@@ -1412,7 +1412,7 @@ const EnhancedOrthopedicDashboard = () => {
             <HelpCircle className="w-6 h-6" style={{ color: COLORS.primary }} />
             Understanding the Quintuple Aim Framework
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {quintupleAimDefinitions.map((aim) => {
               const IconComponent = aim.icon;
               return (

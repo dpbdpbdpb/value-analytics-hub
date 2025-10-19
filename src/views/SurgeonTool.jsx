@@ -39,7 +39,8 @@ const SurgeonTool = () => {
 
   // Load surgeon data from JSON file
   useEffect(() => {
-    fetch('./surgeon_profiles.json')
+    const jsonPath = `${process.env.PUBLIC_URL}/surgeon_profiles.json`;
+    fetch(jsonPath)
       .then(response => {
         if (!response.ok) {
           throw new Error('Failed to load surgeon data');
