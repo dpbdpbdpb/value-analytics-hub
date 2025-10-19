@@ -1053,6 +1053,371 @@ const EnhancedOrthopedicDashboard = () => {
     );
   };
 
+  // FINANCIAL ANALYSIS TAB
+  const renderFinancialTab = () => (
+    <div className="space-y-6">
+      <ExecutiveSummaryCard scenario={selectedScenario} />
+
+      {/* Financial Breakdown */}
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+          <DollarSign className="w-6 h-6" style={{ color: COLORS.primary }} />
+          Savings Breakdown
+        </h2>
+        <ResponsiveContainer width="100%" height={400}>
+          <BarChart data={Object.values(SCENARIOS[selectedScenario]?.breakdown || {}).map((value, idx) => ({
+            name: Object.keys(SCENARIOS[selectedScenario]?.breakdown || {})[idx],
+            value: value
+          }))}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" />
+            <YAxis label={{ value: 'Savings ($M)', angle: -90, position: 'insideLeft' }} />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="value" fill={COLORS.primary} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* 5-Year NPV */}
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <h2 className="text-2xl font-bold mb-4">5-Year Net Present Value</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-4 bg-green-50 rounded-lg">
+            <div className="text-sm text-green-700">5-Year Savings</div>
+            <div className="text-3xl font-bold text-green-900">
+              ${(SCENARIOS[selectedScenario]?.annualSavings * 5).toFixed(2)}M
+            </div>
+          </div>
+          <div className="p-4 bg-red-50 rounded-lg">
+            <div className="text-sm text-red-700">Implementation Cost</div>
+            <div className="text-3xl font-bold text-red-900">
+              -${SCENARIOS[selectedScenario]?.implementation.costMillions.toFixed(2)}M
+            </div>
+          </div>
+          <div className="p-4 bg-blue-50 rounded-lg">
+            <div className="text-sm text-blue-700">Net Present Value</div>
+            <div className="text-3xl font-bold text-blue-900">
+              ${SCENARIOS[selectedScenario]?.npv5Year.toFixed(2)}M
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Scenario Comparison Chart */}
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <h2 className="text-2xl font-bold mb-4">All Scenarios - Financial Comparison</h2>
+        <ResponsiveContainer width="100%" height={400}>
+          <ComposedChart data={Object.values(SCENARIOS)}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="shortName" />
+            <YAxis yAxisId="left" label={{ value: 'Savings ($M)', angle: -90, position: 'insideLeft' }} />
+            <YAxis yAxisId="right" orientation="right" label={{ value: 'NPV ($M)', angle: 90, position: 'insideRight' }} />
+            <Tooltip />
+            <Legend />
+            <Bar yAxisId="left" dataKey="annualSavings" fill={COLORS.primary} name="Annual Savings" />
+            <Line yAxisId="right" type="monotone" dataKey="npv5Year" stroke={COLORS.success} strokeWidth={3} name="5-Year NPV" />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+
+  // RISK ASSESSMENT TAB
+  const renderRiskTab = () => (
+    <div className="space-y-6">
+      <ExecutiveSummaryCard scenario={selectedScenario} />
+
+      {/* Risk Radar Chart */}
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+          <Shield className="w-6 h-6" style={{ color: COLORS.primary }} />
+          Multi-Dimensional Risk Assessment
+        </h2>
+        <ResponsiveContainer width="100%" height={400}>
+          <RadarChart data={[
+            { risk: 'Clinical', [selectedScenario]: SCENARIOS[selectedScenario]?.adoptionRate || 0 },
+            { risk: 'Financial', [selectedScenario]: 100 - (SCENARIOS[selectedScenario]?.riskScore * 10) || 0 },
+            { risk: 'Operational', [selectedScenario]: SCENARIOS[selectedScenario]?.implementation.complexity === 'Low' ? 90 : SCENARIOS[selectedScenario]?.implementation.complexity === 'Medium' ? 70 : 50 },
+            { risk: 'Stakeholder', [selectedScenario]: SCENARIOS[selectedScenario]?.quintupleMissionScore || 0 },
+            { risk: 'Timeline', [selectedScenario]: Math.max(0, 100 - (SCENARIOS[selectedScenario]?.implementation.timeline || 0) * 3) }
+          ]}>
+            <PolarGrid />
+            <PolarAngleAxis dataKey="risk" />
+            <PolarRadiusAxis domain={[0, 100]} />
+            <Radar name={`Scenario ${selectedScenario}`} dataKey={selectedScenario} stroke={COLORS.primary} fill={COLORS.primary} fillOpacity={0.6} />
+            <Tooltip />
+            <Legend />
+          </RadarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Risk Comparison Table */}
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <h2 className="text-2xl font-bold mb-4">Risk Comparison Matrix</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="px-4 py-3 text-left">Scenario</th>
+                <th className="px-4 py-3 text-center">Risk Level</th>
+                <th className="px-4 py-3 text-center">Risk Score</th>
+                <th className="px-4 py-3 text-center">Complexity</th>
+                <th className="px-4 py-3 text-center">Timeline</th>
+                <th className="px-4 py-3 text-center">Implementation Cost</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.values(SCENARIOS).map(scenario => (
+                <tr key={scenario.id} className={`border-b hover:bg-gray-50 ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}>
+                  <td className="px-4 py-3 font-medium">{scenario.shortName}</td>
+                  <td className="px-4 py-3 text-center">
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      scenario.riskLevel === 'low' ? 'bg-green-100 text-green-700' :
+                      scenario.riskLevel === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                      'bg-red-100 text-red-700'
+                    }`}>
+                      {scenario.riskLevel}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-center font-bold">{scenario.riskScore}/10</td>
+                  <td className="px-4 py-3 text-center">{scenario.implementation.complexity}</td>
+                  <td className="px-4 py-3 text-center">{scenario.implementation.timeline} months</td>
+                  <td className="px-4 py-3 text-center">${scenario.implementation.costMillions}M</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+
+  // MISSION IMPACT TAB
+  const renderMissionTab = () => {
+    const missionData = QUINTUPLE_SCORING[selectedScenario];
+
+    return (
+      <div className="space-y-6">
+        <ExecutiveSummaryCard scenario={selectedScenario} />
+
+        {/* Quintuple Aim Radar */}
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+            <Heart className="w-6 h-6" style={{ color: COLORS.primary }} />
+            Quintuple Aim Mission Alignment
+          </h2>
+          <ResponsiveContainer width="100%" height={500}>
+            <RadarChart data={[
+              { aim: 'Patient Experience', score: missionData.patientExperience },
+              { aim: 'Population Health', score: missionData.populationHealth },
+              { aim: 'Cost Reduction', score: missionData.costReduction },
+              { aim: 'Provider Experience', score: missionData.providerExperience },
+              { aim: 'Health Equity', score: missionData.healthEquity }
+            ]}>
+              <PolarGrid />
+              <PolarAngleAxis dataKey="aim" />
+              <PolarRadiusAxis domain={[0, 100]} />
+              <Radar name="Score" dataKey="score" stroke={COLORS.primary} fill={COLORS.primary} fillOpacity={0.7} />
+              <Tooltip />
+            </RadarChart>
+          </ResponsiveContainer>
+          <div className="mt-4 text-center">
+            <div className="text-sm text-gray-600">Overall Mission Score</div>
+            <div className="text-4xl font-bold" style={{ color: COLORS.primary }}>
+              {missionData.total}/100
+            </div>
+            <div className="text-sm text-gray-500 mt-1">
+              Mission Bonus: +{missionData.missionBonus} points
+            </div>
+          </div>
+        </div>
+
+        {/* Mission Comparison */}
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h2 className="text-2xl font-bold mb-4">Mission Score Comparison</h2>
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart data={Object.entries(QUINTUPLE_SCORING).map(([id, data]) => ({
+              scenario: SCENARIOS[id]?.shortName,
+              patientExperience: data.patientExperience,
+              populationHealth: data.populationHealth,
+              costReduction: data.costReduction,
+              providerExperience: data.providerExperience,
+              healthEquity: data.healthEquity
+            }))}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="scenario" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="patientExperience" stackId="a" fill="#10B981" name="Patient Experience" />
+              <Bar dataKey="populationHealth" stackId="a" fill="#3B82F6" name="Population Health" />
+              <Bar dataKey="costReduction" stackId="a" fill="#F59E0B" name="Cost Reduction" />
+              <Bar dataKey="providerExperience" stackId="a" fill="#BA4896" name="Provider Experience" />
+              <Bar dataKey="healthEquity" stackId="a" fill="#9333EA" name="Health Equity" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    );
+  };
+
+  // DECISION FRAMEWORK TAB
+  const renderDecisionTab = () => {
+    const decision = getDecisionOutcome();
+    const DecisionIcon = decision?.icon || HelpCircle;
+
+    return (
+      <div className="space-y-6">
+        <ExecutiveSummaryCard scenario={selectedScenario} />
+
+        {/* Tri-Pillar Voting */}
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+            <Target className="w-6 h-6" style={{ color: COLORS.primary }} />
+            Tri-Pillar Decision Framework
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Clinical Vote */}
+            <div className="border-2 border-gray-200 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Stethoscope className="w-6 h-6" style={{ color: COLORS.info }} />
+                <h3 className="font-bold text-lg">Clinical Leadership</h3>
+              </div>
+              <div className="space-y-2">
+                {['ADVANCE', 'DEFER', 'REJECT'].map(vote => (
+                  <button
+                    key={vote}
+                    onClick={() => setPillarVotes({ ...pillarVotes, clinical: vote })}
+                    className={`w-full px-4 py-2 rounded-lg font-medium transition-all ${
+                      pillarVotes.clinical === vote
+                        ? vote === 'ADVANCE' ? 'bg-green-600 text-white' :
+                          vote === 'DEFER' ? 'bg-yellow-600 text-white' :
+                          'bg-red-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {vote === 'ADVANCE' && <ThumbsUp className="w-4 h-4 inline mr-2" />}
+                    {vote === 'DEFER' && <Minus className="w-4 h-4 inline mr-2" />}
+                    {vote === 'REJECT' && <ThumbsDown className="w-4 h-4 inline mr-2" />}
+                    {vote}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Finance Vote */}
+            <div className="border-2 border-gray-200 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <DollarSign className="w-6 h-6" style={{ color: COLORS.success }} />
+                <h3 className="font-bold text-lg">Finance</h3>
+              </div>
+              <div className="space-y-2">
+                {['ADVANCE', 'DEFER', 'REJECT'].map(vote => (
+                  <button
+                    key={vote}
+                    onClick={() => setPillarVotes({ ...pillarVotes, finance: vote })}
+                    className={`w-full px-4 py-2 rounded-lg font-medium transition-all ${
+                      pillarVotes.finance === vote
+                        ? vote === 'ADVANCE' ? 'bg-green-600 text-white' :
+                          vote === 'DEFER' ? 'bg-yellow-600 text-white' :
+                          'bg-red-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {vote === 'ADVANCE' && <ThumbsUp className="w-4 h-4 inline mr-2" />}
+                    {vote === 'DEFER' && <Minus className="w-4 h-4 inline mr-2" />}
+                    {vote === 'REJECT' && <ThumbsDown className="w-4 h-4 inline mr-2" />}
+                    {vote}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Operations Vote */}
+            <div className="border-2 border-gray-200 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Settings className="w-6 h-6" style={{ color: COLORS.warning }} />
+                <h3 className="font-bold text-lg">Operations</h3>
+              </div>
+              <div className="space-y-2">
+                {['ADVANCE', 'DEFER', 'REJECT'].map(vote => (
+                  <button
+                    key={vote}
+                    onClick={() => setPillarVotes({ ...pillarVotes, operations: vote })}
+                    className={`w-full px-4 py-2 rounded-lg font-medium transition-all ${
+                      pillarVotes.operations === vote
+                        ? vote === 'ADVANCE' ? 'bg-green-600 text-white' :
+                          vote === 'DEFER' ? 'bg-yellow-600 text-white' :
+                          'bg-red-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {vote === 'ADVANCE' && <ThumbsUp className="w-4 h-4 inline mr-2" />}
+                    {vote === 'DEFER' && <Minus className="w-4 h-4 inline mr-2" />}
+                    {vote === 'REJECT' && <ThumbsDown className="w-4 h-4 inline mr-2" />}
+                    {vote}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Decision Outcome */}
+          {decision && (
+            <div className={`mt-6 p-6 rounded-lg border-4`} style={{
+              borderColor: decision.color,
+              backgroundColor: `${decision.color}20`
+            }}>
+              <div className="flex items-center gap-4">
+                <DecisionIcon className="w-12 h-12" style={{ color: decision.color }} />
+                <div>
+                  <div className="text-sm font-medium" style={{ color: decision.color }}>
+                    Consensus Decision
+                  </div>
+                  <div className="text-3xl font-bold" style={{ color: decision.color }}>
+                    {decision.status}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Decision Matrix */}
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h2 className="text-2xl font-bold mb-4">Decision Support Matrix</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="border rounded-lg p-4 bg-green-50">
+              <h3 className="font-bold text-green-900 mb-2 flex items-center gap-2">
+                <CheckCircle className="w-5 h-5" />
+                Strengths
+              </h3>
+              <ul className="space-y-1 text-sm text-green-800">
+                <li>• {SCENARIOS[selectedScenario]?.adoptionRate >= 85 ? 'High adoption rate' : 'Moderate adoption expected'}</li>
+                <li>• ${SCENARIOS[selectedScenario]?.annualSavings.toFixed(2)}M annual savings potential</li>
+                <li>• {SCENARIOS[selectedScenario]?.quintupleMissionScore >= 80 ? 'Strong' : 'Good'} mission alignment</li>
+                <li>• {SCENARIOS[selectedScenario]?.implementation.timeline} month implementation timeline</li>
+              </ul>
+            </div>
+            <div className="border rounded-lg p-4 bg-red-50">
+              <h3 className="font-bold text-red-900 mb-2 flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5" />
+                Risks & Challenges
+              </h3>
+              <ul className="space-y-1 text-sm text-red-800">
+                <li>• {SCENARIOS[selectedScenario]?.riskLevel.charAt(0).toUpperCase() + SCENARIOS[selectedScenario]?.riskLevel.slice(1)} risk level (score: {SCENARIOS[selectedScenario]?.riskScore}/10)</li>
+                <li>• ${SCENARIOS[selectedScenario]?.implementation.costMillions}M implementation cost</li>
+                <li>• {SCENARIOS[selectedScenario]?.implementation.complexity} implementation complexity</li>
+                <li>• Change management across {realData ? Object.values(realData.regions).reduce((sum, r) => sum + r.surgeons, 0) : 0} surgeons</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // WHAT-IF SCENARIO TOOLS
   const renderWhatIfTools = () => (
     <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
@@ -1265,11 +1630,11 @@ const EnhancedOrthopedicDashboard = () => {
         {/* Tab Content */}
         <div className="transition-all">
           {activeTab === 'overview' && renderOverviewTab()}
-          {activeTab === 'financial' && renderOverviewTab() /* Simplified - uses same render */}
+          {activeTab === 'financial' && renderFinancialTab()}
           {activeTab === 'matrix' && renderMatrixTab()}
-          {activeTab === 'risk' && renderOverviewTab() /* Simplified - uses same render */}
-          {activeTab === 'mission' && renderOverviewTab() /* Simplified - uses same render */}
-          {activeTab === 'decision' && renderOverviewTab() /* Simplified - uses same render */}
+          {activeTab === 'risk' && renderRiskTab()}
+          {activeTab === 'mission' && renderMissionTab()}
+          {activeTab === 'decision' && renderDecisionTab()}
         </div>
 
         {/* Footer with Data Source */}
