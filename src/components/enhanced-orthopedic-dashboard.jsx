@@ -65,7 +65,11 @@ const EnhancedOrthopedicDashboard = () => {
     setIsLoading(true);
     setDataError(null);
     try {
-      const response = await fetch('/orthopedic-data.json');
+      // Use PUBLIC_URL for Create React App compatibility
+      const jsonPath = `${process.env.PUBLIC_URL}/orthopedic-data.json`;
+      console.log('📊 Fetching data from:', jsonPath);
+
+      const response = await fetch(jsonPath);
       if (!response.ok) {
         throw new Error(`Failed to fetch data: ${response.statusText}`);
       }
