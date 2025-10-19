@@ -24,7 +24,7 @@ const EnhancedOrthopedicDashboard = () => {
 
   // State management
   const [activeTab, setActiveTab] = useState('overview');
-  const [selectedScenario, setSelectedScenario] = useState('B');
+  const [selectedScenario, setSelectedScenario] = useState('C');
   const [comparisonMode, setComparisonMode] = useState(false);
   const [comparisonScenario, setComparisonScenario] = useState('D');
   const [sortBy, setSortBy] = useState('savings');
@@ -137,7 +137,7 @@ const EnhancedOrthopedicDashboard = () => {
     });
   };
 
-  // 6-Scenario Data Structure (now using real data where available)
+  // 7-Scenario Data Structure aligned with Surgeon Tool (hip_knees_surgeon_tool)
   const SCENARIOS = useMemo(() => {
     if (!realData) {
       // Fallback placeholder data
@@ -164,23 +164,22 @@ const EnhancedOrthopedicDashboard = () => {
       };
     }
 
-    const matrixSavings = calculateMatrixSavings();
-    const topVendors = getTopVendors();
     const totalCases = realData.metadata.totalCases;
-    const avgCostPerCase = realData.metadata.totalSpend / totalCases;
+    const baselineSpend = realData.metadata.totalSpend / 1000000; // Convert to millions
 
     return {
       'A': {
         id: 'A',
-        name: `Status Quo (${topVendors.join(', ')})`,
+        name: 'Status Quo',
         shortName: 'Status Quo',
-        description: 'Continue with current multi-vendor fragmentation across 20+ vendors',
-        vendors: topVendors,
-        vendorCount: Object.keys(realData.vendors).length,
-        annualSavings: realData.scenarios.scenarioA.annualSavings / 1000000,
+        description: 'Continue with current multi-vendor fragmentation (ZIMMER BIOMET, STRYKER, J&J, SMITH & NEPHEW, CONFORMIS)',
+        vendors: ['ZIMMER BIOMET', 'STRYKER', 'J&J', 'SMITH & NEPHEW', 'CONFORMIS'],
+        vendorCount: 5,
+        savingsPercent: 0,
+        annualSavings: 0,
         savingsRange: { conservative: 0, expected: 0, optimistic: 0 },
-        adoptionRate: realData.scenarios.scenarioA.adoptionRate * 100,
-        riskLevel: realData.scenarios.scenarioA.riskLevel.toLowerCase(),
+        adoptionRate: 100,
+        riskLevel: 'low',
         riskScore: 1,
         baselineCost: realData.metadata.totalSpend,
         implementation: {
@@ -194,189 +193,230 @@ const EnhancedOrthopedicDashboard = () => {
           inventoryOptimization: 0,
           adminEfficiency: 0
         },
-        agentScore: realData.scenarios.scenarioA.agentScore,
+        agentScore: 2.1,
         quintupleMissionScore: 45,
         npv5Year: 0
       },
       'B': {
         id: 'B',
-        name: `Dual-Vendor (${realData.scenarios.scenarioB.vendors.join(', ')})`,
-        shortName: 'Dual-Vendor',
-        description: 'Consolidate to two primary vendors with proven surgeon acceptance',
-        vendors: realData.scenarios.scenarioB.vendors,
-        vendorCount: 2,
-        annualSavings: realData.scenarios.scenarioB.annualSavings / 1000000,
+        name: 'Tri-Source (Zimmer + Stryker + J&J)',
+        shortName: 'Tri-Source',
+        description: 'Consolidate to three primary vendors with proven surgeon acceptance',
+        vendors: ['ZIMMER BIOMET', 'STRYKER', 'J&J'],
+        vendorCount: 3,
+        savingsPercent: 12,
+        annualSavings: baselineSpend * 0.12,
         savingsRange: {
-          conservative: (realData.scenarios.scenarioB.annualSavings * 0.85) / 1000000,
-          expected: realData.scenarios.scenarioB.annualSavings / 1000000,
-          optimistic: (realData.scenarios.scenarioB.annualSavings * 1.15) / 1000000
+          conservative: baselineSpend * 0.12 * 0.85,
+          expected: baselineSpend * 0.12,
+          optimistic: baselineSpend * 0.12 * 1.15
         },
-        adoptionRate: realData.scenarios.scenarioB.adoptionRate * 100,
-        riskLevel: realData.scenarios.scenarioB.riskLevel.toLowerCase(),
+        adoptionRate: 92,
+        riskLevel: 'low',
+        riskScore: 2.5,
+        baselineCost: realData.metadata.totalSpend,
+        implementation: {
+          complexity: 'Medium',
+          timeline: 10,
+          costMillions: 2.2
+        },
+        breakdown: {
+          volumeAggregation: baselineSpend * 0.12 * 0.45,
+          priceOptimization: baselineSpend * 0.12 * 0.40,
+          inventoryOptimization: baselineSpend * 0.12 * 0.10,
+          adminEfficiency: baselineSpend * 0.12 * 0.05
+        },
+        agentScore: 3.8,
+        quintupleMissionScore: 82,
+        npv5Year: baselineSpend * 0.12 * 5 - 2.2,
+        vendorSplit: {
+          zimmer_biomet: 40,
+          stryker: 35,
+          j_j: 25
+        }
+      },
+      'C': {
+        id: 'C',
+        name: 'Zimmer + J&J',
+        shortName: 'Zimmer + J&J',
+        description: 'Dual-vendor model with ZIMMER BIOMET and J&J',
+        vendors: ['ZIMMER BIOMET', 'J&J'],
+        vendorCount: 2,
+        savingsPercent: 18,
+        annualSavings: baselineSpend * 0.18,
+        savingsRange: {
+          conservative: baselineSpend * 0.18 * 0.85,
+          expected: baselineSpend * 0.18,
+          optimistic: baselineSpend * 0.18 * 1.15
+        },
+        adoptionRate: 88,
+        riskLevel: 'medium',
         riskScore: 3.5,
         baselineCost: realData.metadata.totalSpend,
         implementation: {
           complexity: 'Medium',
           timeline: 12,
-          costMillions: 2.5
+          costMillions: 2.8
         },
         breakdown: {
-          volumeAggregation: (realData.scenarios.scenarioB.annualSavings / 1000000) * 0.45,
-          priceOptimization: (realData.scenarios.scenarioB.annualSavings / 1000000) * 0.36,
-          inventoryOptimization: (realData.scenarios.scenarioB.annualSavings / 1000000) * 0.12,
-          adminEfficiency: (realData.scenarios.scenarioB.annualSavings / 1000000) * 0.07
+          volumeAggregation: baselineSpend * 0.18 * 0.48,
+          priceOptimization: baselineSpend * 0.18 * 0.38,
+          inventoryOptimization: baselineSpend * 0.18 * 0.10,
+          adminEfficiency: baselineSpend * 0.18 * 0.04
         },
-        agentScore: realData.scenarios.scenarioB.agentScore,
-        quintupleMissionScore: 82,
-        npv5Year: (realData.scenarios.scenarioB.annualSavings / 1000000) * 5 - 2.5,
+        agentScore: 4.1,
+        quintupleMissionScore: 78,
+        npv5Year: baselineSpend * 0.18 * 5 - 2.8,
         vendorSplit: {
-          [realData.scenarios.scenarioB.vendors[0].toLowerCase().replace(' ', '_')]: 55,
-          [realData.scenarios.scenarioB.vendors[1].toLowerCase().replace(' ', '_')]: 45
+          zimmer_biomet: 55,
+          j_j: 45
         }
-      },
-      'C': {
-        id: 'C',
-        name: `Single-Vendor (${realData.scenarios.scenarioC.vendors[0]})`,
-        shortName: 'Single-Vendor',
-        description: 'Maximum leverage through 100% volume concentration with single vendor',
-        vendors: realData.scenarios.scenarioC.vendors,
-        vendorCount: 1,
-        annualSavings: realData.scenarios.scenarioC.annualSavings / 1000000,
-        savingsRange: {
-          conservative: (realData.scenarios.scenarioC.annualSavings * 0.80) / 1000000,
-          expected: realData.scenarios.scenarioC.annualSavings / 1000000,
-          optimistic: (realData.scenarios.scenarioC.annualSavings * 1.17) / 1000000
-        },
-        adoptionRate: realData.scenarios.scenarioC.adoptionRate * 100,
-        riskLevel: realData.scenarios.scenarioC.riskLevel.toLowerCase(),
-        riskScore: 6.8,
-        baselineCost: realData.metadata.totalSpend,
-        implementation: {
-          complexity: 'High',
-          timeline: 18,
-          costMillions: 4.2
-        },
-        breakdown: {
-          volumeAggregation: (realData.scenarios.scenarioC.annualSavings / 1000000) * 0.47,
-          priceOptimization: (realData.scenarios.scenarioC.annualSavings / 1000000) * 0.36,
-          inventoryOptimization: (realData.scenarios.scenarioC.annualSavings / 1000000) * 0.13,
-          adminEfficiency: (realData.scenarios.scenarioC.annualSavings / 1000000) * 0.04
-        },
-        agentScore: realData.scenarios.scenarioC.agentScore,
-        quintupleMissionScore: 58,
-        npv5Year: (realData.scenarios.scenarioC.annualSavings / 1000000) * 5 - 4.2,
-        vendorSplit: { [realData.scenarios.scenarioC.vendors[0].toLowerCase().replace(' ', '_')]: 100 }
       },
       'D': {
         id: 'D',
-        name: 'Matrix Pricing (All three compete)',
-        shortName: 'Matrix Pricing',
-        description: 'Component-level competition among top vendors - surgeons choose best components',
-        vendors: topVendors,
-        vendorCount: 3,
-        annualSavings: matrixSavings,
-        savingsRange: {
-          conservative: matrixSavings * 0.85,
-          expected: matrixSavings,
-          optimistic: matrixSavings * 1.14
-        },
-        adoptionRate: 92,
-        riskLevel: 'medium',
-        riskScore: 2.8,
-        baselineCost: realData.metadata.totalSpend,
-        implementation: {
-          complexity: 'High',
-          timeline: 14,
-          costMillions: 3.8
-        },
-        breakdown: {
-          matrixPricing: matrixSavings * 0.44,
-          volumeAggregation: matrixSavings * 0.38,
-          inventoryOptimization: matrixSavings * 0.12,
-          adminEfficiency: matrixSavings * 0.06
-        },
-        agentScore: 4.7,
-        quintupleMissionScore: 88,
-        npv5Year: matrixSavings * 5 - 3.8,
-        vendorSplit: {
-          [topVendors[0].toLowerCase().replace(/[& ]/g, '_')]: 40,
-          [topVendors[1].toLowerCase().replace(/[& ]/g, '_')]: 35,
-          [topVendors[2].toLowerCase().replace(/[& ]/g, '_')]: 25
-        },
-        matrixComponents: true
-      },
-      'E': {
-        id: 'E',
-        name: 'Hybrid Performance',
-        shortName: 'Hybrid Performance',
-        description: 'Performance-based dual vendor with quarterly volume adjustments',
-        vendors: realData.scenarios.scenarioB.vendors,
+        name: 'Stryker + Zimmer',
+        shortName: 'Stryker + Zimmer',
+        description: 'Dual-vendor model with STRYKER and ZIMMER BIOMET',
+        vendors: ['STRYKER', 'ZIMMER BIOMET'],
         vendorCount: 2,
-        annualSavings: (realData.scenarios.scenarioB.annualSavings / 1000000) * 0.99,
+        savingsPercent: 16,
+        annualSavings: baselineSpend * 0.16,
         savingsRange: {
-          conservative: (realData.scenarios.scenarioB.annualSavings / 1000000) * 0.84,
-          expected: (realData.scenarios.scenarioB.annualSavings / 1000000) * 0.99,
-          optimistic: (realData.scenarios.scenarioB.annualSavings / 1000000) * 1.13
+          conservative: baselineSpend * 0.16 * 0.85,
+          expected: baselineSpend * 0.16,
+          optimistic: baselineSpend * 0.16 * 1.15
         },
-        adoptionRate: 88,
+        adoptionRate: 90,
         riskLevel: 'medium',
         riskScore: 3.2,
         baselineCost: realData.metadata.totalSpend,
         implementation: {
-          complexity: 'Medium-High',
-          timeline: 15,
-          costMillions: 3.2
+          complexity: 'Medium',
+          timeline: 12,
+          costMillions: 2.6
         },
         breakdown: {
-          volumeAggregation: (realData.scenarios.scenarioB.annualSavings / 1000000) * 0.43,
-          priceOptimization: (realData.scenarios.scenarioB.annualSavings / 1000000) * 0.39,
-          inventoryOptimization: (realData.scenarios.scenarioB.annualSavings / 1000000) * 0.13,
-          adminEfficiency: (realData.scenarios.scenarioB.annualSavings / 1000000) * 0.05
+          volumeAggregation: baselineSpend * 0.16 * 0.47,
+          priceOptimization: baselineSpend * 0.16 * 0.38,
+          inventoryOptimization: baselineSpend * 0.16 * 0.11,
+          adminEfficiency: baselineSpend * 0.16 * 0.04
+        },
+        agentScore: 4.0,
+        quintupleMissionScore: 80,
+        npv5Year: baselineSpend * 0.16 * 5 - 2.6,
+        vendorSplit: {
+          stryker: 52,
+          zimmer_biomet: 48
+        }
+      },
+      'E': {
+        id: 'E',
+        name: 'Stryker + J&J',
+        shortName: 'Stryker + J&J',
+        description: 'Dual-vendor model with STRYKER and J&J',
+        vendors: ['STRYKER', 'J&J'],
+        vendorCount: 2,
+        savingsPercent: 20,
+        annualSavings: baselineSpend * 0.20,
+        savingsRange: {
+          conservative: baselineSpend * 0.20 * 0.85,
+          expected: baselineSpend * 0.20,
+          optimistic: baselineSpend * 0.20 * 1.15
+        },
+        adoptionRate: 85,
+        riskLevel: 'medium',
+        riskScore: 3.8,
+        baselineCost: realData.metadata.totalSpend,
+        implementation: {
+          complexity: 'Medium-High',
+          timeline: 14,
+          costMillions: 3.0
+        },
+        breakdown: {
+          volumeAggregation: baselineSpend * 0.20 * 0.48,
+          priceOptimization: baselineSpend * 0.20 * 0.38,
+          inventoryOptimization: baselineSpend * 0.20 * 0.10,
+          adminEfficiency: baselineSpend * 0.20 * 0.04
         },
         agentScore: 4.3,
-        quintupleMissionScore: 85,
-        npv5Year: (realData.scenarios.scenarioB.annualSavings / 1000000) * 0.99 * 5 - 3.2,
+        quintupleMissionScore: 75,
+        npv5Year: baselineSpend * 0.20 * 5 - 3.0,
         vendorSplit: {
-          [realData.scenarios.scenarioB.vendors[0].toLowerCase().replace(' ', '_')]: 50,
-          [realData.scenarios.scenarioB.vendors[1].toLowerCase().replace(' ', '_')]: 50
+          stryker: 53,
+          j_j: 47
         }
       },
       'F': {
         id: 'F',
-        name: 'VBC Alignment',
-        shortName: 'VBC Model',
-        description: 'Value-based care contracting with outcome-based risk/reward',
-        vendors: realData.scenarios.scenarioB.vendors,
-        vendorCount: 2,
-        annualSavings: (realData.scenarios.scenarioB.annualSavings / 1000000) * 0.86,
+        name: 'Zimmer Only',
+        shortName: 'Zimmer Only',
+        description: 'Single-vendor consolidation with ZIMMER BIOMET',
+        vendors: ['ZIMMER BIOMET'],
+        vendorCount: 1,
+        savingsPercent: 25,
+        annualSavings: baselineSpend * 0.25,
         savingsRange: {
-          conservative: (realData.scenarios.scenarioB.annualSavings / 1000000) * 0.73,
-          expected: (realData.scenarios.scenarioB.annualSavings / 1000000) * 0.86,
-          optimistic: (realData.scenarios.scenarioB.annualSavings / 1000000) * 1.03
+          conservative: baselineSpend * 0.25 * 0.80,
+          expected: baselineSpend * 0.25,
+          optimistic: baselineSpend * 0.25 * 1.20
         },
-        adoptionRate: 90,
-        riskLevel: 'medium',
-        riskScore: 3.0,
+        adoptionRate: 75,
+        riskLevel: 'high',
+        riskScore: 6.5,
         baselineCost: realData.metadata.totalSpend,
         implementation: {
-          complexity: 'Medium-High',
-          timeline: 16,
-          costMillions: 3.5
+          complexity: 'High',
+          timeline: 18,
+          costMillions: 4.0
         },
         breakdown: {
-          volumeAggregation: (realData.scenarios.scenarioB.annualSavings / 1000000) * 0.32,
-          priceOptimization: (realData.scenarios.scenarioB.annualSavings / 1000000) * 0.30,
-          inventoryOptimization: (realData.scenarios.scenarioB.annualSavings / 1000000) * 0.11,
-          adminEfficiency: (realData.scenarios.scenarioB.annualSavings / 1000000) * 0.13
+          volumeAggregation: baselineSpend * 0.25 * 0.52,
+          priceOptimization: baselineSpend * 0.25 * 0.35,
+          inventoryOptimization: baselineSpend * 0.25 * 0.10,
+          adminEfficiency: baselineSpend * 0.25 * 0.03
         },
-        agentScore: 4.4,
-        quintupleMissionScore: 92,
-        npv5Year: (realData.scenarios.scenarioB.annualSavings / 1000000) * 0.86 * 5 - 3.5,
+        agentScore: 3.5,
+        quintupleMissionScore: 62,
+        npv5Year: baselineSpend * 0.25 * 5 - 4.0,
         vendorSplit: {
-          [realData.scenarios.scenarioB.vendors[0].toLowerCase().replace(' ', '_')]: 52,
-          [realData.scenarios.scenarioB.vendors[1].toLowerCase().replace(' ', '_')]: 48
+          zimmer_biomet: 100
+        }
+      },
+      'G': {
+        id: 'G',
+        name: 'Stryker Only',
+        shortName: 'Stryker Only',
+        description: 'Single-vendor consolidation with STRYKER',
+        vendors: ['STRYKER'],
+        vendorCount: 1,
+        savingsPercent: 22,
+        annualSavings: baselineSpend * 0.22,
+        savingsRange: {
+          conservative: baselineSpend * 0.22 * 0.80,
+          expected: baselineSpend * 0.22,
+          optimistic: baselineSpend * 0.22 * 1.20
         },
-        outcomeBonus: 3.5
+        adoptionRate: 78,
+        riskLevel: 'high',
+        riskScore: 6.0,
+        baselineCost: realData.metadata.totalSpend,
+        implementation: {
+          complexity: 'High',
+          timeline: 18,
+          costMillions: 3.8
+        },
+        breakdown: {
+          volumeAggregation: baselineSpend * 0.22 * 0.50,
+          priceOptimization: baselineSpend * 0.22 * 0.36,
+          inventoryOptimization: baselineSpend * 0.22 * 0.11,
+          adminEfficiency: baselineSpend * 0.22 * 0.03
+        },
+        agentScore: 3.7,
+        quintupleMissionScore: 65,
+        npv5Year: baselineSpend * 0.22 * 5 - 3.8,
+        vendorSplit: {
+          stryker: 100
+        }
       }
     };
   }, [realData]);
@@ -428,7 +468,7 @@ const EnhancedOrthopedicDashboard = () => {
   // Regional surgeon preference data from real data
   const REGIONAL_DATA = useMemo(() => convertToRegionalData(), [realData]);
 
-  // Quintuple Aim scoring
+  // Quintuple Aim scoring (aligned with 7 scenarios)
   const QUINTUPLE_SCORING = {
     A: {
       patientExperience: 50,
@@ -440,49 +480,58 @@ const EnhancedOrthopedicDashboard = () => {
       total: 45
     },
     B: {
-      patientExperience: 80,
-      populationHealth: 75,
-      costReduction: 85,
-      providerExperience: 75,
-      healthEquity: 80,
-      missionBonus: 15,
+      patientExperience: 82,
+      populationHealth: 78,
+      costReduction: 68,
+      providerExperience: 88,
+      healthEquity: 82,
+      missionBonus: 12,
       total: 82
     },
     C: {
-      patientExperience: 65,
-      populationHealth: 60,
-      costReduction: 95,
-      providerExperience: 45,
-      healthEquity: 55,
-      missionBonus: 5,
-      total: 58
+      patientExperience: 78,
+      populationHealth: 75,
+      costReduction: 80,
+      providerExperience: 76,
+      healthEquity: 78,
+      missionBonus: 10,
+      total: 78
     },
     D: {
-      patientExperience: 90,
-      populationHealth: 85,
-      costReduction: 75,
-      providerExperience: 88,
-      healthEquity: 92,
-      missionBonus: 20,
-      total: 88
+      patientExperience: 80,
+      populationHealth: 77,
+      costReduction: 76,
+      providerExperience: 82,
+      healthEquity: 80,
+      missionBonus: 11,
+      total: 80
     },
     E: {
-      patientExperience: 85,
-      populationHealth: 80,
-      costReduction: 82,
-      providerExperience: 82,
-      healthEquity: 85,
-      missionBonus: 12,
-      total: 85
+      patientExperience: 75,
+      populationHealth: 72,
+      costReduction: 85,
+      providerExperience: 70,
+      healthEquity: 76,
+      missionBonus: 8,
+      total: 75
     },
     F: {
-      patientExperience: 92,
-      populationHealth: 90,
-      costReduction: 70,
-      providerExperience: 85,
-      healthEquity: 95,
-      missionBonus: 25,
-      total: 92
+      patientExperience: 62,
+      populationHealth: 58,
+      costReduction: 92,
+      providerExperience: 48,
+      healthEquity: 62,
+      missionBonus: 3,
+      total: 62
+    },
+    G: {
+      patientExperience: 65,
+      populationHealth: 62,
+      costReduction: 88,
+      providerExperience: 55,
+      healthEquity: 66,
+      missionBonus: 5,
+      total: 65
     }
   };
 
@@ -634,7 +683,7 @@ const EnhancedOrthopedicDashboard = () => {
     const tabs = [
       { id: 'overview', label: 'Overview', icon: Eye },
       { id: 'financial', label: 'Financial Analysis', icon: DollarSign },
-      { id: 'matrix', label: 'Matrix Pricing', icon: BarChart3 },
+      { id: 'components', label: 'Component Analysis', icon: Package },
       { id: 'risk', label: 'Risk Assessment', icon: Shield },
       { id: 'mission', label: 'Mission Impact', icon: Heart },
       { id: 'decision', label: 'Decision Framework', icon: Target }
@@ -958,100 +1007,84 @@ const EnhancedOrthopedicDashboard = () => {
   // remain the same as before, but now use the dynamically loaded SCENARIOS data
   // For brevity, I'm including just the key parts that demonstrate real data usage
 
-  // MATRIX PRICING TAB (updated to use real data)
-  const renderMatrixTab = () => {
-    if (selectedScenario !== 'D') {
-      return (
-        <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-8 text-center">
-          <AlertCircle className="w-16 h-16 text-yellow-600 mx-auto mb-4" />
-          <h3 className="text-2xl font-bold text-yellow-900 mb-2">Matrix Pricing Only Available for Scenario D</h3>
-          <p className="text-yellow-700 mb-4">
-            Please select Scenario D to view the three-vendor matrix pricing details from real data.
-          </p>
-          <button
-            onClick={() => setSelectedScenario('D')}
-            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-          >
-            Switch to Scenario D
-          </button>
-        </div>
-      );
-    }
+  // COMPONENT ANALYSIS TAB (replaces matrix tab)
+  const renderComponentTab = () => (
+    <div className="space-y-6">
+      <ExecutiveSummaryCard scenario={selectedScenario} />
 
-    return (
-      <div className="space-y-6">
-        <ExecutiveSummaryCard scenario="D" />
-
-        {/* Matrix Pricing Explanation with Real Data */}
-        <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-6 border-2 border-blue-200">
-          <h3 className="text-xl font-bold text-blue-900 mb-3">How Matrix Pricing Works (Real Data Analysis)</h3>
-          <p className="text-blue-800 mb-4">
-            Based on {realData ? realData.matrixPricing.length : 20} component categories analyzed, matrix pricing
-            enables component-level competition. Total potential savings: ${calculateMatrixSavings().toFixed(2)}M
-          </p>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-white p-3 rounded-lg">
-              <div className="text-sm text-gray-600">Current Total Spend</div>
-              <div className="text-lg font-bold text-gray-900">
-                ${realData ? (realData.metadata.totalSpend / 1000000).toFixed(2) : '0'}M
-              </div>
-            </div>
-            <div className="bg-white p-3 rounded-lg">
-              <div className="text-sm text-gray-600">With Matrix Pricing</div>
-              <div className="text-lg font-bold text-green-600">
-                ${realData ? ((realData.metadata.totalSpend - calculateMatrixSavings() * 1000000) / 1000000).toFixed(2) : '0'}M
-              </div>
-            </div>
-            <div className="bg-white p-3 rounded-lg">
-              <div className="text-sm text-gray-600">Total Savings</div>
-              <div className="text-lg font-bold text-purple-600">${calculateMatrixSavings().toFixed(2)}M</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Top Savings Opportunities from Real Data */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-            <Package className="w-6 h-6" style={{ color: COLORS.primary }} />
-            Top 10 Component Savings Opportunities (Real Data)
-          </h2>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="px-4 py-3 text-left font-bold">Component Category</th>
-                  <th className="px-4 py-3 text-right font-bold">Current Avg Price</th>
-                  <th className="px-4 py-3 text-right font-bold">Matrix Price</th>
-                  <th className="px-4 py-3 text-right font-bold">Savings %</th>
-                  <th className="px-4 py-3 text-right font-bold">Total Savings</th>
+      {/* Component-Level Savings Analysis */}
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+          <Package className="w-6 h-6" style={{ color: COLORS.primary }} />
+          Top Component Savings Opportunities
+        </h2>
+        <p className="text-gray-600 mb-4">
+          Analysis of component-level pricing showing potential savings from vendor consolidation
+        </p>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="px-4 py-3 text-left font-bold">Component Category</th>
+                <th className="px-4 py-3 text-right font-bold">Current Avg Price</th>
+                <th className="px-4 py-3 text-right font-bold">Target Price</th>
+                <th className="px-4 py-3 text-right font-bold">Savings %</th>
+                <th className="px-4 py-3 text-right font-bold">Potential Savings</th>
+              </tr>
+            </thead>
+            <tbody>
+              {realData?.matrixPricing?.slice(0, 10).map((item, idx) => {
+                const savingsPercent = ((item.currentAvgPrice - item.matrixPrice) / item.currentAvgPrice * 100).toFixed(1);
+                return (
+                  <tr key={idx} className="border-b hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium">{item.category}</td>
+                    <td className="px-4 py-3 text-right text-gray-600">${item.currentAvgPrice.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-right font-medium text-green-600">
+                      ${item.matrixPrice.toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 text-right font-bold text-purple-600">
+                      {savingsPercent}%
+                    </td>
+                    <td className="px-4 py-3 text-right font-bold text-green-600">
+                      ${(item.potentialSavings / 1000).toFixed(0)}K
+                    </td>
+                  </tr>
+                );
+              }) || (
+                <tr>
+                  <td colSpan="5" className="px-4 py-8 text-center text-gray-500">
+                    Component data not available
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {realData?.matrixPricing.slice(0, 10).map((item, idx) => {
-                  const savingsPercent = ((item.currentAvgPrice - item.matrixPrice) / item.currentAvgPrice * 100).toFixed(1);
-                  return (
-                    <tr key={idx} className="border-b hover:bg-gray-50">
-                      <td className="px-4 py-3 font-medium">{item.category}</td>
-                      <td className="px-4 py-3 text-right text-gray-600">${item.currentAvgPrice.toLocaleString()}</td>
-                      <td className="px-4 py-3 text-right font-medium text-green-600 bg-green-50">
-                        ${item.matrixPrice.toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 text-right font-bold text-purple-600">
-                        {savingsPercent}%
-                      </td>
-                      <td className="px-4 py-3 text-right font-bold text-green-600">
-                        ${(item.potentialSavings / 1000).toFixed(0)}K
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
-    );
-  };
+
+      {/* Vendor Utilization Chart */}
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <h2 className="text-2xl font-bold mb-4">Vendor Utilization Across Scenarios</h2>
+        <ResponsiveContainer width="100%" height={400}>
+          <BarChart data={[
+            { scenario: 'A', vendors: 5 },
+            { scenario: 'B', vendors: 3 },
+            { scenario: 'C', vendors: 2 },
+            { scenario: 'D', vendors: 2 },
+            { scenario: 'E', vendors: 2 },
+            { scenario: 'F', vendors: 1 },
+            { scenario: 'G', vendors: 1 }
+          ]}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="scenario" label={{ value: 'Scenario', position: 'insideBottom', offset: -5 }} />
+            <YAxis label={{ value: 'Number of Vendors', angle: -90, position: 'insideLeft' }} />
+            <Tooltip />
+            <Bar dataKey="vendors" fill={COLORS.primary} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
 
   // FINANCIAL ANALYSIS TAB
   const renderFinancialTab = () => (
@@ -1631,7 +1664,7 @@ const EnhancedOrthopedicDashboard = () => {
         <div className="transition-all">
           {activeTab === 'overview' && renderOverviewTab()}
           {activeTab === 'financial' && renderFinancialTab()}
-          {activeTab === 'matrix' && renderMatrixTab()}
+          {activeTab === 'components' && renderComponentTab()}
           {activeTab === 'risk' && renderRiskTab()}
           {activeTab === 'mission' && renderMissionTab()}
           {activeTab === 'decision' && renderDecisionTab()}
