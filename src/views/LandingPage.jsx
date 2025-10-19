@@ -87,7 +87,7 @@ const LandingPage = () => {
       const specialty = specialties.find(s => s.id === selectedSpecialty);
       const role = roles.find(r => r.id === selectedRole);
       if (specialty.status === 'active' && role) {
-        navigate(`/${role.route}/${selectedSpecialty}`);
+        navigate(`/${role.route}/${selectedSpecialty}?persona=${selectedRole}`);
       }
     }
   };

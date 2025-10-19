@@ -1,10 +1,25 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Heart, User, RefreshCw } from 'lucide-react';
+import { Home, Heart, User, RefreshCw, TrendingUp, Shield, Stethoscope } from 'lucide-react';
 
-const NavigationHeader = ({ role, specialty, specialtyName }) => {
+const NavigationHeader = ({ role, specialty, specialtyName, persona }) => {
   const navigate = useNavigate();
 
+  // Map personas to display names
+  const personaDisplay = {
+    clinical: 'Clinical Leadership',
+    financial: 'Financial Leadership',
+    operational: 'Operational Leadership'
+  };
+
+  // Map personas to icons
+  const personaIcon = {
+    clinical: Stethoscope,
+    financial: TrendingUp,
+    operational: Shield
+  };
+
+  // Legacy role display for backwards compatibility
   const roleDisplay = {
     executive: 'Executive Dashboard',
     surgeon: 'Surgeon View',
@@ -17,7 +32,10 @@ const NavigationHeader = ({ role, specialty, specialtyName }) => {
     admin: RefreshCw
   };
 
-  const RoleIcon = roleIcon[role] || User;
+  // Determine display based on persona or role
+  const displayName = persona ? personaDisplay[persona] : roleDisplay[role];
+  const IconComponent = persona ? personaIcon[persona] : roleIcon[role];
+  const RoleIcon = IconComponent || User;
 
   return (
     <div className="bg-gradient-to-r from-purple-600 to-purple-700 shadow-lg sticky top-0 z-50">
@@ -34,7 +52,7 @@ const NavigationHeader = ({ role, specialty, specialtyName }) => {
               </h1>
               <div className="flex items-center gap-2 text-purple-100 text-sm">
                 <RoleIcon className="w-3 h-3" />
-                <span>{roleDisplay[role]}</span>
+                <span>{displayName}</span>
                 <span className="text-purple-300">•</span>
                 <span>{specialtyName || specialty.toUpperCase()}</span>
               </div>

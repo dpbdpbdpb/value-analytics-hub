@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, RadarChart, Radar,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -17,6 +18,9 @@ import {
 import NavigationHeader from '../components/shared/NavigationHeader';
 
 const EnhancedOrthopedicDashboard = () => {
+  // Get persona from URL params
+  const [searchParams] = useSearchParams();
+  const persona = searchParams.get('persona') || 'financial'; // default to financial
   // Data loading state
   const [realData, setRealData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -648,15 +652,19 @@ const EnhancedOrthopedicDashboard = () => {
 
   // Render tab navigation
   const renderTabs = () => {
-    const tabs = [
-      { id: 'overview', label: 'Overview', icon: Eye },
-      { id: 'financial', label: 'Financial Analysis', icon: DollarSign },
-      { id: 'components', label: 'Component Analysis', icon: Package },
-      { id: 'risk', label: 'Risk Assessment', icon: Shield },
-      { id: 'mission', label: 'Mission Impact', icon: Heart },
-      { id: 'industry', label: 'Industry Intelligence', icon: AlertCircle },
-      { id: 'decision', label: 'Decision Framework', icon: Target }
+    // Define all tabs with persona visibility
+    const allTabs = [
+      { id: 'overview', label: 'Overview', icon: Eye, personas: ['financial', 'operational'] },
+      { id: 'financial', label: 'Financial Analysis', icon: DollarSign, personas: ['financial', 'operational'] },
+      { id: 'components', label: 'Component Analysis', icon: Package, personas: ['financial', 'operational'] },
+      { id: 'risk', label: 'Risk Assessment', icon: Shield, personas: ['financial', 'operational'] },
+      { id: 'mission', label: 'Mission Impact', icon: Heart, personas: ['financial'] },
+      { id: 'industry', label: 'Industry Intelligence', icon: AlertCircle, personas: ['financial', 'operational'] },
+      { id: 'decision', label: 'Decision Framework', icon: Target, personas: ['financial', 'operational'] }
     ];
+
+    // Filter tabs based on current persona
+    const tabs = allTabs.filter(tab => tab.personas.includes(persona));
 
     return (
       <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-200 pb-2">
@@ -851,7 +859,7 @@ const EnhancedOrthopedicDashboard = () => {
                 <th className="px-4 py-3 text-left font-bold text-gray-900">Adoption Rate</th>
                 <th className="px-4 py-3 text-left font-bold text-gray-900">Risk Level</th>
                 <th className="px-4 py-3 text-left font-bold text-gray-900">Agent Score</th>
-                <th className="px-4 py-3 text-left font-bold text-gray-900">Prob-Weighted</th>
+                <th className="px-4 py-3 text-left font-bold text-gray-900">Expected Value</th>
                 <th className="px-4 py-3 text-left font-bold text-gray-900">Action</th>
               </tr>
             </thead>
@@ -1141,6 +1149,116 @@ const EnhancedOrthopedicDashboard = () => {
   const renderRiskTab = () => (
     <div className="space-y-6">
       <ExecutiveSummaryCard scenario={selectedScenario} />
+
+      {/* Risk vs Reward Quadrant Chart */}
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+          <Target className="w-6 h-6" style={{ color: COLORS.primary }} />
+          Risk vs Reward Positioning
+        </h2>
+        <p className="text-gray-600 mb-4">
+          Strategic positioning of each scenario based on risk level and financial reward. Top-right quadrant represents optimal high-reward, low-risk opportunities.
+        </p>
+        <ResponsiveContainer width="100%" height={500}>
+          <ScatterChart margin={{ top: 20, right: 80, bottom: 60, left: 60 }}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis
+              type="number"
+              dataKey="risk"
+              name="Risk Score"
+              domain={[0, 10]}
+              label={{ value: 'Risk Score (Lower is Better) →', position: 'bottom', offset: 40 }}
+            />
+            <YAxis
+              type="number"
+              dataKey="reward"
+              name="Annual Savings"
+              domain={[0, 'auto']}
+              label={{ value: '← Annual Savings ($M)', angle: -90, position: 'left', offset: 40 }}
+            />
+            <Tooltip
+              cursor={{ strokeDasharray: '3 3' }}
+              content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                  const data = payload[0].payload;
+                  return (
+                    <div className="bg-white p-4 border-2 rounded-lg shadow-lg" style={{ borderColor: data.color }}>
+                      <p className="font-bold text-lg mb-2">{data.name}</p>
+                      <p className="text-sm text-gray-600">Risk Score: <span className="font-bold">{data.risk}/10</span></p>
+                      <p className="text-sm text-gray-600">Annual Savings: <span className="font-bold">${data.reward.toFixed(1)}M</span></p>
+                      <p className="text-sm text-gray-600">Vendors: <span className="font-bold">{data.vendorCount}</span></p>
+                      <p className="text-sm mt-2 px-2 py-1 rounded" style={{ backgroundColor: `${data.color}20`, color: data.color }}>
+                        {data.risk < 3 ? 'Low Risk' : data.risk < 6 ? 'Medium Risk' : 'Higher Risk'}
+                      </p>
+                    </div>
+                  );
+                }
+                return null;
+              }}
+            />
+            <Scatter
+              name="Scenarios"
+              data={Object.values(SCENARIOS).map(s => ({
+                name: s.shortName,
+                risk: s.riskScore,
+                reward: s.annualSavings,
+                vendorCount: s.vendorCount,
+                color: s.riskLevel === 'low' ? '#10B981' : s.riskLevel === 'medium' ? '#F59E0B' : '#EF4444',
+                isSelected: s.id === selectedScenario
+              }))}
+            >
+              {Object.values(SCENARIOS).map((s, index) => {
+                const color = s.riskLevel === 'low' ? '#10B981' : s.riskLevel === 'medium' ? '#F59E0B' : '#EF4444';
+                const isSelected = s.id === selectedScenario;
+                return (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={color}
+                    stroke={isSelected ? '#BA4896' : color}
+                    strokeWidth={isSelected ? 4 : 1}
+                    r={isSelected ? 12 : 8}
+                  />
+                );
+              })}
+            </Scatter>
+            {/* Reference lines for quadrants */}
+            <line x1={300} y1={0} x2={300} y2={500} stroke="#ccc" strokeDasharray="5 5" strokeWidth={1} />
+            <line x1={0} y1={250} x2={600} y2={250} stroke="#ccc" strokeDasharray="5 5" strokeWidth={1} />
+          </ScatterChart>
+        </ResponsiveContainer>
+
+        {/* Quadrant Legend */}
+        <div className="grid grid-cols-2 gap-4 mt-6">
+          <div className="border-2 border-green-200 bg-green-50 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              <h3 className="font-bold text-green-900">Optimal Zone</h3>
+            </div>
+            <p className="text-sm text-green-700">High Reward, Low Risk - Recommended scenarios for implementation</p>
+          </div>
+          <div className="border-2 border-yellow-200 bg-yellow-50 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+              <h3 className="font-bold text-yellow-900">Balanced Zone</h3>
+            </div>
+            <p className="text-sm text-yellow-700">Moderate Reward & Risk - Consider with careful planning</p>
+          </div>
+          <div className="border-2 border-blue-200 bg-blue-50 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+              <h3 className="font-bold text-blue-900">Conservative Zone</h3>
+            </div>
+            <p className="text-sm text-blue-700">Lower Reward, Lower Risk - Safe but limited value creation</p>
+          </div>
+          <div className="border-2 border-red-200 bg-red-50 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+              <h3 className="font-bold text-red-900">Caution Zone</h3>
+            </div>
+            <p className="text-sm text-red-700">Higher Risk - Requires strong mitigation strategies and stakeholder buy-in</p>
+          </div>
+        </div>
+      </div>
 
       {/* Risk Radar Chart */}
       <div className="bg-white rounded-xl shadow-lg p-6">
@@ -1800,7 +1918,7 @@ const EnhancedOrthopedicDashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Navigation Header */}
-      <NavigationHeader role="executive" specialty="hipknee" specialtyName="Hip & Knee" />
+      <NavigationHeader role="executive" specialty="hipknee" specialtyName="Hip & Knee" persona={persona} />
 
       <div className="p-6">
         <div className="max-w-7xl mx-auto">
