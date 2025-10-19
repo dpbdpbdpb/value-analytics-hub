@@ -10,10 +10,11 @@ import {
   Activity, Shield, Target, Calculator, FileText, CheckCircle,
   AlertTriangle, XCircle, ChevronDown, ChevronRight, Award,
   Package, Heart, Briefcase, Clock, Zap, Info, Settings,
-  Sliders, ArrowRight, TrendingDown, HelpCircle, Eye, Download,
-  Filter, BarChart3, Bookmark, Play, X, Check, Minus, ThumbsUp,
-  ThumbsDown, BookOpen, MapPin, Stethoscope, Users2, Home, RefreshCw
+  Sliders, ArrowRight, TrendingDown, HelpCircle, Eye,
+  Filter, BarChart3, Bookmark, Play, X, Check,
+  BookOpen, MapPin, Stethoscope, Users2, Home, RefreshCw
 } from 'lucide-react';
+import NavigationHeader from '../components/shared/NavigationHeader';
 
 const EnhancedOrthopedicDashboard = () => {
   // Data loading state
@@ -29,6 +30,7 @@ const EnhancedOrthopedicDashboard = () => {
   const [comparisonScenario, setComparisonScenario] = useState('D');
   const [sortBy, setSortBy] = useState('savings');
   const [filterRisk, setFilterRisk] = useState('all');
+  const [filterProcedureType, setFilterProcedureType] = useState('all'); // all, primary, revision
   const [showFilters, setShowFilters] = useState(false);
   const [bookmarks, setBookmarks] = useState([]);
 
@@ -37,13 +39,6 @@ const EnhancedOrthopedicDashboard = () => {
     adoptionModifier: 0, // -20 to +20
     priceErosion: 0, // -10 to +10
     implementationMonths: 12, // 6 to 24
-  });
-
-  // Tri-pillar voting state
-  const [pillarVotes, setPillarVotes] = useState({
-    clinical: null, // ADVANCE, DEFER, REJECT
-    finance: null,
-    operations: null
   });
 
   // CommonSpirit brand colors
@@ -350,7 +345,7 @@ const EnhancedOrthopedicDashboard = () => {
         id: 'F',
         name: 'Zimmer Only',
         shortName: 'Zimmer Only',
-        description: 'Single-vendor consolidation with ZIMMER BIOMET',
+        description: 'Single-vendor partnership with ZIMMER BIOMET',
         vendors: ['ZIMMER BIOMET'],
         vendorCount: 1,
         savingsPercent: 25,
@@ -386,7 +381,7 @@ const EnhancedOrthopedicDashboard = () => {
         id: 'G',
         name: 'Stryker Only',
         shortName: 'Stryker Only',
-        description: 'Single-vendor consolidation with STRYKER',
+        description: 'Single-vendor partnership with STRYKER',
         vendors: ['STRYKER'],
         vendorCount: 1,
         savingsPercent: 22,
@@ -594,33 +589,6 @@ const EnhancedOrthopedicDashboard = () => {
            (s.savingsRange.optimistic * 0.25);
   };
 
-  // Determine decision outcome based on tri-pillar votes
-  const getDecisionOutcome = () => {
-    const { clinical, finance, operations } = pillarVotes;
-    if (!clinical || !finance || !operations) return null;
-
-    if (clinical === 'ADVANCE' && finance === 'ADVANCE' && operations === 'ADVANCE') {
-      return { status: 'PROCEED', color: COLORS.success, icon: CheckCircle };
-    } else if (clinical === 'REJECT' || finance === 'REJECT' || operations === 'REJECT') {
-      return { status: 'REJECT', color: COLORS.danger, icon: XCircle };
-    } else {
-      return { status: 'DEFER', color: COLORS.warning, icon: AlertTriangle };
-    }
-  };
-
-  // Export functions
-  const exportToPDF = () => {
-    alert('PDF export functionality would be implemented here using a library like jsPDF');
-  };
-
-  const exportToExcel = () => {
-    alert('Excel export functionality would be implemented here');
-  };
-
-  const exportToPowerPoint = () => {
-    alert('PowerPoint export functionality would be implemented here');
-  };
-
   // Bookmark current configuration
   const toggleBookmark = () => {
     const config = {
@@ -686,6 +654,7 @@ const EnhancedOrthopedicDashboard = () => {
       { id: 'components', label: 'Component Analysis', icon: Package },
       { id: 'risk', label: 'Risk Assessment', icon: Shield },
       { id: 'mission', label: 'Mission Impact', icon: Heart },
+      { id: 'industry', label: 'Industry Intelligence', icon: AlertCircle },
       { id: 'decision', label: 'Decision Framework', icon: Target }
     ];
 
@@ -858,6 +827,18 @@ const EnhancedOrthopedicDashboard = () => {
                 <option value="high">High Risk</option>
               </select>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Procedure Type</label>
+              <select
+                value={filterProcedureType}
+                onChange={(e) => setFilterProcedureType(e.target.value)}
+                className="px-3 py-2 border rounded-lg"
+              >
+                <option value="all">All Procedures</option>
+                <option value="primary">Primary Only</option>
+                <option value="revision">Revision Only</option>
+              </select>
+            </div>
           </div>
         )}
 
@@ -1019,7 +1000,7 @@ const EnhancedOrthopedicDashboard = () => {
           Top Component Savings Opportunities
         </h2>
         <p className="text-gray-600 mb-4">
-          Analysis of component-level pricing showing potential savings from vendor consolidation
+          Analysis of component-level pricing showing potential savings from strategic vendor partnerships
         </p>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -1230,9 +1211,127 @@ const EnhancedOrthopedicDashboard = () => {
   const renderMissionTab = () => {
     const missionData = QUINTUPLE_SCORING[selectedScenario];
 
+    const quintupleAimDefinitions = [
+      {
+        name: 'Patient Experience',
+        score: missionData.patientExperience,
+        color: '#10B981',
+        icon: Heart,
+        description: 'Quality of care from the patient perspective',
+        scoringFactors: [
+          'Device reliability and proven outcomes',
+          'Surgeon familiarity and training depth',
+          'Product availability and consistency',
+          'Reduced revision rates'
+        ],
+        scale: '0-100: Low (0-40) = Limited product choices/surgeon training; Medium (41-70) = Adequate options; High (71-100) = Optimal product portfolio and surgeon expertise'
+      },
+      {
+        name: 'Population Health',
+        score: missionData.populationHealth,
+        color: '#3B82F6',
+        icon: Building2,
+        description: 'Overall health outcomes across patient populations',
+        scoringFactors: [
+          'Clinical outcomes data and registry participation',
+          'Evidence-based product selection',
+          'Standardization benefits across facilities',
+          'Long-term implant survivorship'
+        ],
+        scale: '0-100: Low (0-40) = Limited outcomes tracking; Medium (41-70) = Good standardization; High (71-100) = Comprehensive outcomes with registry data'
+      },
+      {
+        name: 'Cost Reduction',
+        score: missionData.costReduction,
+        color: '#F59E0B',
+        icon: DollarSign,
+        description: 'Financial sustainability and value creation',
+        scoringFactors: [
+          'Direct savings from vendor negotiation',
+          'Reduced inventory and supply chain costs',
+          'Administrative efficiency gains',
+          'Volume-based contract optimization'
+        ],
+        scale: '0-100: Proportional to savings percentage (0% = 0 points, 25% = 92 points). Reflects annual cost reduction achieved.'
+      },
+      {
+        name: 'Provider Experience',
+        score: missionData.providerExperience,
+        color: '#BA4896',
+        icon: Stethoscope,
+        description: 'Surgeon and clinical team satisfaction',
+        scoringFactors: [
+          'Product choice flexibility and preference accommodation',
+          'Rep support and technical assistance',
+          'Training and education opportunities',
+          'Ease of adoption and workflow integration'
+        ],
+        scale: '0-100: Low (0-40) = Single vendor/limited choice; Medium (41-70) = 2-3 vendors; High (71-100) = 3+ vendors with broad portfolio'
+      },
+      {
+        name: 'Health Equity',
+        score: missionData.healthEquity,
+        color: '#9333EA',
+        icon: Shield,
+        description: 'Fair access to quality care across all populations',
+        scoringFactors: [
+          'Consistency of product availability across facilities',
+          'Standardized care protocols across regions',
+          'Access to premium implants for all patients',
+          'Reduced disparities in outcomes by location'
+        ],
+        scale: '0-100: Low (0-40) = High facility variation; Medium (41-70) = Moderate standardization; High (71-100) = Consistent protocols system-wide'
+      }
+    ];
+
     return (
       <div className="space-y-6">
         <ExecutiveSummaryCard scenario={selectedScenario} />
+
+        {/* Quintuple Aim Explanations */}
+        <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl shadow-lg p-6">
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+            <HelpCircle className="w-6 h-6" style={{ color: COLORS.primary }} />
+            Understanding the Quintuple Aim Framework
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {quintupleAimDefinitions.map((aim) => {
+              const IconComponent = aim.icon;
+              return (
+                <div key={aim.name} className="bg-white rounded-lg p-4 shadow hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-2 mb-2">
+                    <IconComponent className="w-5 h-5" style={{ color: aim.color }} />
+                    <h3 className="font-bold text-lg">{aim.name}</h3>
+                  </div>
+                  <div className="mb-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm text-gray-600">Current Score</span>
+                      <span className="text-2xl font-bold" style={{ color: aim.color }}>{aim.score}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="h-2 rounded-full transition-all"
+                        style={{ width: `${aim.score}%`, backgroundColor: aim.color }}
+                      />
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-2 font-medium">{aim.description}</p>
+                  <div className="text-xs text-gray-600 mb-2">
+                    <strong>Scoring Factors:</strong>
+                    <ul className="list-disc ml-4 mt-1 space-y-0.5">
+                      {aim.scoringFactors.map((factor, idx) => (
+                        <li key={idx}>{factor}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200">
+                    <strong>Scale:</strong> {aim.scale}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Quintuple Aim Radar */}
         <div className="bg-white rounded-xl shadow-lg p-6">
@@ -1295,127 +1394,274 @@ const EnhancedOrthopedicDashboard = () => {
     );
   };
 
-  // DECISION FRAMEWORK TAB
-  const renderDecisionTab = () => {
-    const decision = getDecisionOutcome();
-    const DecisionIcon = decision?.icon || HelpCircle;
+  // INDUSTRY INTELLIGENCE TAB
+  const renderIndustryTab = () => {
+    const industryIntelligence = [
+      {
+        category: 'Mergers & Acquisitions',
+        icon: Target,
+        color: '#BA4896',
+        events: [
+          {
+            date: '2024-Q2',
+            title: 'Stryker Acquires Vocera Communications',
+            impact: 'Medium',
+            description: 'Enhanced clinical communication capabilities, potential bundling opportunities with OR equipment',
+            implications: ['Integration with Stryker platforms', 'New communication solutions', 'Potential pricing leverage']
+          },
+          {
+            date: '2023-Q4',
+            title: 'J&J Completes Abiomed Acquisition',
+            impact: 'Low',
+            description: 'Cardiovascular focus, minimal direct orthopedic impact',
+            implications: ['J&J portfolio diversification', 'Resource allocation shifts', 'Cross-specialty synergies']
+          }
+        ]
+      },
+      {
+        category: 'Spinoffs & Divestitures',
+        icon: AlertCircle,
+        color: '#F59E0B',
+        events: [
+          {
+            date: '2023-Q2',
+            title: 'Zimmer Biomet Sells Spine Business to H.I.G. Capital',
+            impact: 'Medium',
+            description: 'ZimVie spin-off completes separation, focusing core business on joints',
+            implications: ['Increased focus on hip/knee portfolio', 'Potential pricing adjustments', 'Supply chain optimization']
+          },
+          {
+            date: '2021-Q3',
+            title: 'J&J Separates Consumer Health Division (Kenvue)',
+            impact: 'Low',
+            description: 'Creation of Kenvue as standalone entity, DePuy Synthes remains with J&J MedTech',
+            implications: ['Streamlined MedTech focus', 'Capital reallocation to ortho R&D', 'Enhanced shareholder value focus']
+          }
+        ]
+      },
+      {
+        category: 'Legal & Regulatory',
+        icon: Shield,
+        color: '#EF4444',
+        events: [
+          {
+            date: '2024-Q1',
+            title: 'ASR Hip Settlement - DePuy',
+            impact: 'Low',
+            description: 'Legacy metal-on-metal hip implant settlements continue, minimal current portfolio impact',
+            implications: ['Increased quality oversight', 'Enhanced clinical evidence requirements', 'Product liability considerations']
+          },
+          {
+            date: '2023-Q3',
+            title: 'DOJ Investigation into Implant Pricing',
+            impact: 'High',
+            description: 'Federal investigation into orthopedic device pricing practices across industry',
+            implications: ['Increased price transparency pressure', 'Potential regulatory changes', 'Enhanced compliance requirements']
+          },
+          {
+            date: '2023-Q1',
+            title: 'FDA Modernization Act 2.0',
+            impact: 'Medium',
+            description: 'New pathways for medical device approvals, alternatives to animal testing',
+            implications: ['Faster innovation cycles', 'New product introductions accelerated', 'Competitive landscape shifts']
+          }
+        ]
+      },
+      {
+        category: 'Market Dynamics',
+        icon: TrendingUp,
+        color: '#10B981',
+        events: [
+          {
+            date: '2024-Q1',
+            title: 'Robotic-Assisted Surgery Growth',
+            impact: 'High',
+            description: 'Continued expansion of robotic platforms (Mako, Rosa, Navio) driving vendor differentiation',
+            implications: ['Technology integration requirements', 'Capital equipment considerations', 'Surgeon training investments']
+          },
+          {
+            date: '2023-Q4',
+            title: 'ASC Migration Accelerates',
+            impact: 'High',
+            description: 'Hip and knee procedures shifting to ambulatory surgery centers, changing purchasing dynamics',
+            implications: ['Value-based purchasing emphasis', 'Episode payment models', 'Supply chain efficiency focus']
+          },
+          {
+            date: '2023-Q2',
+            title: 'Direct Contracting Models Emerge',
+            impact: 'Medium',
+            description: 'New direct-to-employer joint replacement programs bypassing traditional reimbursement',
+            implications: ['Bundled payment pressure', 'Outcome-based contracting', 'Price transparency demands']
+          }
+        ]
+      }
+    ];
+
+    const getImpactColor = (impact) => {
+      switch(impact) {
+        case 'High': return '#EF4444';
+        case 'Medium': return '#F59E0B';
+        case 'Low': return '#10B981';
+        default: return '#6B7280';
+      }
+    };
 
     return (
       <div className="space-y-6">
         <ExecutiveSummaryCard scenario={selectedScenario} />
 
-        {/* Tri-Pillar Voting */}
+        {/* Industry Overview */}
+        <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl shadow-lg p-6">
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+            <AlertCircle className="w-6 h-6" style={{ color: COLORS.primary }} />
+            Orthopedic Industry Intelligence Dashboard
+          </h2>
+          <p className="text-gray-700 mb-4">
+            Strategic insights on mergers, acquisitions, divestitures, legal challenges, and market dynamics
+            affecting the orthopedic device landscape and vendor partnership decisions.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {industryIntelligence.map((cat) => {
+              const IconComponent = cat.icon;
+              return (
+                <div key={cat.category} className="bg-white rounded-lg p-4 shadow">
+                  <div className="flex items-center gap-2 mb-2">
+                    <IconComponent className="w-5 h-5" style={{ color: cat.color }} />
+                    <h3 className="font-bold">{cat.category}</h3>
+                  </div>
+                  <div className="text-3xl font-bold" style={{ color: cat.color }}>
+                    {cat.events.length}
+                  </div>
+                  <div className="text-xs text-gray-500">Recent Events</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Detailed Intelligence Cards */}
+        {industryIntelligence.map((category) => {
+          const CategoryIcon = category.icon;
+          return (
+            <div key={category.category} className="bg-white rounded-xl shadow-lg p-6">
+              <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                <CategoryIcon className="w-6 h-6" style={{ color: category.color }} />
+                {category.category}
+              </h2>
+              <div className="space-y-4">
+                {category.events.map((event, idx) => (
+                  <div key={idx} className="border-l-4 pl-4 py-3" style={{ borderColor: getImpactColor(event.impact) }}>
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-bold text-lg">{event.title}</h3>
+                          <span
+                            className="px-2 py-1 rounded text-xs font-medium text-white"
+                            style={{ backgroundColor: getImpactColor(event.impact) }}
+                          >
+                            {event.impact} Impact
+                          </span>
+                        </div>
+                        <div className="text-sm text-gray-500">{event.date}</div>
+                      </div>
+                    </div>
+                    <p className="text-gray-700 mb-3">{event.description}</p>
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <div className="text-sm font-semibold text-gray-700 mb-2">Strategic Implications:</div>
+                      <ul className="text-sm text-gray-600 space-y-1">
+                        {event.implications.map((imp, i) => (
+                          <li key={i} className="flex items-start gap-2">
+                            <span className="text-purple-600 font-bold">•</span>
+                            <span>{imp}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Vendor-Specific Intelligence */}
         <div className="bg-white rounded-xl shadow-lg p-6">
           <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
             <Target className="w-6 h-6" style={{ color: COLORS.primary }} />
-            Tri-Pillar Decision Framework
+            Vendor-Specific Strategic Position
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Clinical Vote */}
-            <div className="border-2 border-gray-200 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Stethoscope className="w-6 h-6" style={{ color: COLORS.info }} />
-                <h3 className="font-bold text-lg">Clinical Leadership</h3>
-              </div>
-              <div className="space-y-2">
-                {['ADVANCE', 'DEFER', 'REJECT'].map(vote => (
-                  <button
-                    key={vote}
-                    onClick={() => setPillarVotes({ ...pillarVotes, clinical: vote })}
-                    className={`w-full px-4 py-2 rounded-lg font-medium transition-all ${
-                      pillarVotes.clinical === vote
-                        ? vote === 'ADVANCE' ? 'bg-green-600 text-white' :
-                          vote === 'DEFER' ? 'bg-yellow-600 text-white' :
-                          'bg-red-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {vote === 'ADVANCE' && <ThumbsUp className="w-4 h-4 inline mr-2" />}
-                    {vote === 'DEFER' && <Minus className="w-4 h-4 inline mr-2" />}
-                    {vote === 'REJECT' && <ThumbsDown className="w-4 h-4 inline mr-2" />}
-                    {vote}
-                  </button>
-                ))}
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="border-2 border-purple-200 rounded-lg p-4">
+              <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
+                <div className="w-3 h-3 bg-purple-600 rounded-full"></div>
+                Zimmer Biomet
+              </h3>
+              <ul className="text-sm text-gray-700 space-y-2">
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                  <span>Post-ZimVie spin: focused strategy on joints</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                  <span>Rosa robotics platform expansion</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+                  <span>Integration challenges from historical M&A</span>
+                </li>
+              </ul>
             </div>
-
-            {/* Finance Vote */}
-            <div className="border-2 border-gray-200 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <DollarSign className="w-6 h-6" style={{ color: COLORS.success }} />
-                <h3 className="font-bold text-lg">Finance</h3>
-              </div>
-              <div className="space-y-2">
-                {['ADVANCE', 'DEFER', 'REJECT'].map(vote => (
-                  <button
-                    key={vote}
-                    onClick={() => setPillarVotes({ ...pillarVotes, finance: vote })}
-                    className={`w-full px-4 py-2 rounded-lg font-medium transition-all ${
-                      pillarVotes.finance === vote
-                        ? vote === 'ADVANCE' ? 'bg-green-600 text-white' :
-                          vote === 'DEFER' ? 'bg-yellow-600 text-white' :
-                          'bg-red-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {vote === 'ADVANCE' && <ThumbsUp className="w-4 h-4 inline mr-2" />}
-                    {vote === 'DEFER' && <Minus className="w-4 h-4 inline mr-2" />}
-                    {vote === 'REJECT' && <ThumbsDown className="w-4 h-4 inline mr-2" />}
-                    {vote}
-                  </button>
-                ))}
-              </div>
+            <div className="border-2 border-blue-200 rounded-lg p-4">
+              <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
+                <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
+                Stryker
+              </h3>
+              <ul className="text-sm text-gray-700 space-y-2">
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                  <span>Mako robotics market leader</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                  <span>Vocera acquisition enhances digital ecosystem</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                  <span>Consistent innovation pipeline</span>
+                </li>
+              </ul>
             </div>
-
-            {/* Operations Vote */}
-            <div className="border-2 border-gray-200 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Settings className="w-6 h-6" style={{ color: COLORS.warning }} />
-                <h3 className="font-bold text-lg">Operations</h3>
-              </div>
-              <div className="space-y-2">
-                {['ADVANCE', 'DEFER', 'REJECT'].map(vote => (
-                  <button
-                    key={vote}
-                    onClick={() => setPillarVotes({ ...pillarVotes, operations: vote })}
-                    className={`w-full px-4 py-2 rounded-lg font-medium transition-all ${
-                      pillarVotes.operations === vote
-                        ? vote === 'ADVANCE' ? 'bg-green-600 text-white' :
-                          vote === 'DEFER' ? 'bg-yellow-600 text-white' :
-                          'bg-red-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {vote === 'ADVANCE' && <ThumbsUp className="w-4 h-4 inline mr-2" />}
-                    {vote === 'DEFER' && <Minus className="w-4 h-4 inline mr-2" />}
-                    {vote === 'REJECT' && <ThumbsDown className="w-4 h-4 inline mr-2" />}
-                    {vote}
-                  </button>
-                ))}
-              </div>
+            <div className="border-2 border-green-200 rounded-lg p-4">
+              <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
+                <div className="w-3 h-3 bg-green-600 rounded-full"></div>
+                J&J (DePuy Synthes)
+              </h3>
+              <ul className="text-sm text-gray-700 space-y-2">
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                  <span>Post-Kenvue split: focused MedTech strategy</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+                  <span>Legacy litigation (ASR) ongoing</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                  <span>Velys robotic platform development</span>
+                </li>
+              </ul>
             </div>
           </div>
-
-          {/* Decision Outcome */}
-          {decision && (
-            <div className={`mt-6 p-6 rounded-lg border-4`} style={{
-              borderColor: decision.color,
-              backgroundColor: `${decision.color}20`
-            }}>
-              <div className="flex items-center gap-4">
-                <DecisionIcon className="w-12 h-12" style={{ color: decision.color }} />
-                <div>
-                  <div className="text-sm font-medium" style={{ color: decision.color }}>
-                    Consensus Decision
-                  </div>
-                  <div className="text-3xl font-bold" style={{ color: decision.color }}>
-                    {decision.status}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
+      </div>
+    );
+  };
+
+  // DECISION FRAMEWORK TAB
+  const renderDecisionTab = () => {
+    return (
+      <div className="space-y-6">
+        <ExecutiveSummaryCard scenario={selectedScenario} />
 
         {/* Decision Matrix */}
         <div className="bg-white rounded-xl shadow-lg p-6">
@@ -1552,10 +1798,14 @@ const EnhancedOrthopedicDashboard = () => {
 
   // Main render
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Navigation Header */}
+      <NavigationHeader role="executive" specialty="hipknee" specialtyName="Hip & Knee" />
+
+      <div className="p-6">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
           <div className="flex items-start justify-between mb-6">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-lg flex items-center justify-center" style={{ backgroundColor: COLORS.primary }}>
@@ -1563,10 +1813,10 @@ const EnhancedOrthopedicDashboard = () => {
               </div>
               <div>
                 <h1 className="text-4xl font-bold text-gray-900">
-                  Orthopedic Vendor Consolidation
+                  Orthopedic Value Analytics
                 </h1>
                 <p className="text-gray-600 mt-1">
-                  CommonSpirit Health | Executive Decision Dashboard
+                  CommonSpirit Health | Quintuple Aim Strategic Platform
                 </p>
                 <p className="text-sm text-gray-500 mt-1">
                   {realData ? `${realData.metadata.totalCases.toLocaleString()} Procedures` : 'Loading...'} |
@@ -1587,27 +1837,6 @@ const EnhancedOrthopedicDashboard = () => {
                   fill={bookmarks.find(b => b.scenario === selectedScenario && b.tab === activeTab) ? COLORS.primary : 'none'}
                   color={COLORS.primary}
                 />
-              </button>
-              <button
-                onClick={exportToPDF}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-              >
-                <Download className="w-4 h-4" />
-                PDF
-              </button>
-              <button
-                onClick={exportToExcel}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-              >
-                <Download className="w-4 h-4" />
-                Excel
-              </button>
-              <button
-                onClick={exportToPowerPoint}
-                className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
-              >
-                <Download className="w-4 h-4" />
-                PPT
               </button>
             </div>
           </div>
@@ -1637,11 +1866,23 @@ const EnhancedOrthopedicDashboard = () => {
             </div>
 
             <div className="p-4 bg-gradient-to-r from-amber-50 to-amber-100 rounded-lg border-2 border-amber-200">
-              <div className="text-sm text-amber-700 mb-1">Total Cases</div>
+              <div className="text-sm text-amber-700 mb-1">Total Cases {filterProcedureType !== 'all' && `(${filterProcedureType})`}</div>
               <div className="text-2xl font-bold text-amber-900">
-                {realData ? realData.metadata.totalCases.toLocaleString() : '0'}
+                {realData ? (() => {
+                  const totalCases = realData.metadata.totalCases;
+                  // Estimate: ~85% primary, ~15% revision (industry standard)
+                  const primaryCases = Math.round(totalCases * 0.85);
+                  const revisionCases = Math.round(totalCases * 0.15);
+                  if (filterProcedureType === 'primary') return primaryCases.toLocaleString();
+                  if (filterProcedureType === 'revision') return revisionCases.toLocaleString();
+                  return totalCases.toLocaleString();
+                })() : '0'}
               </div>
-              <div className="text-xs text-amber-600">Hip & Knee</div>
+              <div className="text-xs text-amber-600">
+                {filterProcedureType === 'all' && realData && `~${Math.round(realData.metadata.totalCases * 0.85).toLocaleString()} Primary / ~${Math.round(realData.metadata.totalCases * 0.15).toLocaleString()} Revision`}
+                {filterProcedureType === 'primary' && '~85% of total volume'}
+                {filterProcedureType === 'revision' && '~15% of total volume'}
+              </div>
             </div>
 
             <div className="p-4 bg-gradient-to-r from-red-50 to-red-100 rounded-lg border-2 border-red-200">
@@ -1667,6 +1908,7 @@ const EnhancedOrthopedicDashboard = () => {
           {activeTab === 'components' && renderComponentTab()}
           {activeTab === 'risk' && renderRiskTab()}
           {activeTab === 'mission' && renderMissionTab()}
+          {activeTab === 'industry' && renderIndustryTab()}
           {activeTab === 'decision' && renderDecisionTab()}
         </div>
 
@@ -1687,6 +1929,7 @@ const EnhancedOrthopedicDashboard = () => {
             Regions: {realData ? Object.keys(realData.regions).join(', ') : 'Loading...'}
           </p>
         </div>
+      </div>
       </div>
     </div>
   );

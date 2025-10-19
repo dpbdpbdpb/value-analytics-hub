@@ -1,6 +1,8 @@
-# Getting Started with Create React App
+# CommonSpirit Orthopedic Value Platform
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+**Version 2.0** - Unified Multi-Specialty Analytics Platform
+
+> This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
 
