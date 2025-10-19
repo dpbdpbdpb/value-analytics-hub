@@ -1,5 +1,5 @@
 import React from 'react';
-import EnhancedOrthopedicDashboard from './components/EnhancedOrthopedicDashboard';
+import EnhancedOrthopedicDashboard from './components/enhanced-orthopedic-dashboard';
 import './App.css';
 
 function App() {
