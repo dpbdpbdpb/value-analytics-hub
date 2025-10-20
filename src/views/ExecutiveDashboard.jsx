@@ -1546,121 +1546,290 @@ const EnhancedOrthopedicDashboard = () => {
     <div className="space-y-6">
       <ExecutiveSummaryCard scenario={selectedScenario} />
 
-      {/* Risk vs Reward Quadrant Chart */}
+      {/* Risk vs Reward Heat Map */}
       <div className="bg-white rounded-xl shadow-lg p-6">
         <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
           <Target className="w-6 h-6" style={{ color: COLORS.primary }} />
-          Risk vs Reward Positioning
+          Risk vs Reward Heat Map
         </h2>
         <p className="text-gray-600 mb-4">
-          Strategic positioning of each scenario based on risk level and financial reward. Quadrants show optimal zones: <span className="font-semibold text-green-700">Green = Optimal</span>, <span className="font-semibold text-yellow-700">Yellow = Balanced</span>, <span className="font-semibold text-blue-700">Blue = Conservative</span>, <span className="font-semibold text-red-700">Red = Caution</span>.
+          Strategic positioning of each scenario based on risk level and financial reward. Colors indicate optimal zones: <span className="font-semibold text-green-700">Green = Optimal</span>, <span className="font-semibold text-yellow-700">Yellow = Balanced</span>, <span className="font-semibold text-blue-700">Blue = Conservative</span>, <span className="font-semibold text-red-700">Red = Caution</span>.
         </p>
-        <div className="relative">
-          {/* Background quadrant colors */}
-          <div className="absolute inset-0 pointer-events-none" style={{ marginTop: '20px', marginBottom: '60px', marginLeft: '60px', marginRight: '80px' }}>
-            <div className="grid grid-cols-2 grid-rows-2 w-full h-full">
-              <div className="bg-yellow-50 border border-yellow-100"></div> {/* Top-left: High reward, High risk */}
-              <div className="bg-green-50 border border-green-100"></div> {/* Top-right: High reward, Low risk - OPTIMAL */}
-              <div className="bg-red-50 border border-red-100"></div> {/* Bottom-left: Low reward, High risk */}
-              <div className="bg-blue-50 border border-blue-100"></div> {/* Bottom-right: Low reward, Low risk */}
-            </div>
-          </div>
-          <ResponsiveContainer width="100%" height={500}>
-            <ScatterChart margin={{ top: 20, right: 80, bottom: 60, left: 60 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
-              <XAxis
-                type="number"
-                dataKey="risk"
-                name="Risk Score"
-                domain={[0, 10]}
-                label={{ value: 'Risk Score (Lower is Better) →', position: 'bottom', offset: 40, style: { fontWeight: 'bold' } }}
-                ticks={[0, 2.5, 5, 7.5, 10]}
-              />
-              <YAxis
-                type="number"
-                dataKey="reward"
-                name="Annual Savings"
-                domain={[0, 'dataMax']}
-                label={{ value: '← Annual Savings ($M)', angle: -90, position: 'left', offset: 40, style: { fontWeight: 'bold' } }}
-              />
-            <Tooltip
-              cursor={{ strokeDasharray: '3 3' }}
-              content={({ active, payload }) => {
-                if (active && payload && payload.length) {
-                  const data = payload[0].payload;
-                  return (
-                    <div className="bg-white p-4 border-2 rounded-lg shadow-lg" style={{ borderColor: data.color }}>
-                      <p className="font-bold text-lg mb-2">{data.name}</p>
-                      <p className="text-sm text-gray-600">Risk Score: <span className="font-bold">{data.risk}/10</span></p>
-                      <p className="text-sm text-gray-600">Annual Savings: <span className="font-bold">${data.reward.toFixed(1)}M</span></p>
-                      <p className="text-sm text-gray-600">Vendors: <span className="font-bold">{data.vendorCount}</span></p>
-                      <p className="text-sm mt-2 px-2 py-1 rounded" style={{ backgroundColor: `${data.color}20`, color: data.color }}>
-                        {data.risk < 3 ? 'Low Risk' : data.risk < 6 ? 'Medium Risk' : 'Higher Risk'}
-                      </p>
-                    </div>
-                  );
-                }
-                return null;
-              }}
-            />
-            <Scatter
-              name="Scenarios"
-              data={Object.values(SCENARIOS).map(s => ({
-                name: s.shortName,
-                risk: s.riskScore,
-                reward: s.annualSavings,
-                vendorCount: s.vendorCount,
-                color: s.riskLevel === 'low' ? '#10B981' : s.riskLevel === 'medium' ? '#F59E0B' : '#EF4444',
-                isSelected: s.id === selectedScenario
-              }))}
-            >
-              {Object.values(SCENARIOS).map((s, index) => {
-                const color = s.riskLevel === 'low' ? '#10B981' : s.riskLevel === 'medium' ? '#F59E0B' : '#EF4444';
-                const isSelected = s.id === selectedScenario;
-                return (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={color}
-                    stroke={isSelected ? '#BA4896' : color}
-                    strokeWidth={isSelected ? 4 : 1}
-                    r={isSelected ? 12 : 8}
-                  />
-                );
-              })}
-            </Scatter>
-          </ScatterChart>
-        </ResponsiveContainer>
-      </div>
 
-        {/* Quadrant Legend */}
-        <div className="grid grid-cols-2 gap-4 mt-6">
-          <div className="border-2 border-green-200 bg-green-50 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-              <h3 className="font-bold text-green-900">Optimal Zone</h3>
+        {/* Heat Map Grid */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-sm font-semibold text-gray-700">Risk Level →</div>
+            <div className="flex gap-8 text-xs text-gray-600">
+              <span>Low Risk (0-3)</span>
+              <span>Medium Risk (4-6)</span>
+              <span>High Risk (7-10)</span>
             </div>
-            <p className="text-sm text-green-700">High Reward, Low Risk - Recommended scenarios for implementation</p>
           </div>
-          <div className="border-2 border-yellow-200 bg-yellow-50 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-              <h3 className="font-bold text-yellow-900">Balanced Zone</h3>
+
+          <div className="grid grid-cols-4 gap-3">
+            {/* Y-axis labels */}
+            <div className="flex flex-col justify-around text-sm font-semibold text-gray-700 pr-2">
+              <div className="text-right">High Reward<br/>(&gt;$15M)</div>
+              <div className="text-right">Med Reward<br/>($10-15M)</div>
+              <div className="text-right">Low Reward<br/>(&lt;$10M)</div>
             </div>
-            <p className="text-sm text-yellow-700">Moderate Reward & Risk - Consider with careful planning</p>
-          </div>
-          <div className="border-2 border-blue-200 bg-blue-50 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-              <h3 className="font-bold text-blue-900">Conservative Zone</h3>
+
+            {/* Heat map cells - organized by Risk (columns) and Reward (rows) */}
+            {/* Row 1: High Reward */}
+            <div className="space-y-3">
+              {/* High Reward, Low Risk - OPTIMAL ZONE (Green) */}
+              <div className="bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-300 rounded-lg p-4 h-32 flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-green-800">OPTIMAL</span>
+                  <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                </div>
+                <div className="space-y-1">
+                  {Object.values(SCENARIOS).filter(s => s.annualSavings >= 15 && s.riskScore <= 3).map(s => (
+                    <div
+                      key={s.id}
+                      onClick={() => setSelectedScenario(s.id)}
+                      className={`text-xs px-2 py-1 rounded cursor-pointer transition-all ${
+                        selectedScenario === s.id
+                          ? 'bg-purple-600 text-white font-bold shadow-lg scale-105'
+                          : 'bg-white text-green-900 hover:bg-green-50 font-semibold'
+                      }`}
+                    >
+                      {s.shortName}: ${s.annualSavings.toFixed(1)}M
+                    </div>
+                  ))}
+                  {Object.values(SCENARIOS).filter(s => s.annualSavings >= 15 && s.riskScore <= 3).length === 0 && (
+                    <div className="text-xs text-green-700 italic">None</div>
+                  )}
+                </div>
+              </div>
             </div>
-            <p className="text-sm text-blue-700">Lower Reward, Lower Risk - Safe but limited value creation</p>
-          </div>
-          <div className="border-2 border-red-200 bg-red-50 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-              <h3 className="font-bold text-red-900">Caution Zone</h3>
+
+            <div className="space-y-3">
+              {/* High Reward, Medium Risk - BALANCED ZONE (Yellow) */}
+              <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 border-2 border-yellow-300 rounded-lg p-4 h-32 flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-yellow-800">BALANCED</span>
+                  <div className="w-2 h-2 bg-yellow-600 rounded-full"></div>
+                </div>
+                <div className="space-y-1">
+                  {Object.values(SCENARIOS).filter(s => s.annualSavings >= 15 && s.riskScore > 3 && s.riskScore <= 6).map(s => (
+                    <div
+                      key={s.id}
+                      onClick={() => setSelectedScenario(s.id)}
+                      className={`text-xs px-2 py-1 rounded cursor-pointer transition-all ${
+                        selectedScenario === s.id
+                          ? 'bg-purple-600 text-white font-bold shadow-lg scale-105'
+                          : 'bg-white text-yellow-900 hover:bg-yellow-50 font-semibold'
+                      }`}
+                    >
+                      {s.shortName}: ${s.annualSavings.toFixed(1)}M
+                    </div>
+                  ))}
+                  {Object.values(SCENARIOS).filter(s => s.annualSavings >= 15 && s.riskScore > 3 && s.riskScore <= 6).length === 0 && (
+                    <div className="text-xs text-yellow-700 italic">None</div>
+                  )}
+                </div>
+              </div>
             </div>
-            <p className="text-sm text-red-700">Higher Risk - Requires strong mitigation strategies and stakeholder buy-in</p>
+
+            <div className="space-y-3">
+              {/* High Reward, High Risk - CAUTION ZONE (Red) */}
+              <div className="bg-gradient-to-br from-red-100 to-red-200 border-2 border-red-300 rounded-lg p-4 h-32 flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-red-800">CAUTION</span>
+                  <div className="w-2 h-2 bg-red-600 rounded-full"></div>
+                </div>
+                <div className="space-y-1">
+                  {Object.values(SCENARIOS).filter(s => s.annualSavings >= 15 && s.riskScore > 6).map(s => (
+                    <div
+                      key={s.id}
+                      onClick={() => setSelectedScenario(s.id)}
+                      className={`text-xs px-2 py-1 rounded cursor-pointer transition-all ${
+                        selectedScenario === s.id
+                          ? 'bg-purple-600 text-white font-bold shadow-lg scale-105'
+                          : 'bg-white text-red-900 hover:bg-red-50 font-semibold'
+                      }`}
+                    >
+                      {s.shortName}: ${s.annualSavings.toFixed(1)}M
+                    </div>
+                  ))}
+                  {Object.values(SCENARIOS).filter(s => s.annualSavings >= 15 && s.riskScore > 6).length === 0 && (
+                    <div className="text-xs text-red-700 italic">None</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Row 2: Medium Reward */}
+            <div className="col-start-2 space-y-3">
+              {/* Med Reward, Low Risk */}
+              <div className="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200 rounded-lg p-4 h-32 flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-green-700">GOOD</span>
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                </div>
+                <div className="space-y-1">
+                  {Object.values(SCENARIOS).filter(s => s.annualSavings >= 10 && s.annualSavings < 15 && s.riskScore <= 3).map(s => (
+                    <div
+                      key={s.id}
+                      onClick={() => setSelectedScenario(s.id)}
+                      className={`text-xs px-2 py-1 rounded cursor-pointer transition-all ${
+                        selectedScenario === s.id
+                          ? 'bg-purple-600 text-white font-bold shadow-lg scale-105'
+                          : 'bg-white text-green-800 hover:bg-green-50 font-semibold'
+                      }`}
+                    >
+                      {s.shortName}: ${s.annualSavings.toFixed(1)}M
+                    </div>
+                  ))}
+                  {Object.values(SCENARIOS).filter(s => s.annualSavings >= 10 && s.annualSavings < 15 && s.riskScore <= 3).length === 0 && (
+                    <div className="text-xs text-green-600 italic">None</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {/* Med Reward, Medium Risk */}
+              <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-2 border-yellow-200 rounded-lg p-4 h-32 flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-yellow-700">MODERATE</span>
+                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                </div>
+                <div className="space-y-1">
+                  {Object.values(SCENARIOS).filter(s => s.annualSavings >= 10 && s.annualSavings < 15 && s.riskScore > 3 && s.riskScore <= 6).map(s => (
+                    <div
+                      key={s.id}
+                      onClick={() => setSelectedScenario(s.id)}
+                      className={`text-xs px-2 py-1 rounded cursor-pointer transition-all ${
+                        selectedScenario === s.id
+                          ? 'bg-purple-600 text-white font-bold shadow-lg scale-105'
+                          : 'bg-white text-yellow-800 hover:bg-yellow-50 font-semibold'
+                      }`}
+                    >
+                      {s.shortName}: ${s.annualSavings.toFixed(1)}M
+                    </div>
+                  ))}
+                  {Object.values(SCENARIOS).filter(s => s.annualSavings >= 10 && s.annualSavings < 15 && s.riskScore > 3 && s.riskScore <= 6).length === 0 && (
+                    <div className="text-xs text-yellow-600 italic">None</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {/* Med Reward, High Risk */}
+              <div className="bg-gradient-to-br from-orange-100 to-orange-200 border-2 border-orange-300 rounded-lg p-4 h-32 flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-orange-800">RISKY</span>
+                  <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
+                </div>
+                <div className="space-y-1">
+                  {Object.values(SCENARIOS).filter(s => s.annualSavings >= 10 && s.annualSavings < 15 && s.riskScore > 6).map(s => (
+                    <div
+                      key={s.id}
+                      onClick={() => setSelectedScenario(s.id)}
+                      className={`text-xs px-2 py-1 rounded cursor-pointer transition-all ${
+                        selectedScenario === s.id
+                          ? 'bg-purple-600 text-white font-bold shadow-lg scale-105'
+                          : 'bg-white text-orange-900 hover:bg-orange-50 font-semibold'
+                      }`}
+                    >
+                      {s.shortName}: ${s.annualSavings.toFixed(1)}M
+                    </div>
+                  ))}
+                  {Object.values(SCENARIOS).filter(s => s.annualSavings >= 10 && s.annualSavings < 15 && s.riskScore > 6).length === 0 && (
+                    <div className="text-xs text-orange-700 italic">None</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Row 3: Low Reward */}
+            <div className="col-start-2 space-y-3">
+              {/* Low Reward, Low Risk - CONSERVATIVE (Blue) */}
+              <div className="bg-gradient-to-br from-blue-100 to-blue-200 border-2 border-blue-300 rounded-lg p-4 h-32 flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-blue-800">CONSERVATIVE</span>
+                  <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                </div>
+                <div className="space-y-1">
+                  {Object.values(SCENARIOS).filter(s => s.annualSavings < 10 && s.riskScore <= 3).map(s => (
+                    <div
+                      key={s.id}
+                      onClick={() => setSelectedScenario(s.id)}
+                      className={`text-xs px-2 py-1 rounded cursor-pointer transition-all ${
+                        selectedScenario === s.id
+                          ? 'bg-purple-600 text-white font-bold shadow-lg scale-105'
+                          : 'bg-white text-blue-900 hover:bg-blue-50 font-semibold'
+                      }`}
+                    >
+                      {s.shortName}: ${s.annualSavings.toFixed(1)}M
+                    </div>
+                  ))}
+                  {Object.values(SCENARIOS).filter(s => s.annualSavings < 10 && s.riskScore <= 3).length === 0 && (
+                    <div className="text-xs text-blue-700 italic">None</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {/* Low Reward, Medium Risk */}
+              <div className="bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-gray-300 rounded-lg p-4 h-32 flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-gray-700">LIMITED</span>
+                  <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+                </div>
+                <div className="space-y-1">
+                  {Object.values(SCENARIOS).filter(s => s.annualSavings < 10 && s.riskScore > 3 && s.riskScore <= 6).map(s => (
+                    <div
+                      key={s.id}
+                      onClick={() => setSelectedScenario(s.id)}
+                      className={`text-xs px-2 py-1 rounded cursor-pointer transition-all ${
+                        selectedScenario === s.id
+                          ? 'bg-purple-600 text-white font-bold shadow-lg scale-105'
+                          : 'bg-white text-gray-800 hover:bg-gray-50 font-semibold'
+                      }`}
+                    >
+                      {s.shortName}: ${s.annualSavings.toFixed(1)}M
+                    </div>
+                  ))}
+                  {Object.values(SCENARIOS).filter(s => s.annualSavings < 10 && s.riskScore > 3 && s.riskScore <= 6).length === 0 && (
+                    <div className="text-xs text-gray-600 italic">None</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {/* Low Reward, High Risk - AVOID (Dark Red) */}
+              <div className="bg-gradient-to-br from-red-200 to-red-300 border-2 border-red-400 rounded-lg p-4 h-32 flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-red-900">AVOID</span>
+                  <div className="w-2 h-2 bg-red-700 rounded-full"></div>
+                </div>
+                <div className="space-y-1">
+                  {Object.values(SCENARIOS).filter(s => s.annualSavings < 10 && s.riskScore > 6).map(s => (
+                    <div
+                      key={s.id}
+                      onClick={() => setSelectedScenario(s.id)}
+                      className={`text-xs px-2 py-1 rounded cursor-pointer transition-all ${
+                        selectedScenario === s.id
+                          ? 'bg-purple-600 text-white font-bold shadow-lg scale-105'
+                          : 'bg-white text-red-900 hover:bg-red-50 font-semibold'
+                      }`}
+                    >
+                      {s.shortName}: ${s.annualSavings.toFixed(1)}M
+                    </div>
+                  ))}
+                  {Object.values(SCENARIOS).filter(s => s.annualSavings < 10 && s.riskScore > 6).length === 0 && (
+                    <div className="text-xs text-red-800 italic">None</div>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
