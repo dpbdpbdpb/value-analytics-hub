@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, X, TrendingUp, TrendingDown, AlertCircle, DollarSign, Package, Users, Award, Info, ChevronDown, ChevronUp, Download, CheckCircle, AlertTriangle, Target, Mail } from 'lucide-react';
+import { Search, X, TrendingUp, TrendingDown, AlertCircle, DollarSign, Package, Users, Award, Info, ChevronDown, ChevronUp, Download, CheckCircle, AlertTriangle, Target, Mail, Heart, Star, Activity } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, ComposedChart, ScatterChart, Scatter, ZAxis, AreaChart, Area, ReferenceLine, Label } from 'recharts';
 import NavigationHeader from '../components/shared/NavigationHeader';
 

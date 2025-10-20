@@ -441,24 +441,6 @@ const EnhancedOrthopedicDashboard = () => {
       healthEquity: 76,
       missionBonus: 8,
       total: 75
-    },
-    F: {
-      patientExperience: 62,
-      populationHealth: 58,
-      costReduction: 92,
-      providerExperience: 48,
-      healthEquity: 62,
-      missionBonus: 3,
-      total: 62
-    },
-    G: {
-      patientExperience: 65,
-      populationHealth: 62,
-      costReduction: 88,
-      providerExperience: 55,
-      healthEquity: 66,
-      missionBonus: 5,
-      total: 65
     }
   };
 
@@ -1349,9 +1331,6 @@ const EnhancedOrthopedicDashboard = () => {
                 );
               })}
             </Scatter>
-            {/* Reference lines for quadrants */}
-            <line x1={300} y1={0} x2={300} y2={500} stroke="#ccc" strokeDasharray="5 5" strokeWidth={1} />
-            <line x1={0} y1={250} x2={600} y2={250} stroke="#ccc" strokeDasharray="5 5" strokeWidth={1} />
           </ScatterChart>
         </ResponsiveContainer>
 
@@ -1455,7 +1434,7 @@ const EnhancedOrthopedicDashboard = () => {
 
   // MISSION IMPACT TAB
   const renderMissionTab = () => {
-    const missionData = QUINTUPLE_SCORING[selectedScenario];
+    const missionData = QUINTUPLE_SCORING[selectedScenario] || QUINTUPLE_SCORING['C'];
 
     const quintupleAimDefinitions = [
       {
