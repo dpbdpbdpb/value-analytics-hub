@@ -999,15 +999,20 @@ const EnhancedOrthopedicDashboard = () => {
   // COMPONENT ANALYSIS TAB (replaces matrix tab)
   const renderComponentTab = () => {
     // Separate components into Primary and Revision
-    const primaryComponents = realData?.matrixPricing?.filter(item =>
-      item.category.toLowerCase().includes('primary') ||
-      (!item.category.toLowerCase().includes('revision') &&
-       !item.category.toLowerCase().includes('unicondylar'))
-    ) || [];
-
+    // Note: Revision takes precedence - if a component has "revision" in the name, it's revision
     const revisionComponents = realData?.matrixPricing?.filter(item =>
       item.category.toLowerCase().includes('revision')
     ) || [];
+
+    const primaryComponents = realData?.matrixPricing?.filter(item => {
+      const cat = item.category.toLowerCase();
+      // Exclude revision first (revision takes precedence)
+      if (cat.includes('revision')) return false;
+      // Include explicitly marked as primary OR unicondylar (which is a type of primary procedure)
+      if (cat.includes('primary') || cat.includes('unicondylar')) return true;
+      // Include everything else that's not revision
+      return true;
+    }) || [];
 
     const renderComponentTable = (components, title, description, bgColor) => (
       <div className={`rounded-xl p-4 ${bgColor}`}>
@@ -1122,63 +1127,141 @@ const EnhancedOrthopedicDashboard = () => {
     <div className="space-y-6">
       <ExecutiveSummaryCard scenario={selectedScenario} />
 
-      {/* Financial Breakdown */}
+      {/* Risk/Reward Heatmap Grid */}
       <div className="bg-white rounded-xl shadow-lg p-6">
         <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-          <DollarSign className="w-6 h-6" style={{ color: COLORS.primary }} />
-          Savings Breakdown
+          <Target className="w-6 h-6" style={{ color: COLORS.primary }} />
+          Risk vs Reward Analysis Matrix
         </h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Radar Chart */}
-          <ResponsiveContainer width="100%" height={400}>
-            <RadarChart data={[
-              { category: 'Volume\nAggregation', value: ((SCENARIOS[selectedScenario]?.breakdown?.volumeAggregation || 0) / (SCENARIOS[selectedScenario]?.annualSavings || 1)) * 100, amount: SCENARIOS[selectedScenario]?.breakdown?.volumeAggregation || 0 },
-              { category: 'Price\nOptimization', value: ((SCENARIOS[selectedScenario]?.breakdown?.priceOptimization || 0) / (SCENARIOS[selectedScenario]?.annualSavings || 1)) * 100, amount: SCENARIOS[selectedScenario]?.breakdown?.priceOptimization || 0 },
-              { category: 'Inventory\nEfficiency', value: ((SCENARIOS[selectedScenario]?.breakdown?.inventoryOptimization || 0) / (SCENARIOS[selectedScenario]?.annualSavings || 1)) * 100, amount: SCENARIOS[selectedScenario]?.breakdown?.inventoryOptimization || 0 },
-              { category: 'Admin\nEfficiency', value: ((SCENARIOS[selectedScenario]?.breakdown?.adminEfficiency || 0) / (SCENARIOS[selectedScenario]?.annualSavings || 1)) * 100, amount: SCENARIOS[selectedScenario]?.breakdown?.adminEfficiency || 0 }
-            ]}>
-              <PolarGrid stroke="#cbd5e1" />
-              <PolarAngleAxis dataKey="category" tick={{ fill: '#1f2937', fontSize: 12, fontWeight: 600 }} />
-              <PolarRadiusAxis angle={90} domain={[0, 60]} tick={{ fill: '#6b7280' }} />
-              <Radar name="Contribution %" dataKey="value" stroke={COLORS.primary} fill={COLORS.primary} fillOpacity={0.6} />
-              <Tooltip
-                content={({ active, payload }) => {
-                  if (active && payload && payload.length) {
-                    return (
-                      <div className="bg-white p-3 border-2 rounded-lg shadow-lg" style={{ borderColor: COLORS.primary }}>
-                        <p className="font-bold text-sm mb-1">{payload[0].payload.category.replace('\n', ' ')}</p>
-                        <p className="text-sm text-gray-700">Amount: <span className="font-bold">${payload[0].payload.amount.toFixed(2)}M</span></p>
-                        <p className="text-sm text-gray-700">Share: <span className="font-bold">{payload[0].value.toFixed(1)}%</span></p>
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-              />
-            </RadarChart>
-          </ResponsiveContainer>
+        <p className="text-gray-600 mb-6">
+          Strategic positioning of all scenarios in a risk/reward matrix. Darker green indicates optimal combinations of high savings and low risk.
+        </p>
 
-          {/* Breakdown Cards */}
-          <div className="grid grid-cols-2 gap-4 content-center">
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border-2 border-purple-200">
-              <div className="text-xs font-semibold text-purple-600 mb-1">Volume Aggregation</div>
-              <div className="text-2xl font-bold text-purple-900">${(SCENARIOS[selectedScenario]?.breakdown?.volumeAggregation || 0).toFixed(2)}M</div>
-              <div className="text-xs text-purple-700 mt-1">{(((SCENARIOS[selectedScenario]?.breakdown?.volumeAggregation || 0) / (SCENARIOS[selectedScenario]?.annualSavings || 1)) * 100).toFixed(1)}% of total</div>
+        <div className="overflow-x-auto">
+          <div className="inline-block min-w-full">
+            {/* Grid Header */}
+            <div className="flex items-end mb-2">
+              <div className="w-32"></div>
+              <div className="flex-1 text-center">
+                <div className="font-bold text-sm text-gray-700 mb-2">Annual Savings Potential →</div>
+                <div className="grid grid-cols-5 gap-1">
+                  <div className="text-xs text-gray-600 text-center">0-5%</div>
+                  <div className="text-xs text-gray-600 text-center">5-12%</div>
+                  <div className="text-xs text-gray-600 text-center">12-18%</div>
+                  <div className="text-xs text-gray-600 text-center">18-22%</div>
+                  <div className="text-xs text-gray-600 text-center">22%+</div>
+                </div>
+              </div>
             </div>
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border-2 border-blue-200">
-              <div className="text-xs font-semibold text-blue-600 mb-1">Price Optimization</div>
-              <div className="text-2xl font-bold text-blue-900">${(SCENARIOS[selectedScenario]?.breakdown?.priceOptimization || 0).toFixed(2)}M</div>
-              <div className="text-xs text-blue-700 mt-1">{(((SCENARIOS[selectedScenario]?.breakdown?.priceOptimization || 0) / (SCENARIOS[selectedScenario]?.annualSavings || 1)) * 100).toFixed(1)}% of total</div>
+
+            {/* Grid Body */}
+            <div className="flex">
+              {/* Y-axis label */}
+              <div className="w-32 flex items-center justify-center">
+                <div className="transform -rotate-90 whitespace-nowrap font-bold text-sm text-gray-700">
+                  ← Risk Score (Lower is Better)
+                </div>
+              </div>
+
+              {/* Grid cells */}
+              <div className="flex-1">
+                {/* Risk levels from low to high (top to bottom) */}
+                {[
+                  { label: 'Very Low (0-2)', min: 0, max: 2, riskLevel: 'very-low' },
+                  { label: 'Low (2-4)', min: 2, max: 4, riskLevel: 'low' },
+                  { label: 'Medium (4-6)', min: 4, max: 6, riskLevel: 'medium' },
+                  { label: 'High (6-8)', min: 6, max: 8, riskLevel: 'high' },
+                  { label: 'Very High (8-10)', min: 8, max: 10, riskLevel: 'very-high' }
+                ].map((riskRow, rowIdx) => (
+                  <div key={rowIdx} className="flex gap-1 mb-1">
+                    <div className="w-24 flex items-center justify-end pr-3">
+                      <span className="text-xs text-gray-600">{riskRow.label}</span>
+                    </div>
+                    {/* Savings columns */}
+                    {[
+                      { min: 0, max: 5 },
+                      { min: 5, max: 12 },
+                      { min: 12, max: 18 },
+                      { min: 18, max: 22 },
+                      { min: 22, max: 100 }
+                    ].map((savingsCol, colIdx) => {
+                      // Find scenarios in this cell
+                      const scenariosInCell = Object.values(SCENARIOS).filter(s => {
+                        const savingsPercent = s.savingsPercent || 0;
+                        const risk = s.riskScore || 0;
+                        return savingsPercent >= savingsCol.min && savingsPercent < savingsCol.max &&
+                               risk >= riskRow.min && risk < riskRow.max;
+                      });
+
+                      // Calculate cell color based on position
+                      // Green = high reward, low risk (top-right)
+                      // Red = low reward, high risk (bottom-left)
+                      const rewardScore = colIdx; // 0-4
+                      const riskScore = 4 - rowIdx; // inverted: 4-0
+                      const heatScore = rewardScore + riskScore; // 0-8
+
+                      let bgColor = '';
+                      if (heatScore >= 7) bgColor = 'bg-green-100 border-green-300';
+                      else if (heatScore >= 6) bgColor = 'bg-green-50 border-green-200';
+                      else if (heatScore >= 5) bgColor = 'bg-yellow-50 border-yellow-200';
+                      else if (heatScore >= 4) bgColor = 'bg-orange-50 border-orange-200';
+                      else if (heatScore >= 3) bgColor = 'bg-red-50 border-red-200';
+                      else bgColor = 'bg-red-100 border-red-300';
+
+                      return (
+                        <div
+                          key={colIdx}
+                          className={`flex-1 h-20 border-2 ${bgColor} rounded-lg p-2 flex flex-col items-center justify-center`}
+                        >
+                          {scenariosInCell.length > 0 ? (
+                            <div className="text-center">
+                              {scenariosInCell.map((s, idx) => (
+                                <div
+                                  key={idx}
+                                  className={`text-xs font-bold mb-1 px-2 py-1 rounded ${
+                                    s.id === selectedScenario ? 'bg-purple-600 text-white' : 'bg-white text-gray-800'
+                                  }`}
+                                >
+                                  {s.shortName}
+                                </div>
+                              ))}
+                              <div className="text-xs text-gray-600 mt-1">
+                                {scenariosInCell[0].savingsPercent}% / {scenariosInCell[0].riskScore.toFixed(1)}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-xs text-gray-400">—</div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border-2 border-green-200">
-              <div className="text-xs font-semibold text-green-600 mb-1">Inventory Efficiency</div>
-              <div className="text-2xl font-bold text-green-900">${(SCENARIOS[selectedScenario]?.breakdown?.inventoryOptimization || 0).toFixed(2)}M</div>
-              <div className="text-xs text-green-700 mt-1">{(((SCENARIOS[selectedScenario]?.breakdown?.inventoryOptimization || 0) / (SCENARIOS[selectedScenario]?.annualSavings || 1)) * 100).toFixed(1)}% of total</div>
-            </div>
-            <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-4 border-2 border-amber-200">
-              <div className="text-xs font-semibold text-amber-600 mb-1">Admin Efficiency</div>
-              <div className="text-2xl font-bold text-amber-900">${(SCENARIOS[selectedScenario]?.breakdown?.adminEfficiency || 0).toFixed(2)}M</div>
-              <div className="text-xs text-amber-700 mt-1">{(((SCENARIOS[selectedScenario]?.breakdown?.adminEfficiency || 0) / (SCENARIOS[selectedScenario]?.annualSavings || 1)) * 100).toFixed(1)}% of total</div>
+
+            {/* Legend */}
+            <div className="mt-6 grid grid-cols-5 gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-green-100 border-2 border-green-300 rounded"></div>
+                <span className="text-xs text-gray-700">Optimal</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-green-50 border-2 border-green-200 rounded"></div>
+                <span className="text-xs text-gray-700">Favorable</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-yellow-50 border-2 border-yellow-200 rounded"></div>
+                <span className="text-xs text-gray-700">Balanced</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-orange-50 border-2 border-orange-200 rounded"></div>
+                <span className="text-xs text-gray-700">Cautious</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-red-100 border-2 border-red-300 rounded"></div>
+                <span className="text-xs text-gray-700">High Risk</span>
+              </div>
             </div>
           </div>
         </div>
@@ -2280,6 +2363,25 @@ const EnhancedOrthopedicDashboard = () => {
 
         {/* What-If Tools */}
         {renderWhatIfTools()}
+
+        {/* Scenario Selector + Tab Navigation */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+          {/* Scenario Selector */}
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-semibold text-gray-700">Active Scenario:</label>
+            <select
+              value={selectedScenario}
+              onChange={(e) => setSelectedScenario(e.target.value)}
+              className="px-4 py-2 border-2 border-purple-300 rounded-lg font-medium text-gray-900 bg-white hover:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer"
+            >
+              {Object.values(SCENARIOS).map(scenario => (
+                <option key={scenario.id} value={scenario.id}>
+                  {scenario.id}: {scenario.shortName} - ${scenario.annualSavings.toFixed(2)}M ({scenario.savingsPercent}%)
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
 
         {/* Tab Navigation */}
         {renderTabs()}

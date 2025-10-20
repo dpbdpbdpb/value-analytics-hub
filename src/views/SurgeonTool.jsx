@@ -1291,20 +1291,6 @@ const SurgeonTool = () => {
               </div>
 
               </div>
-
-              {/* Call to Action */}
-              <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl shadow-lg p-5 text-white text-center">
-                <h3 className="text-2xl font-bold mb-2">Ready to See Your Personal Impact?</h3>
-                <p className="text-lg opacity-90 mb-3">
-                  Switch to <strong>My Profile</strong> to see your status and how these system goals affect your practice
-                </p>
-                <button
-                  onClick={() => setActiveView('individual')}
-                  className="bg-white text-purple-600 hover:bg-gray-100 font-bold py-4 px-8 rounded-lg transition-colors text-lg"
-                >
-                  See Your Personal Impact →
-                </button>
-              </div>
             </div>
           );
         })()}
