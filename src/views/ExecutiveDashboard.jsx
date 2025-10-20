@@ -854,10 +854,154 @@ const EnhancedOrthopedicDashboard = () => {
         </div>
       </div>
 
-      {/* Risk vs Reward Heatmap - TEMPORARILY DISABLED FOR DEBUGGING */}
-      {false && <div className="bg-white rounded-xl shadow-lg p-6">
-        <h2 className="text-2xl font-bold mb-4">Heatmap temporarily disabled</h2>
-      </div>}
+      {/* Risk vs Reward Heatmap */}
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+          <Target className="w-6 h-6" style={{ color: COLORS.primary }} />
+          Risk vs Reward Heatmap
+        </h2>
+        <p className="text-gray-600 mb-6">
+          Strategic positioning of scenarios. Darker green = optimal (high savings, low risk). Select cells show scenario names and metrics.
+        </p>
+
+        <div className="overflow-x-auto">
+          <div className="inline-block min-w-full">
+            {/* Grid Header */}
+            <div className="flex items-end mb-2">
+              <div className="w-32"></div>
+              <div className="flex-1 text-center">
+                <div className="font-bold text-sm text-gray-700 mb-2">Annual Savings Potential →</div>
+                <div className="grid grid-cols-5 gap-1">
+                  <div className="text-xs text-gray-600 text-center">0-5%</div>
+                  <div className="text-xs text-gray-600 text-center">5-12%</div>
+                  <div className="text-xs text-gray-600 text-center">12-18%</div>
+                  <div className="text-xs text-gray-600 text-center">18-22%</div>
+                  <div className="text-xs text-gray-600 text-center">22%+</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Grid Body */}
+            <div className="flex">
+              {/* Y-axis label */}
+              <div className="w-32 flex items-center justify-center">
+                <div className="transform -rotate-90 whitespace-nowrap font-bold text-sm text-gray-700">
+                  ← Risk Score (Lower is Better)
+                </div>
+              </div>
+
+              {/* Grid cells */}
+              <div className="flex-1">
+                {/* Risk levels from low to high (top to bottom) */}
+                {[
+                  { label: 'Very Low (0-2)', min: 0, max: 2 },
+                  { label: 'Low (2-4)', min: 2, max: 4 },
+                  { label: 'Medium (4-6)', min: 4, max: 6 },
+                  { label: 'High (6-8)', min: 6, max: 8 },
+                  { label: 'Very High (8-10)', min: 8, max: 10 }
+                ].map((riskRow, rowIdx) => (
+                  <div key={rowIdx} className="flex gap-1 mb-1">
+                    <div className="w-24 flex items-center justify-end pr-3">
+                      <span className="text-xs text-gray-600">{riskRow.label}</span>
+                    </div>
+                    {/* Savings columns */}
+                    {[
+                      { min: 0, max: 5 },
+                      { min: 5, max: 12 },
+                      { min: 12, max: 18 },
+                      { min: 18, max: 22 },
+                      { min: 22, max: 100 }
+                    ].map((savingsCol, colIdx) => {
+                      const scenariosInCell = Object.values(SCENARIOS).filter(s => {
+                        const savingsPercent = s.savingsPercent || 0;
+                        const risk = s.riskScore || 0;
+                        return savingsPercent >= savingsCol.min && savingsPercent < savingsCol.max &&
+                               risk >= riskRow.min && risk < riskRow.max;
+                      });
+
+                      const rewardScore = colIdx;
+                      const riskScore = 4 - rowIdx;
+                      const heatScore = rewardScore + riskScore;
+
+                      let bgColor = '';
+                      if (heatScore >= 7) bgColor = 'bg-green-100 border-green-300';
+                      else if (heatScore >= 6) bgColor = 'bg-green-50 border-green-200';
+                      else if (heatScore >= 5) bgColor = 'bg-yellow-50 border-yellow-200';
+                      else if (heatScore >= 4) bgColor = 'bg-orange-50 border-orange-200';
+                      else if (heatScore >= 3) bgColor = 'bg-red-50 border-red-200';
+                      else bgColor = 'bg-red-100 border-red-300';
+
+                      return (
+                        <div
+                          key={colIdx}
+                          className={`flex-1 h-20 border-2 ${bgColor} rounded-lg p-2 flex flex-col items-center justify-center`}
+                        >
+                          {scenariosInCell.length > 0 ? (
+                            <div className="text-center">
+                              {scenariosInCell.map((s, idx) => (
+                                <div
+                                  key={idx}
+                                  className={`text-xs font-bold mb-1 px-2 py-1 rounded ${
+                                    s.id === selectedScenario ? 'bg-purple-600 text-white' : 'bg-white text-gray-800'
+                                  }`}
+                                >
+                                  {s.shortName}
+                                </div>
+                              ))}
+                              <div className="text-xs text-gray-600 mt-1">
+                                {scenariosInCell[0].savingsPercent}% / {scenariosInCell[0].riskScore.toFixed(1)}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-center px-1">
+                              <div className="text-xs text-gray-500 font-medium leading-tight">
+                                {heatScore >= 7 && '🎯 Ideal'}
+                                {heatScore === 6 && '✓ Strong'}
+                                {heatScore === 5 && '⚖️ Balanced'}
+                                {heatScore === 4 && '⚠️ Careful'}
+                                {heatScore === 3 && '🔴 Unfavorable'}
+                                {heatScore <= 2 && '❌ Avoid'}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Legend */}
+            <div className="mt-6 grid grid-cols-6 gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-green-100 border-2 border-green-300 rounded"></div>
+                <span className="text-xs text-gray-700">Optimal</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-green-50 border-2 border-green-200 rounded"></div>
+                <span className="text-xs text-gray-700">Favorable</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-yellow-50 border-2 border-yellow-200 rounded"></div>
+                <span className="text-xs text-gray-700">Balanced</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-orange-50 border-2 border-orange-200 rounded"></div>
+                <span className="text-xs text-gray-700">Cautious</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-red-50 border-2 border-red-200 rounded"></div>
+                <span className="text-xs text-gray-700">Unfavorable</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-red-100 border-2 border-red-300 rounded"></div>
+                <span className="text-xs text-gray-700">High Risk</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 
