@@ -1946,11 +1946,14 @@ const SurgeonTool = () => {
                           <div className="space-y-3">
                             {sherpas.map((sherpa) => (
                               <div key={sherpa.id} className="bg-white rounded-lg p-4 flex items-center justify-between">
-                                <div>
+                                <div className="flex-1">
                                   <div className="font-bold text-gray-900">{sherpa.name}</div>
-                                  <div className="text-sm text-gray-600">
+                                  <div className="text-sm text-gray-600 mt-1">
                                     {sherpa.totalCases} cases • ${sherpa.avgSpendPerCase.toFixed(0)}/case
                                     • ${(selectedSurgeon.avgSpendPerCase - sherpa.avgSpendPerCase).toFixed(0)} lower cost
+                                  </div>
+                                  <div className="text-sm font-semibold text-purple-600 mt-1">
+                                    Primary Vendor: {sherpa.primaryVendor}
                                   </div>
                                 </div>
                                 <div>
@@ -1979,6 +1982,52 @@ const SurgeonTool = () => {
               <>
                 {/* Top 5 Components with Vendor Pricing Comparison */}
             {(() => {
+              const [componentProcedureView, setComponentProcedureView] = React.useState('combined');
+              const [componentTypeView, setComponentTypeView] = React.useState('all');
+
+              // Define hip and knee keywords for categorization
+              const hipKeywords = ['hip', 'femoral head', 'acetabular', 'stem', 'cup'];
+              const kneeKeywords = ['knee', 'tibial', 'femoral component', 'patella', 'bearing', 'tray'];
+
+              const isHipComponent = (category) => {
+                const cat = category.toLowerCase();
+                return hipKeywords.some(keyword => cat.includes(keyword));
+              };
+
+              const isKneeComponent = (category) => {
+                const cat = category.toLowerCase();
+                return kneeKeywords.some(keyword => cat.includes(keyword));
+              };
+
+              const isPrimaryComponent = (category) => {
+                return !category.toLowerCase().includes('revision');
+              };
+
+              const isRevisionComponent = (category) => {
+                return category.toLowerCase().includes('revision');
+              };
+
+              // Filter components based on selected views (both procedure and type)
+              const getFilteredComponents = (components) => {
+                let filtered = components;
+
+                // First filter by procedure type (hip/knee)
+                if (componentProcedureView === 'hip') {
+                  filtered = filtered.filter(comp => isHipComponent(comp.category));
+                } else if (componentProcedureView === 'knee') {
+                  filtered = filtered.filter(comp => isKneeComponent(comp.category));
+                }
+
+                // Then filter by primary/revision
+                if (componentTypeView === 'primary') {
+                  filtered = filtered.filter(comp => isPrimaryComponent(comp.category));
+                } else if (componentTypeView === 'revision') {
+                  filtered = filtered.filter(comp => isRevisionComponent(comp.category));
+                }
+
+                return filtered;
+              };
+
               // Calculate vendor pricing comparison for each component
               const getVendorPricingForComponent = (category, surgeonVendor) => {
                 const vendorPricing = {};
@@ -2034,6 +2083,83 @@ const SurgeonTool = () => {
                     Your Top 5 Most Expensive Component Categories
                   </h3>
 
+                  {/* View Selectors */}
+                  <div className="space-y-3 mb-4">
+                    {/* Procedure Type Filter */}
+                    <div>
+                      <div className="text-xs font-semibold text-gray-600 mb-1.5">Procedure Type:</div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setComponentProcedureView('combined')}
+                          className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                            componentProcedureView === 'combined'
+                              ? 'bg-purple-600 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          All Procedures
+                        </button>
+                        <button
+                          onClick={() => setComponentProcedureView('hip')}
+                          className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                            componentProcedureView === 'hip'
+                              ? 'bg-purple-600 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          Hip Only
+                        </button>
+                        <button
+                          onClick={() => setComponentProcedureView('knee')}
+                          className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                            componentProcedureView === 'knee'
+                              ? 'bg-purple-600 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          Knee Only
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Primary/Revision Filter */}
+                    <div>
+                      <div className="text-xs font-semibold text-gray-600 mb-1.5">Component Type:</div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setComponentTypeView('all')}
+                          className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                            componentTypeView === 'all'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          All Types
+                        </button>
+                        <button
+                          onClick={() => setComponentTypeView('primary')}
+                          className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                            componentTypeView === 'primary'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          Primary Only
+                        </button>
+                        <button
+                          onClick={() => setComponentTypeView('revision')}
+                          className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                            componentTypeView === 'revision'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          Revision Only
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm border-collapse">
                       <thead>
@@ -2049,7 +2175,7 @@ const SurgeonTool = () => {
                         </tr>
                       </thead>
                       <tbody>
-                      {getCurrentViewData.topComponents.filter(comp => comp.category !== 'UNKNOWN').slice(0, 5).map((comp, idx) => {
+                      {getFilteredComponents(getCurrentViewData.topComponents).filter(comp => comp.category !== 'UNKNOWN').slice(0, 5).map((comp, idx) => {
                         const vendorComparison = getVendorPricingForComponent(comp.category, comp.vendor);
                         const yourVendorStats = vendorComparison.find(v => v.vendor === comp.vendor);
                         const bestPrice = vendorComparison[0];
