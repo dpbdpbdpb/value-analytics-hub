@@ -1230,7 +1230,17 @@ const EnhancedOrthopedicDashboard = () => {
                               </div>
                             </div>
                           ) : (
-                            <div className="text-xs text-gray-400">—</div>
+                            <div className="text-center px-1">
+                              <div className="text-xs text-gray-500 font-medium leading-tight">
+                                {/* Generate explanatory text based on position */}
+                                {heatScore >= 7 && '🎯 Ideal: High savings, low risk'}
+                                {heatScore === 6 && '✓ Strong: Good return, manageable risk'}
+                                {heatScore === 5 && '⚖️ Balanced: Moderate risk & reward'}
+                                {heatScore === 4 && '⚠️ Careful: Limited upside vs. risk'}
+                                {heatScore === 3 && '🔴 Unfavorable: High risk, low return'}
+                                {heatScore <= 2 && '❌ Avoid: Worst risk/reward profile'}
+                              </div>
+                            </div>
                           )}
                         </div>
                       );
