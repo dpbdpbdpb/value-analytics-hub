@@ -1,0 +1,118 @@
+{
+  "lastUpdated": "2025-01-20T00:00:00Z",
+  "totalSpend": 164000000,
+  "dataSource": "ECRI Benchmarking + Surgical Analysis 2024",
+  "vendors": [
+    {
+      "id": "stryker",
+      "name": "Stryker",
+      "marketShare": 34.3,
+      "annualSpend": 54159893,
+      "savingsPotential10th": 3852337,
+      "savingsPotentialLow": 10830000,
+      "leverageScore": 7.1,
+      "color": "#BA4896",
+      "strengths": [
+        "Largest market share (34.3%)",
+        "Strong technology portfolio",
+        "Well-established physician relationships"
+      ],
+      "weaknesses": [
+        "Premium pricing strategy",
+        "Limited flexibility on discounting"
+      ],
+      "negotiationLeverage": [
+        "Wants to grow market share to 40%+",
+        "Recently lost major contracts to Zimmer",
+        "Q4 2024 earnings pressure"
+      ]
+    },
+    {
+      "id": "zimmer",
+      "name": "Zimmer Biomet",
+      "marketShare": 32.7,
+      "annualSpend": 46706788,
+      "savingsPotential10th": 4804543,
+      "savingsPotentialLow": 13575351,
+      "leverageScore": 10.3,
+      "color": "#8B6BA8",
+      "strengths": [
+        "Highest savings potential ($4.8M at 10th percentile)",
+        "Strong product portfolio post-ZimVie",
+        "Eager for volume commitments"
+      ],
+      "weaknesses": [
+        "Integration challenges from ZimVie spinoff",
+        "Market share erosion to Stryker"
+      ],
+      "negotiationLeverage": [
+        "ZimVie spinoff created organizational pressure",
+        "Needs to stabilize market share post-spinoff",
+        "Most aggressive on pricing to secure volume"
+      ]
+    },
+    {
+      "id": "jnj",
+      "name": "J&J (DePuy Synthes)",
+      "marketShare": 18.3,
+      "annualSpend": 34629221,
+      "savingsPotential10th": 3473424,
+      "savingsPotentialLow": 10910556,
+      "leverageScore": 10.0,
+      "color": "#5C8DBA",
+      "strengths": [
+        "Strong revision portfolio",
+        "Excellent clinical support"
+      ],
+      "weaknesses": [
+        "J&J MedTech integration ongoing",
+        "Mid-tier pricing with limited flexibility"
+      ],
+      "negotiationLeverage": [
+        "J&J MedTech separation creating focus",
+        "Integration of DePuy Synthes brands",
+        "Moderate pricing pressure"
+      ]
+    },
+    {
+      "id": "smith",
+      "name": "Smith & Nephew",
+      "marketShare": 6.2,
+      "annualSpend": 12029995,
+      "savingsPotential10th": 1886208,
+      "savingsPotentialLow": 4307720,
+      "leverageScore": 15.7,
+      "color": "#4EAECC",
+      "strengths": [
+        "Smaller player with pricing flexibility",
+        "Good backup option for physicians",
+        "Strong leverage score (15.7%)"
+      ],
+      "weaknesses": [
+        "Limited market share",
+        "Smaller product portfolio"
+      ],
+      "negotiationLeverage": [
+        "Desperate for volume to remain viable",
+        "Highest leverage score among majors",
+        "Excellent tertiary/backup option"
+      ]
+    }
+  ],
+  "savingsScenarios": [
+    {
+      "name": "Conservative (ECRI 10th)",
+      "totalSavings": 15412592,
+      "percentage": 9.4,
+      "description": "Realistic target based on peer health system performance",
+      "confidence": "high"
+    },
+    {
+      "name": "Aggressive (ECRI Lowest)",
+      "totalSavings": 45698453,
+      "percentage": 27.9,
+      "description": "Best-in-class pricing - requires aggressive consolidation",
+      "confidence": "medium"
+    }
+  ]
+}
