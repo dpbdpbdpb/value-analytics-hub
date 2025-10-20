@@ -549,7 +549,7 @@ const SurgeonTool = () => {
       };
     });
 
-    return scored.sort((a, b) => b.similarityScore - a.similarityScore).slice(0, 5);
+    return scored.sort((a, b) => b.similarityScore - a.similarityScore).slice(0, 4);
   };
 
   const generatePeerInsights = (surgeon, allSurgeons, percentiles, quadrant) => {
@@ -1500,11 +1500,51 @@ const SurgeonTool = () => {
                     </div>
                   </div>
 
-                  {/* Overview Cards */}
+                  {/* 8-Agent Framework Overview Cards */}
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                    {/* Clinical Evidence Score */}
+                    <div className="bg-white rounded-xl shadow-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <Heart className="text-red-500" size={24} />
+                        <span className="text-xs text-gray-500">Clinical Evidence</span>
+                      </div>
+                      <div className="text-xl font-bold text-gray-900">4.2/5.0</div>
+                      <div className="text-sm text-gray-600 mt-1">Evidence Quality</div>
+                      <div className="text-xs text-green-600 mt-2 font-semibold">
+                        ✓ Peer-reviewed outcomes
+                      </div>
+                    </div>
+
+                    {/* Patient Experience Score */}
+                    <div className="bg-white rounded-xl shadow-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <Star className="text-amber-500" size={24} />
+                        <span className="text-xs text-gray-500">Patient Experience</span>
+                      </div>
+                      <div className="text-xl font-bold text-gray-900">86/100</div>
+                      <div className="text-sm text-gray-600 mt-1">Device Reliability</div>
+                      <div className="text-xs text-gray-500 mt-2">
+                        Registry outcomes tracked
+                      </div>
+                    </div>
+
+                    {/* Provider Experience Score */}
                     <div className="bg-white rounded-xl shadow-lg p-4">
                       <div className="flex items-center justify-between mb-2">
                         <Users className="text-purple-600" size={24} />
+                        <span className="text-xs text-gray-500">Provider Experience</span>
+                      </div>
+                      <div className="text-xl font-bold text-gray-900">78/100</div>
+                      <div className="text-sm text-gray-600 mt-1">Workflow Efficiency</div>
+                      <div className="text-xs text-gray-500 mt-2">
+                        Vendor support quality
+                      </div>
+                    </div>
+
+                    {/* Annual Volume (kept for context) */}
+                    <div className="bg-white rounded-xl shadow-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <Activity className="text-blue-600" size={24} />
                         <span className="text-xs text-gray-500">Annual Volume</span>
                       </div>
                       <div className="text-xl font-bold text-gray-900">{displayData.totalCases}</div>
@@ -1513,63 +1553,8 @@ const SurgeonTool = () => {
                          procedureView === 'hips' ? 'Hip Cases' : 'Knee Cases'}
                       </div>
                       {procedureView !== 'combined' && (
-                        <div className="text-xs text-purple-600 mt-2 font-semibold">
-                          {((displayData.totalCases / selectedSurgeon.totalCases) * 100).toFixed(0)}% of total practice
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="bg-white rounded-xl shadow-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <DollarSign className="text-green-600" size={24} />
-                        <span className="text-xs text-gray-500">Total Spend</span>
-                      </div>
-                      <div className="text-xl font-bold text-gray-900">${(displayData.totalSpend / 1000).toFixed(0)}k</div>
-                      <div className="text-sm text-gray-600 mt-1">
-                        {procedureView === 'combined' ? 'Implant Costs' :
-                         procedureView === 'hips' ? 'Hip Implants' : 'Knee Implants'}
-                      </div>
-                      {procedureView !== 'combined' && (
-                        <div className="text-xs text-green-600 mt-2 font-semibold">
-                          {((displayData.totalSpend / selectedSurgeon.totalSpend) * 100).toFixed(0)}% of total spend
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="bg-white rounded-xl shadow-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <Package className="text-blue-600" size={24} />
-                        <span className="text-xs text-gray-500">Per Case</span>
-                      </div>
-                      <div className="text-xl font-bold text-gray-900">${displayData.avgSpendPerCase.toFixed(0)}</div>
-                      <div className="text-sm text-gray-600 mt-1">Average Cost</div>
-                      {procedureView !== 'combined' && (
-                        <div className="text-xs text-gray-500 mt-2">
-                          {procedureView === 'hips'
-                            ? 'Typical: $3,000-5,000'
-                            : 'Typical: $2,500-4,000'
-                          }
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="bg-white rounded-xl shadow-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <Award className="text-orange-600" size={24} />
-                        <span className="text-xs text-gray-500">Primary Vendor</span>
-                      </div>
-                      <div className="text-xl font-bold text-gray-900">
-                        {displayData.primaryVendor ? displayData.primaryVendor.split(' ')[0] : 'N/A'}
-                      </div>
-                      <div className="text-sm text-gray-600 mt-1">
-                        {displayData.vendorBreakdown && displayData.vendorBreakdown.length > 0
-                          ? `${displayData.vendorBreakdown[0].percentage.toFixed(0)}% of spend`
-                          : 'No data'
-                        }
-                      </div>
-                      {procedureView !== 'combined' && displayData.vendorBreakdown.length > 1 && (
-                        <div className="text-xs text-gray-500 mt-2">
-                          2nd: {displayData.vendorBreakdown[1].vendor.split(' ')[0]} ({displayData.vendorBreakdown[1].percentage.toFixed(0)}%)
+                        <div className="text-xs text-blue-600 mt-2 font-semibold">
+                          {((displayData.totalCases / selectedSurgeon.totalCases) * 100).toFixed(0)}% of practice
                         </div>
                       )}
                     </div>
@@ -1950,10 +1935,14 @@ const SurgeonTool = () => {
                       {/* Sherpa Suggestions */}
                       {sherpas.length > 0 && (
                         <div className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg p-4 border-2 border-orange-200">
-                          <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                          <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
                             <Mail className="text-orange-600" size={20} />
                             Suggested Sherpas in Your Volume Range
                           </h4>
+                          <p className="text-sm text-gray-700 mb-4 italic">
+                            A "Sherpa" is a peer surgeon with similar case volume who uses preferred vendors and achieves better financial outcomes.
+                            These colleagues can provide practical guidance on vendor selection and cost optimization.
+                          </p>
                           <div className="space-y-3">
                             {sherpas.map((sherpa) => (
                               <div key={sherpa.id} className="bg-white rounded-lg p-4 flex items-center justify-between">
@@ -2088,11 +2077,15 @@ const SurgeonTool = () => {
                               )}
                             </td>
                             <td className="px-3 py-3 text-right">
-                              <div className="font-bold text-gray-900">${comp.avgPrice.toFixed(2)}</div>
+                              <div className="font-bold text-gray-900">
+                                ${(yourVendorStats ? yourVendorStats.medianPrice : comp.avgPrice).toFixed(2)}
+                              </div>
                               <div className="text-xs text-gray-600">per unit</div>
                             </td>
                             <td className="px-3 py-3 text-right">
-                              <div className="font-bold text-green-600">${bestPrice.medianPrice.toFixed(2)}</div>
+                              <div className={`font-bold ${isUsingBestVendor ? 'text-gray-900' : 'text-green-600'}`}>
+                                ${bestPrice.medianPrice.toFixed(2)}
+                              </div>
                               <div className="text-xs text-gray-600">{bestPrice.vendor.split(' ')[0]}</div>
                             </td>
                             <td className="px-3 py-3 text-right font-semibold text-gray-900">{comp.quantity.toLocaleString()}</td>
@@ -2513,16 +2506,6 @@ const SurgeonTool = () => {
             )}
               </>
             )}
-          </div>
-        )}
-        {/* Empty State */}
-        {!selectedSurgeon && (
-          <div className="bg-white rounded-xl shadow-lg p-12 text-center">
-            <Search className="mx-auto text-gray-300 mb-2" size={64} />
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Search for Your Profile</h3>
-            <p className="text-gray-600 mb-3">
-              Type your last name in the search box above to see your personalized vendor consolidation impact analysis
-            </p>
           </div>
         )}
         </div>
