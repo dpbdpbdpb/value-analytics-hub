@@ -1434,7 +1434,7 @@ const EnhancedOrthopedicDashboard = () => {
 
   // MISSION IMPACT TAB
   const renderMissionTab = () => {
-    const missionData = QUINTUPLE_SCORING[selectedScenario] || QUINTUPLE_SCORING['C'];
+    const missionData = QUINTUPLE_SCORING[selectedScenario];
 
     const quintupleAimDefinitions = [
       {
