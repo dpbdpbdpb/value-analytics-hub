@@ -621,7 +621,17 @@ const EnhancedOrthopedicDashboard = () => {
   const ExecutiveSummaryCard = ({ scenario }) => {
     const s = getAdjustedMetrics(scenario);
     if (!s) return null;
-    const confidence = s.agentScore / 5.0;
+
+    // Determine recommendation badge based on agentScore
+    const getRecommendationBadge = (score) => {
+      if (score >= 4.2) return { text: 'STRONGLY RECOMMENDED', color: 'bg-green-600', textColor: 'text-white' };
+      if (score >= 3.8) return { text: 'RECOMMENDED', color: 'bg-green-500', textColor: 'text-white' };
+      if (score >= 3.0) return { text: 'CONSIDER', color: 'bg-yellow-500', textColor: 'text-white' };
+      if (score >= 2.5) return { text: 'CAUTION', color: 'bg-orange-500', textColor: 'text-white' };
+      return { text: 'NOT RECOMMENDED', color: 'bg-red-500', textColor: 'text-white' };
+    };
+
+    const recommendation = getRecommendationBadge(s.agentScore);
 
     return (
       <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-6 mb-6 border-2 border-purple-200">
@@ -631,9 +641,12 @@ const EnhancedOrthopedicDashboard = () => {
             <p className="text-purple-700 mt-1">{s.name}</p>
           </div>
           <div className="text-right">
-            <div className="text-sm text-purple-600">Confidence Level</div>
+            <div className="text-sm text-purple-600">8-Agent Validation Score</div>
             <div className="text-2xl font-bold" style={{ color: COLORS.primary }}>
-              {confidence.toFixed(1)}/5.0
+              {s.agentScore.toFixed(1)}/5.0
+            </div>
+            <div className={`mt-2 px-3 py-1 rounded-full text-xs font-bold ${recommendation.color} ${recommendation.textColor}`}>
+              {recommendation.text}
             </div>
           </div>
         </div>
