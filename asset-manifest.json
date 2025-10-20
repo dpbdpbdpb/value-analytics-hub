@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/orthopedic-dashboard/static/css/main.f855e6bc.css",
-    "main.js": "/orthopedic-dashboard/static/js/main.27f36413.js",
-    "static/js/453.17030626.chunk.js": "/orthopedic-dashboard/static/js/453.17030626.chunk.js",
+    "main.css": "/orthopedic-dashboard/static/css/main.cf25dc71.css",
+    "main.js": "/orthopedic-dashboard/static/js/main.fa495d27.js",
+    "static/js/453.c9a45154.chunk.js": "/orthopedic-dashboard/static/js/453.c9a45154.chunk.js",
     "index.html": "/orthopedic-dashboard/index.html",
-    "main.f855e6bc.css.map": "/orthopedic-dashboard/static/css/main.f855e6bc.css.map",
-    "main.27f36413.js.map": "/orthopedic-dashboard/static/js/main.27f36413.js.map",
-    "453.17030626.chunk.js.map": "/orthopedic-dashboard/static/js/453.17030626.chunk.js.map"
+    "main.cf25dc71.css.map": "/orthopedic-dashboard/static/css/main.cf25dc71.css.map",
+    "main.fa495d27.js.map": "/orthopedic-dashboard/static/js/main.fa495d27.js.map",
+    "453.c9a45154.chunk.js.map": "/orthopedic-dashboard/static/js/453.c9a45154.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.f855e6bc.css",
-    "static/js/main.27f36413.js"
+    "static/css/main.cf25dc71.css",
+    "static/js/main.fa495d27.js"
   ]
 }
