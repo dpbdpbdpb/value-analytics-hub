@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronRight, ArrowLeft, Target, BarChart3, Users, Stethoscope, DollarSign, Settings } from 'lucide-react';
 import NavigationHeader from '../components/shared/NavigationHeader';
@@ -6,6 +6,23 @@ import NavigationHeader from '../components/shared/NavigationHeader';
 const ProductLineView = () => {
   const navigate = useNavigate();
   const { serviceLineId, productLineId } = useParams();
+  const [orthoData, setOrthoData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Load orthopedic data
+  useEffect(() => {
+    const jsonPath = `${process.env.PUBLIC_URL}/orthopedic-data.json`;
+    fetch(jsonPath)
+      .then(response => response.json())
+      .then(data => {
+        setOrthoData(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error loading orthopedic data:', err);
+        setLoading(false);
+      });
+  }, []);
 
   // Decision Canvas configuration for Hip/Knee
   const decisionCanvases = [
@@ -137,6 +154,17 @@ const ProductLineView = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading product line data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <NavigationHeader role="portfolio" persona="portfolio" />
@@ -165,7 +193,9 @@ const ProductLineView = () => {
               </div>
               <div className="text-right">
                 <div className="text-sm text-gray-600">Value Opportunity</div>
-                <div className="text-3xl font-bold text-blue-600">$28M</div>
+                <div className="text-3xl font-bold text-blue-600">
+                  {orthoData ? `$${(Math.max(...Object.values(orthoData.scenarios || {}).map(s => s.annualSavings || 0)) / 1000000).toFixed(0)}M` : '-'}
+                </div>
                 <div className="text-sm text-gray-600 mt-1">annual savings potential</div>
               </div>
             </div>
@@ -177,28 +207,36 @@ const ProductLineView = () => {
                   <Users className="w-5 h-5 text-blue-600" />
                   <div className="text-sm text-gray-600">Surgeons</div>
                 </div>
-                <div className="text-2xl font-bold text-blue-900">25</div>
+                <div className="text-2xl font-bold text-blue-900">
+                  {orthoData ? Object.values(orthoData.vendors).reduce((sum, v) => sum + (v.uniqueSurgeons || 0), 0) : '-'}
+                </div>
               </div>
               <div className="bg-green-50 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <BarChart3 className="w-5 h-5 text-green-600" />
                   <div className="text-sm text-gray-600">Annual Volume</div>
                 </div>
-                <div className="text-2xl font-bold text-green-900">8,500</div>
+                <div className="text-2xl font-bold text-green-900">
+                  {orthoData ? orthoData.metadata.totalCases.toLocaleString() : '-'}
+                </div>
               </div>
               <div className="bg-amber-50 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <DollarSign className="w-5 h-5 text-amber-600" />
                   <div className="text-sm text-gray-600">Avg Cost/Case</div>
                 </div>
-                <div className="text-2xl font-bold text-amber-900">$8,450</div>
+                <div className="text-2xl font-bold text-amber-900">
+                  {orthoData ? `$${(orthoData.metadata.totalSpend / orthoData.metadata.totalCases).toLocaleString(undefined, {maximumFractionDigits: 0})}` : '-'}
+                </div>
               </div>
               <div className="bg-purple-50 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Target className="w-5 h-5 text-purple-600" />
                   <div className="text-sm text-gray-600">Decision Scenarios</div>
                 </div>
-                <div className="text-2xl font-bold text-purple-900">7</div>
+                <div className="text-2xl font-bold text-purple-900">
+                  {orthoData ? Object.keys(orthoData.scenarios || {}).length : '-'}
+                </div>
               </div>
             </div>
 
