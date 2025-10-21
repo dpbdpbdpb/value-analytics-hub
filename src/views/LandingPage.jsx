@@ -10,7 +10,7 @@ const LandingPage = () => {
   const roles = [
     {
       id: 'clinical',
-      name: 'Clinical Leadership',
+      name: 'Clinical',
       icon: Stethoscope,
       description: 'Surgeon-level analytics, clinical outcomes, value impact, and practice optimization',
       color: '#3B82F6',
@@ -18,7 +18,7 @@ const LandingPage = () => {
     },
     {
       id: 'financial',
-      name: 'Financial Leadership',
+      name: 'Finance',
       icon: TrendingUp,
       description: 'System-wide value analytics, cost reduction strategies, and ROI analysis',
       color: '#BA4896',
@@ -26,7 +26,7 @@ const LandingPage = () => {
     },
     {
       id: 'operational',
-      name: 'Operational Leadership',
+      name: 'Operations',
       icon: Shield,
       description: 'Supply chain optimization, implementation tracking, and operational efficiency',
       color: '#10B981',
@@ -114,16 +114,68 @@ const LandingPage = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-12">
-        {/* Step 1: Select Role */}
+        {/* Primary Action: Team Decision Dashboard */}
+        <div className="mb-12">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-3">How would you like to proceed?</h2>
+            <p className="text-gray-600 text-lg">Choose collaborative team view or individual perspective</p>
+          </div>
+
+          {/* Team Decision Dashboard - Primary CTA */}
+          <div className="mb-8">
+            <button
+              onClick={() => navigate('/team-decision/hipknee')}
+              className="w-full p-8 rounded-2xl bg-gradient-to-br from-purple-600 to-purple-700 text-white shadow-2xl hover:shadow-purple-500/50 hover:scale-[1.02] transition-all border-4 border-purple-400"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                  <div className="w-20 h-20 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                    <Users className="w-12 h-12 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="text-3xl font-bold mb-2">🤝 Team Decision Dashboard</h3>
+                    <p className="text-purple-100 text-lg mb-3">
+                      Collaborative view showing Finance, Clinical, and Operations perspectives together
+                    </p>
+                    <div className="flex items-center gap-6 text-sm">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="w-5 h-5" />
+                        <span>Finance Impact</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Stethoscope className="w-5 h-5" />
+                        <span>Clinical Impact</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Shield className="w-5 h-5" />
+                        <span>Operations Impact</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <ArrowRight className="w-12 h-12 flex-shrink-0" />
+              </div>
+            </button>
+          </div>
+
+          {/* Divider */}
+          <div className="flex items-center gap-4 mb-8">
+            <div className="flex-1 border-t-2 border-gray-300"></div>
+            <span className="text-gray-500 font-semibold">OR</span>
+            <div className="flex-1 border-t-2 border-gray-300"></div>
+          </div>
+        </div>
+
+        {/* Secondary Option: Individual Perspectives */}
         <div className="mb-12">
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold">
-                1
+              <div className="w-8 h-8 bg-gray-500 text-white rounded-full flex items-center justify-center font-bold">
+                ↳
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">Select Your Role</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Individual Perspective</h2>
             </div>
-            <p className="text-gray-600 ml-11">Choose how you want to view the analytics</p>
+            <p className="text-gray-600 ml-11">For detailed research and preparation (optional)</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -167,12 +219,12 @@ const LandingPage = () => {
           </div>
         </div>
 
-        {/* Step 2: Select Specialty */}
+        {/* Step 2: Select Specialty (only for individual perspectives) */}
         <div className={`transition-all ${selectedRole ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-2">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                selectedRole ? 'bg-purple-600 text-white' : 'bg-gray-300 text-gray-500'
+                selectedRole ? 'bg-gray-600 text-white' : 'bg-gray-300 text-gray-500'
               }`}>
                 2
               </div>

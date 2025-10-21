@@ -7,16 +7,18 @@ const NavigationHeader = ({ role, specialty, specialtyName, persona }) => {
 
   // Map personas to display names
   const personaDisplay = {
-    clinical: 'Clinical Leadership',
-    financial: 'Financial Leadership',
-    operational: 'Operational Leadership'
+    clinical: 'Clinical',
+    financial: 'Finance',
+    operational: 'Operations',
+    team: 'Team Decision Dashboard'
   };
 
   // Map personas to icons
   const personaIcon = {
     clinical: Stethoscope,
     financial: TrendingUp,
-    operational: Shield
+    operational: Shield,
+    team: User
   };
 
   // Legacy role display for backwards compatibility

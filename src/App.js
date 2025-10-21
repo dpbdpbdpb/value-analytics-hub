@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import LandingPage from './views/LandingPage';
 import ExecutiveDashboard from './views/ExecutiveDashboard';
 import SurgeonTool from './views/SurgeonTool';
+import TeamDecisionDashboard from './views/TeamDecisionDashboard';
 import './App.css';
 
 function App() {
@@ -11,6 +12,9 @@ function App() {
       <Routes>
         {/* Landing Page */}
         <Route path="/" element={<LandingPage />} />
+
+        {/* Team Decision Dashboard (Primary collaborative view) */}
+        <Route path="/team-decision/hipknee" element={<TeamDecisionDashboard />} />
 
         {/* Executive Dashboard Routes */}
         <Route path="/executive/hipknee" element={<ExecutiveDashboard />} />
