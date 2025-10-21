@@ -1013,6 +1013,93 @@ const EnhancedOrthopedicDashboard = () => {
     const components = realData?.matrixPricing || [];
     const totalSavings = components.reduce((sum, item) => sum + item.potentialSavings, 0);
 
+    // Classification helpers
+    const hipKeywords = ['hip', 'femoral head', 'acetabular', 'stem', 'cup', 'bi polar', 'uni polar'];
+    const kneeKeywords = ['knee', 'tibial', 'femoral component', 'patella', 'bearing', 'tray'];
+
+    const isHip = (category) => {
+      const cat = category.toLowerCase();
+      return hipKeywords.some(k => cat.includes(k)) && !cat.includes('knee');
+    };
+
+    const isKnee = (category) => {
+      const cat = category.toLowerCase();
+      return kneeKeywords.some(k => cat.includes(k));
+    };
+
+    const isPrimary = (category) => !category.toLowerCase().includes('revision');
+    const isRevision = (category) => category.toLowerCase().includes('revision');
+
+    // Group components
+    const hipPrimary = components.filter(c => isHip(c.category) && isPrimary(c.category));
+    const hipRevision = components.filter(c => isHip(c.category) && isRevision(c.category));
+    const kneePrimary = components.filter(c => isKnee(c.category) && isPrimary(c.category));
+    const kneeRevision = components.filter(c => isKnee(c.category) && isRevision(c.category));
+
+    const renderComponentTable = (componentList, title, bgColor, borderColor) => {
+      const groupSavings = componentList.reduce((sum, item) => sum + item.potentialSavings, 0);
+
+      return (
+        <div className={`rounded-lg p-4 ${bgColor} border-2 ${borderColor}`}>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-bold text-gray-900">{title}</h3>
+            <div className="text-right">
+              <div className="text-xl font-bold text-green-600">
+                ${(groupSavings / 1000).toFixed(0)}K
+              </div>
+              <div className="text-xs text-gray-600">{componentList.length} categories</div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-100 border-b">
+                  <th className="px-3 py-2 text-left font-bold">#</th>
+                  <th className="px-3 py-2 text-left font-bold">Component</th>
+                  <th className="px-3 py-2 text-right font-bold">Current</th>
+                  <th className="px-3 py-2 text-right font-bold">Target</th>
+                  <th className="px-3 py-2 text-right font-bold">Savings %</th>
+                  <th className="px-3 py-2 text-right font-bold">Potential</th>
+                </tr>
+              </thead>
+              <tbody>
+                {componentList.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="px-3 py-4 text-center text-gray-500 text-sm">
+                      No components in this category
+                    </td>
+                  </tr>
+                ) : (
+                  componentList.map((item, idx) => {
+                    const savingsPercent = ((item.currentAvgPrice - item.matrixPrice) / item.currentAvgPrice * 100).toFixed(1);
+                    return (
+                      <tr key={idx} className="border-b hover:bg-gray-50">
+                        <td className="px-3 py-2 text-gray-500">{idx + 1}</td>
+                        <td className="px-3 py-2 font-medium text-gray-900">{item.category}</td>
+                        <td className="px-3 py-2 text-right text-gray-600">${item.currentAvgPrice.toLocaleString()}</td>
+                        <td className="px-3 py-2 text-right font-medium text-green-600">
+                          ${item.matrixPrice.toLocaleString()}
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded font-bold text-xs">
+                            {savingsPercent}%
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 text-right font-bold text-green-600">
+                          ${(item.potentialSavings / 1000).toFixed(0)}K
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    };
+
     return (
       <div className="space-y-6">
         <ExecutiveSummaryCard scenario={selectedScenario} />
@@ -1021,10 +1108,10 @@ const EnhancedOrthopedicDashboard = () => {
         <div className="bg-white rounded-xl shadow-lg p-6">
           <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
             <Package className="w-6 h-6" style={{ color: COLORS.primary }} />
-            Component Pricing Opportunities
+            Component Pricing Opportunities by Procedure & Type
           </h2>
           <p className="text-gray-600 mb-6">
-            Top component-level pricing opportunities sorted by potential savings
+            Component-level pricing opportunities grouped by hip/knee procedures and primary/revision types
           </p>
 
           {/* Total Savings Summary */}
@@ -1039,43 +1126,28 @@ const EnhancedOrthopedicDashboard = () => {
             </div>
           </div>
 
-          {/* Components Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="px-4 py-3 text-left font-bold text-sm">#</th>
-                  <th className="px-4 py-3 text-left font-bold text-sm">Component Category</th>
-                  <th className="px-4 py-3 text-right font-bold text-sm">Current Avg</th>
-                  <th className="px-4 py-3 text-right font-bold text-sm">Target Price</th>
-                  <th className="px-4 py-3 text-right font-bold text-sm">Savings %</th>
-                  <th className="px-4 py-3 text-right font-bold text-sm">Potential Savings</th>
-                </tr>
-              </thead>
-              <tbody>
-                {components.map((item, idx) => {
-                  const savingsPercent = ((item.currentAvgPrice - item.matrixPrice) / item.currentAvgPrice * 100).toFixed(1);
-                  return (
-                    <tr key={idx} className="border-b hover:bg-gray-50">
-                      <td className="px-4 py-3 text-gray-500 text-sm">{idx + 1}</td>
-                      <td className="px-4 py-3 font-medium text-sm">{item.category}</td>
-                      <td className="px-4 py-3 text-right text-gray-600 text-sm">${item.currentAvgPrice.toLocaleString()}</td>
-                      <td className="px-4 py-3 text-right font-medium text-green-600 text-sm">
-                        ${item.matrixPrice.toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded font-bold text-sm">
-                          {savingsPercent}%
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right font-bold text-green-600 text-sm">
-                        ${(item.potentialSavings / 1000).toFixed(0)}K
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          {/* Hip Components */}
+          <div className="mb-6">
+            <h3 className="text-xl font-bold text-blue-900 mb-4 flex items-center gap-2">
+              <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
+              Hip Procedures
+            </h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {renderComponentTable(hipPrimary, 'Hip Primary', 'bg-blue-50', 'border-blue-200')}
+              {renderComponentTable(hipRevision, 'Hip Revision', 'bg-amber-50', 'border-amber-200')}
+            </div>
+          </div>
+
+          {/* Knee Components */}
+          <div>
+            <h3 className="text-xl font-bold text-teal-900 mb-4 flex items-center gap-2">
+              <div className="w-3 h-3 bg-teal-600 rounded-full"></div>
+              Knee Procedures
+            </h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {renderComponentTable(kneePrimary, 'Knee Primary', 'bg-teal-50', 'border-teal-200')}
+              {renderComponentTable(kneeRevision, 'Knee Revision', 'bg-orange-50', 'border-orange-200')}
+            </div>
           </div>
         </div>
       </div>
