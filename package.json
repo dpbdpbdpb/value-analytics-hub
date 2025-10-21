@@ -1,7 +1,7 @@
 {
-  "name": "commonspirit-orthopedic-value-analytics",
+  "name": "commonspirit-value-analytics-hub",
   "version": "2.0.0",
-  "homepage": "https://dpbdpbdpb.github.io/orthopedic-dashboard",
+  "homepage": "https://dpbdpbdpb.github.io/value-analytics-hub",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.17.0",

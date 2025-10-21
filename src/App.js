@@ -11,7 +11,7 @@ import './App.css';
 
 function App() {
   return (
-    <Router basename="/orthopedic-dashboard">
+    <Router basename="/value-analytics-hub">
       <Routes>
         {/* Portfolio Overview - Default home page */}
         <Route path="/" element={<PortfolioOverview />} />
@@ -77,7 +77,7 @@ const ComingSoon = ({ specialty }) => {
           and strategic decision support currently available for Hip & Knee.
         </p>
         <a
-          href="/orthopedic-dashboard"
+          href="/value-analytics-hub"
           className="inline-block px-8 py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white font-bold rounded-lg hover:shadow-lg transition-all"
         >
           Return to Home
