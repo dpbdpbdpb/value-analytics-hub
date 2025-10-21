@@ -45,8 +45,8 @@ const PortfolioOverview = () => {
       borderColor: 'border-blue-200',
       textColor: 'text-blue-900',
       accentColor: 'text-blue-600',
-      description: 'Joint replacement (hip & knee)',
-      productLines: ['Hip/Knee'],
+      description: 'Joint replacement, spine, sports medicine, trauma',
+      productLines: ['Hip/Knee', 'Shoulder', 'Spine', 'Sports Medicine', 'Trauma'],
       activeDecisions: orthopedicMetrics.activeDecisions,
       annualVolume: orthopedicMetrics.annualVolume,
       opportunityValue: orthopedicMetrics.opportunityValue,
@@ -164,17 +164,17 @@ const PortfolioOverview = () => {
                 <div className="col-span-3 grid grid-cols-3 gap-4">
                   <div className="bg-white bg-opacity-10 rounded-lg p-4 backdrop-blur-sm">
                     <div className="text-3xl mb-2">⚕️</div>
-                    <div className="font-bold mb-1">Clinical Excellence</div>
+                    <div className="font-bold mb-1">Clinical</div>
                     <div className="text-xs text-slate-200">Patient outcomes, quality, safety</div>
                   </div>
                   <div className="bg-white bg-opacity-10 rounded-lg p-4 backdrop-blur-sm">
                     <div className="text-3xl mb-2">💰</div>
-                    <div className="font-bold mb-1">Financial Stewardship</div>
+                    <div className="font-bold mb-1">Financial</div>
                     <div className="text-xs text-slate-200">Cost, value, sustainability</div>
                   </div>
                   <div className="bg-white bg-opacity-10 rounded-lg p-4 backdrop-blur-sm">
                     <div className="text-3xl mb-2">⚙️</div>
-                    <div className="font-bold mb-1">Operational Excellence</div>
+                    <div className="font-bold mb-1">Operational</div>
                     <div className="text-xs text-slate-200">Efficiency, workflow, capacity</div>
                   </div>
                 </div>

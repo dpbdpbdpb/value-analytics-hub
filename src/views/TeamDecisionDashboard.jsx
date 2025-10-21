@@ -841,7 +841,7 @@ const TeamDecisionDashboard = () => {
                 <div className="bg-purple-50 border-l-4 border-purple-600 p-6 rounded">
                   <h3 className="font-bold text-purple-900 mb-3">Mission Alignment</h3>
                   <p className="text-sm text-purple-800 mb-3">
-                    Clinical excellence supports our Quintuple Aim:
+                    Clinical quality supports our Quintuple Aim:
                   </p>
                   <ul className="space-y-2 text-sm text-purple-800">
                     <li>• Surgeon satisfaction impacts provider experience scores</li>
@@ -1021,7 +1021,7 @@ const TeamDecisionDashboard = () => {
                 <div className="bg-purple-50 border-l-4 border-purple-600 p-6 rounded">
                   <h3 className="font-bold text-purple-900 mb-3">Mission Alignment</h3>
                   <p className="text-sm text-purple-800 mb-3">
-                    Operational excellence enables our Quintuple Aim:
+                    Operational efficiency enables our Quintuple Aim:
                   </p>
                   <ul className="space-y-2 text-sm text-purple-800">
                     <li>• Efficient implementation minimizes disruption to patient care</li>

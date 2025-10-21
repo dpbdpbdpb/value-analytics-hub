@@ -37,7 +37,7 @@ const ServiceLineView = () => {
     completedDecisions: 0
   };
 
-  // Product lines - only Hip/Knee has data
+  // Product lines - only Hip/Knee has data currently
   const productLines = [
     {
       id: 'hip-knee',
@@ -51,6 +51,50 @@ const ServiceLineView = () => {
       decisions: [
         { id: 'vendor-consolidation', name: 'Vendor Consolidation Strategy', status: 'analyzing' }
       ]
+    },
+    {
+      id: 'shoulder',
+      name: 'Shoulder',
+      description: 'Total shoulder, reverse shoulder arthroplasty',
+      activeDecisions: 0,
+      completedDecisions: 0,
+      annualVolume: 'TBD',
+      opportunityValue: 'TBD',
+      status: 'coming-soon',
+      decisions: []
+    },
+    {
+      id: 'spine',
+      name: 'Spine',
+      description: 'Spinal fusion, disc replacement, decompression',
+      activeDecisions: 0,
+      completedDecisions: 0,
+      annualVolume: 'TBD',
+      opportunityValue: 'TBD',
+      status: 'coming-soon',
+      decisions: []
+    },
+    {
+      id: 'sports',
+      name: 'Sports Medicine',
+      description: 'ACL reconstruction, meniscus repair, rotator cuff',
+      activeDecisions: 0,
+      completedDecisions: 0,
+      annualVolume: 'TBD',
+      opportunityValue: 'TBD',
+      status: 'coming-soon',
+      decisions: []
+    },
+    {
+      id: 'trauma',
+      name: 'Trauma',
+      description: 'Fracture fixation, external fixation',
+      activeDecisions: 0,
+      completedDecisions: 0,
+      annualVolume: 'TBD',
+      opportunityValue: 'TBD',
+      status: 'coming-soon',
+      decisions: []
     }
   ];
 
@@ -158,7 +202,7 @@ const ServiceLineView = () => {
           </div>
 
           {/* Product Line Cards */}
-          <div className="max-w-2xl mx-auto">
+          <div className="grid grid-cols-3 gap-6">
             {productLines.map((productLine) => {
               const isActive = productLine.status === 'active';
 
