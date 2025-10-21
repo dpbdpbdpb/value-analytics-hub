@@ -1009,91 +1009,10 @@ const EnhancedOrthopedicDashboard = () => {
   // remain the same as before, but now use the dynamically loaded SCENARIOS data
   // For brevity, I'm including just the key parts that demonstrate real data usage
 
-  // COMPONENT ANALYSIS TAB (replaces matrix tab)
+  // COMPONENT ANALYSIS TAB - Simplified version
   const renderComponentTab = () => {
-    // Separate components into Primary and Revision
-    // Note: Revision takes precedence - if a component has "revision" in the name, it's revision
-    const revisionComponents = realData?.matrixPricing?.filter(item =>
-      item.category.toLowerCase().includes('revision')
-    ) || [];
-
-    const primaryComponents = realData?.matrixPricing?.filter(item => {
-      const cat = item.category.toLowerCase();
-      // Exclude revision first (revision takes precedence)
-      if (cat.includes('revision')) return false;
-      // Include explicitly marked as primary OR unicondylar (which is a type of primary procedure)
-      if (cat.includes('primary') || cat.includes('unicondylar')) return true;
-      // Include everything else that's not revision
-      return true;
-    }) || [];
-
-    // Group by Hip vs Knee procedures
-    const hipKeywords = ['hip', 'femoral head', 'acetabular', 'stem'];
-    const kneeKeywords = ['knee', 'tibial', 'femoral component', 'patella', 'bearing'];
-
-    const hipComponents = realData?.matrixPricing?.filter(item => {
-      const cat = item.category.toLowerCase();
-      return hipKeywords.some(keyword => cat.includes(keyword));
-    }) || [];
-
-    const kneeComponents = realData?.matrixPricing?.filter(item => {
-      const cat = item.category.toLowerCase();
-      return kneeKeywords.some(keyword => cat.includes(keyword));
-    }) || [];
-
-    // Further breakdown: Hip Primary/Revision and Knee Primary/Revision
-    const hipPrimary = hipComponents.filter(item => !item.category.toLowerCase().includes('revision'));
-    const hipRevision = hipComponents.filter(item => item.category.toLowerCase().includes('revision'));
-    const kneePrimary = kneeComponents.filter(item => !item.category.toLowerCase().includes('revision'));
-    const kneeRevision = kneeComponents.filter(item => item.category.toLowerCase().includes('revision'));
-
-    const renderComponentTable = (components, title, description, bgColor) => (
-      <div className={`rounded-xl p-4 ${bgColor}`}>
-        <h3 className="text-lg font-bold mb-2">{title}</h3>
-        <p className="text-sm text-gray-600 mb-3">{description}</p>
-        <div className="overflow-x-auto bg-white rounded-lg">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="px-4 py-3 text-left font-bold text-sm">Component Category</th>
-                <th className="px-4 py-3 text-right font-bold text-sm">Current Avg</th>
-                <th className="px-4 py-3 text-right font-bold text-sm">Target</th>
-                <th className="px-4 py-3 text-right font-bold text-sm">Savings %</th>
-                <th className="px-4 py-3 text-right font-bold text-sm">Potential</th>
-              </tr>
-            </thead>
-            <tbody>
-              {components.length > 0 ? components.slice(0, 8).map((item, idx) => {
-                const savingsPercent = ((item.currentAvgPrice - item.matrixPrice) / item.currentAvgPrice * 100).toFixed(1);
-                return (
-                  <tr key={idx} className="border-b hover:bg-gray-50">
-                    <td className="px-4 py-2 font-medium text-sm">{item.category}</td>
-                    <td className="px-4 py-2 text-right text-gray-600 text-sm">${item.currentAvgPrice.toLocaleString()}</td>
-                    <td className="px-4 py-2 text-right font-medium text-green-600 text-sm">
-                      ${item.matrixPrice.toLocaleString()}
-                    </td>
-                    <td className="px-4 py-2 text-right font-bold text-purple-600 text-sm">
-                      {savingsPercent}%
-                    </td>
-                    <td className="px-4 py-2 text-right font-bold text-green-600 text-sm">
-                      ${(item.potentialSavings / 1000).toFixed(0)}K
-                    </td>
-                  </tr>
-                );
-              }) : (
-                <tr>
-                  <td colSpan="5" className="px-4 py-4 text-center text-gray-500 text-sm">
-                    No components in this category
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    );
-
-    const [componentView, setComponentView] = React.useState('combined');
+    const components = realData?.matrixPricing || [];
+    const totalSavings = components.reduce((sum, item) => sum + item.potentialSavings, 0);
 
     return (
       <div className="space-y-6">
@@ -1103,240 +1022,62 @@ const EnhancedOrthopedicDashboard = () => {
         <div className="bg-white rounded-xl shadow-lg p-6">
           <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
             <Package className="w-6 h-6" style={{ color: COLORS.primary }} />
-            Component Savings Opportunities by Procedure Type
+            Component Pricing Opportunities
           </h2>
-          <p className="text-gray-600 mb-4">
-            Analysis of component-level pricing showing potential savings from strategic vendor partnerships
+          <p className="text-gray-600 mb-6">
+            Top component-level pricing opportunities sorted by potential savings
           </p>
 
-          {/* View Selector */}
-          <div className="flex gap-2 mb-6">
-            <button
-              onClick={() => setComponentView('combined')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                componentView === 'combined'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              Combined View
-            </button>
-            <button
-              onClick={() => setComponentView('hip')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                componentView === 'hip'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              Hip Procedures
-            </button>
-            <button
-              onClick={() => setComponentView('knee')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                componentView === 'knee'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              Knee Procedures
-            </button>
+          {/* Total Savings Summary */}
+          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 mb-6 border-2 border-green-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-green-900 mb-1">Total Component Savings Potential</h3>
+                <p className="text-3xl font-bold text-green-700">${(totalSavings / 1000000).toFixed(2)}M</p>
+                <p className="text-sm text-green-600 mt-1">{components.length} component categories analyzed</p>
+              </div>
+              <TrendingUp className="w-16 h-16 text-green-500 opacity-50" />
+            </div>
           </div>
 
-          {/* Combined View */}
-          {componentView === 'combined' && (
-            <>
-              {/* Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border-2 border-blue-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                    <h3 className="font-bold text-blue-900 text-sm">Primary</h3>
-                  </div>
-                  <div className="text-2xl font-bold text-blue-900">
-                    ${(primaryComponents.reduce((sum, item) => sum + item.potentialSavings, 0) / 1000000).toFixed(2)}M
-                  </div>
-                  <div className="text-xs text-blue-700 mt-1">
-                    {primaryComponents.length} categories
-                  </div>
-                </div>
-                <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-4 border-2 border-amber-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
-                    <h3 className="font-bold text-amber-900 text-sm">Revision</h3>
-                  </div>
-                  <div className="text-2xl font-bold text-amber-900">
-                    ${(revisionComponents.reduce((sum, item) => sum + item.potentialSavings, 0) / 1000000).toFixed(2)}M
-                  </div>
-                  <div className="text-xs text-amber-700 mt-1">
-                    {revisionComponents.length} categories
-                  </div>
-                </div>
-                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border-2 border-green-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <h3 className="font-bold text-green-900 text-sm">Hip</h3>
-                  </div>
-                  <div className="text-2xl font-bold text-green-900">
-                    ${(hipComponents.reduce((sum, item) => sum + item.potentialSavings, 0) / 1000000).toFixed(2)}M
-                  </div>
-                  <div className="text-xs text-green-700 mt-1">
-                    {hipComponents.length} categories
-                  </div>
-                </div>
-                <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-lg p-4 border-2 border-teal-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-3 h-3 bg-teal-500 rounded-full"></div>
-                    <h3 className="font-bold text-teal-900 text-sm">Knee</h3>
-                  </div>
-                  <div className="text-2xl font-bold text-teal-900">
-                    ${(kneeComponents.reduce((sum, item) => sum + item.potentialSavings, 0) / 1000000).toFixed(2)}M
-                  </div>
-                  <div className="text-xs text-teal-700 mt-1">
-                    {kneeComponents.length} categories
-                  </div>
-                </div>
-              </div>
-
-              {/* Component Tables */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {renderComponentTable(
-                  primaryComponents,
-                  'Primary Procedure Components',
-                  'Standard joint replacement components with highest savings potential',
-                  'bg-blue-50'
-                )}
-                {renderComponentTable(
-                  revisionComponents,
-                  'Revision Procedure Components',
-                  'Revision-specific components showing significant cost optimization opportunities',
-                  'bg-amber-50'
-                )}
-              </div>
-            </>
-          )}
-
-          {/* Hip View */}
-          {componentView === 'hip' && (
-            <>
-              {/* Hip Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border-2 border-green-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <h3 className="font-bold text-green-900">Total Hip Savings</h3>
-                  </div>
-                  <div className="text-3xl font-bold text-green-900">
-                    ${(hipComponents.reduce((sum, item) => sum + item.potentialSavings, 0) / 1000000).toFixed(2)}M
-                  </div>
-                  <div className="text-sm text-green-700 mt-1">
-                    {hipComponents.length} component categories
-                  </div>
-                </div>
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border-2 border-blue-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                    <h3 className="font-bold text-blue-900">Hip Primary</h3>
-                  </div>
-                  <div className="text-3xl font-bold text-blue-900">
-                    ${(hipPrimary.reduce((sum, item) => sum + item.potentialSavings, 0) / 1000000).toFixed(2)}M
-                  </div>
-                  <div className="text-sm text-blue-700 mt-1">
-                    {hipPrimary.length} categories
-                  </div>
-                </div>
-                <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-4 border-2 border-amber-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
-                    <h3 className="font-bold text-amber-900">Hip Revision</h3>
-                  </div>
-                  <div className="text-3xl font-bold text-amber-900">
-                    ${(hipRevision.reduce((sum, item) => sum + item.potentialSavings, 0) / 1000000).toFixed(2)}M
-                  </div>
-                  <div className="text-sm text-amber-700 mt-1">
-                    {hipRevision.length} categories
-                  </div>
-                </div>
-              </div>
-
-              {/* Hip Component Tables */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {renderComponentTable(
-                  hipPrimary,
-                  'Hip Primary Components',
-                  'Primary hip replacement components',
-                  'bg-blue-50'
-                )}
-                {renderComponentTable(
-                  hipRevision,
-                  'Hip Revision Components',
-                  'Revision hip replacement components',
-                  'bg-amber-50'
-                )}
-              </div>
-            </>
-          )}
-
-          {/* Knee View */}
-          {componentView === 'knee' && (
-            <>
-              {/* Knee Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-lg p-4 border-2 border-teal-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-3 h-3 bg-teal-500 rounded-full"></div>
-                    <h3 className="font-bold text-teal-900">Total Knee Savings</h3>
-                  </div>
-                  <div className="text-3xl font-bold text-teal-900">
-                    ${(kneeComponents.reduce((sum, item) => sum + item.potentialSavings, 0) / 1000000).toFixed(2)}M
-                  </div>
-                  <div className="text-sm text-teal-700 mt-1">
-                    {kneeComponents.length} component categories
-                  </div>
-                </div>
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border-2 border-blue-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                    <h3 className="font-bold text-blue-900">Knee Primary</h3>
-                  </div>
-                  <div className="text-3xl font-bold text-blue-900">
-                    ${(kneePrimary.reduce((sum, item) => sum + item.potentialSavings, 0) / 1000000).toFixed(2)}M
-                  </div>
-                  <div className="text-sm text-blue-700 mt-1">
-                    {kneePrimary.length} categories
-                  </div>
-                </div>
-                <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-4 border-2 border-amber-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
-                    <h3 className="font-bold text-amber-900">Knee Revision</h3>
-                  </div>
-                  <div className="text-3xl font-bold text-amber-900">
-                    ${(kneeRevision.reduce((sum, item) => sum + item.potentialSavings, 0) / 1000000).toFixed(2)}M
-                  </div>
-                  <div className="text-sm text-amber-700 mt-1">
-                    {kneeRevision.length} categories
-                  </div>
-                </div>
-              </div>
-
-              {/* Knee Component Tables */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {renderComponentTable(
-                  kneePrimary,
-                  'Knee Primary Components',
-                  'Primary knee replacement components',
-                  'bg-blue-50'
-                )}
-                {renderComponentTable(
-                  kneeRevision,
-                  'Knee Revision Components',
-                  'Revision knee replacement components',
-                  'bg-amber-50'
-                )}
-              </div>
-            </>
-          )}
+          {/* Components Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="px-4 py-3 text-left font-bold text-sm">#</th>
+                  <th className="px-4 py-3 text-left font-bold text-sm">Component Category</th>
+                  <th className="px-4 py-3 text-right font-bold text-sm">Current Avg</th>
+                  <th className="px-4 py-3 text-right font-bold text-sm">Target Price</th>
+                  <th className="px-4 py-3 text-right font-bold text-sm">Savings %</th>
+                  <th className="px-4 py-3 text-right font-bold text-sm">Potential Savings</th>
+                </tr>
+              </thead>
+              <tbody>
+                {components.map((item, idx) => {
+                  const savingsPercent = ((item.currentAvgPrice - item.matrixPrice) / item.currentAvgPrice * 100).toFixed(1);
+                  return (
+                    <tr key={idx} className="border-b hover:bg-gray-50">
+                      <td className="px-4 py-3 text-gray-500 text-sm">{idx + 1}</td>
+                      <td className="px-4 py-3 font-medium text-sm">{item.category}</td>
+                      <td className="px-4 py-3 text-right text-gray-600 text-sm">${item.currentAvgPrice.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-right font-medium text-green-600 text-sm">
+                        ${item.matrixPrice.toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded font-bold text-sm">
+                          {savingsPercent}%
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right font-bold text-green-600 text-sm">
+                        ${(item.potentialSavings / 1000).toFixed(0)}K
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     );
