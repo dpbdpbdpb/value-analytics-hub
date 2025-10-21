@@ -20,8 +20,8 @@ const PortfolioOverview = () => {
       description: 'Joint replacement, spine, sports medicine, trauma',
       productLines: ['Hip/Knee', 'Shoulder', 'Spine', 'Sports Medicine', 'Trauma'],
       activeDecisions: 8,
-      annualVolume: '12,500 cases',
-      opportunityValue: '$45M',
+      annualVolume: '27,623 cases',
+      opportunityValue: '$42M',
       status: 'active'
     },
     {
