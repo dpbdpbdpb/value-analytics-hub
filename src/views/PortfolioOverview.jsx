@@ -161,7 +161,7 @@ const PortfolioOverview = () => {
           </div>
 
           {/* Service Line Cards */}
-          <div className="grid grid-cols-1 gap-6">
+          <div className="grid grid-cols-2 gap-6">
             {serviceLines.map((serviceLine) => {
               const IconComponent = serviceLine.icon;
               const isActive = serviceLine.status === 'active';
@@ -169,7 +169,7 @@ const PortfolioOverview = () => {
               return (
                 <div
                   key={serviceLine.id}
-                  className={`bg-white rounded-xl shadow-lg p-6 transition-all border-2 ${
+                  className={`bg-white rounded-xl shadow-lg p-5 transition-all border-2 ${
                     isActive
                       ? `${serviceLine.borderColor} hover:shadow-xl cursor-pointer hover:scale-[1.01]`
                       : 'border-gray-200 opacity-75'
@@ -195,16 +195,16 @@ const PortfolioOverview = () => {
                             </span>
                           )}
                         </div>
-                        <p className="text-gray-600 mb-4">{serviceLine.description}</p>
+                        <p className="text-gray-600 mb-3 text-sm">{serviceLine.description}</p>
 
                         {/* Product Lines */}
-                        <div className="mb-4">
+                        <div className="mb-3">
                           <div className="text-xs font-semibold text-gray-600 mb-2">Product Lines:</div>
                           <div className="flex flex-wrap gap-2">
                             {serviceLine.productLines.map((pl) => (
                               <span
                                 key={pl}
-                                className={`px-3 py-1 ${serviceLine.bgColor} ${serviceLine.accentColor} rounded text-sm font-medium`}
+                                className={`px-2 py-1 ${serviceLine.bgColor} ${serviceLine.accentColor} rounded text-xs font-medium`}
                               >
                                 {pl}
                               </span>

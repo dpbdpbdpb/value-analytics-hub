@@ -224,7 +224,7 @@ const ProductLineView = () => {
           </div>
 
           {/* Decision Canvas Cards */}
-          <div className="grid grid-cols-1 gap-6">
+          <div className="grid grid-cols-3 gap-6">
             {decisionCanvases.map((canvas) => {
               const IconComponent = canvas.icon;
               const isActive = canvas.status === 'active';
@@ -232,64 +232,57 @@ const ProductLineView = () => {
               return (
                 <div
                   key={canvas.id}
-                  className={`bg-white rounded-xl shadow-lg p-6 transition-all border-2 ${
+                  className={`bg-white rounded-xl shadow-lg p-5 transition-all border-2 ${
                     isActive
-                      ? `${canvas.borderColor} hover:shadow-xl cursor-pointer hover:scale-[1.01]`
+                      ? `${canvas.borderColor} hover:shadow-xl cursor-pointer hover:scale-[1.02]`
                       : 'border-gray-200 opacity-75'
                   }`}
                   onClick={() => handleCanvasClick(canvas)}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4 flex-1">
-                      {/* Icon */}
-                      <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${canvas.color} flex items-center justify-center flex-shrink-0`}>
-                        <IconComponent className="w-8 h-8 text-white" />
-                      </div>
-
-                      {/* Content */}
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className={`text-2xl font-bold ${canvas.textColor}`}>
-                            {canvas.name}
-                          </h3>
-                          <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
-                            Active
-                          </span>
-                        </div>
-                        <p className="text-gray-600 mb-4">{canvas.description}</p>
-
-                        {/* Features */}
-                        <div className="mb-4">
-                          <div className="text-xs font-semibold text-gray-600 mb-2">Key Features:</div>
-                          <div className="grid grid-cols-2 gap-2">
-                            {canvas.features.map((feature, idx) => (
-                              <div key={idx} className="flex items-center gap-2">
-                                <div className={`w-1.5 h-1.5 rounded-full ${canvas.bgColor} ${canvas.accentColor}`}></div>
-                                <span className="text-sm text-gray-700">{feature}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Metrics */}
-                        <div className="flex gap-6 text-sm">
-                          {Object.entries(canvas.metrics).map(([key, value]) => (
-                            <div key={key}>
-                              <span className="text-gray-600 capitalize">{key.replace(/([A-Z])/g, ' $1')}: </span>
-                              <span className={`font-bold ${canvas.accentColor}`}>{value}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+                  {/* Icon */}
+                  <div className="flex justify-center mb-4">
+                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${canvas.color} flex items-center justify-center`}>
+                      <IconComponent className="w-7 h-7 text-white" />
                     </div>
-
-                    {/* Arrow */}
-                    {isActive && (
-                      <div className={`flex items-center ${canvas.accentColor} ml-4`}>
-                        <ChevronRight className="w-8 h-8" />
-                      </div>
-                    )}
                   </div>
+
+                  {/* Header */}
+                  <div className="text-center mb-3">
+                    <h3 className={`text-lg font-bold ${canvas.textColor} mb-1`}>
+                      {canvas.name}
+                    </h3>
+                    <p className="text-gray-600 text-xs">{canvas.description}</p>
+                  </div>
+
+                  {/* Features */}
+                  <div className="mb-3">
+                    <div className="text-xs font-semibold text-gray-600 mb-2 text-center">Key Features</div>
+                    <div className="flex flex-col gap-1">
+                      {canvas.features.map((feature, idx) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <div className={`w-1.5 h-1.5 rounded-full ${canvas.bgColor} ${canvas.accentColor}`}></div>
+                          <span className="text-xs text-gray-700">{feature}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Metrics */}
+                  <div className="border-t pt-3">
+                    {Object.entries(canvas.metrics).map(([key, value]) => (
+                      <div key={key} className="flex justify-between text-xs mb-1">
+                        <span className="text-gray-600 capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
+                        <span className={`font-bold ${canvas.accentColor}`}>{value}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Arrow */}
+                  {isActive && (
+                    <div className={`flex items-center justify-center ${canvas.accentColor} mt-4`}>
+                      <ChevronRight className="w-6 h-6" />
+                    </div>
+                  )}
                 </div>
               );
             })}

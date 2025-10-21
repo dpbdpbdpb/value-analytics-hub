@@ -163,90 +163,86 @@ const ServiceLineView = () => {
           </div>
 
           {/* Product Line Cards */}
-          <div className="grid grid-cols-1 gap-6">
+          <div className="grid grid-cols-3 gap-6">
             {productLines.map((productLine) => {
               const isActive = productLine.status === 'active';
 
               return (
                 <div
                   key={productLine.id}
-                  className={`bg-white rounded-xl shadow-lg p-6 transition-all border-2 ${
+                  className={`bg-white rounded-xl shadow-lg p-5 transition-all border-2 ${
                     isActive
-                      ? 'border-blue-200 hover:shadow-xl cursor-pointer hover:scale-[1.01]'
+                      ? 'border-blue-200 hover:shadow-xl cursor-pointer hover:scale-[1.02]'
                       : 'border-gray-200 opacity-75'
                   }`}
                   onClick={() => handleProductLineClick(productLine)}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      {/* Header */}
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-2xl font-bold text-blue-900">
-                          {productLine.name}
-                        </h3>
-                        {!isActive && (
-                          <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-semibold">
-                            Coming Q2 2025
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-gray-600 mb-4">{productLine.description}</p>
-
-                      {/* Metrics Row */}
-                      <div className="grid grid-cols-4 gap-4 mb-4">
-                        <div>
-                          <div className="text-xs text-gray-600 mb-1">Active Decisions</div>
-                          <div className="text-xl font-bold text-blue-600">
-                            {productLine.activeDecisions}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-gray-600 mb-1">Completed</div>
-                          <div className="text-xl font-bold text-green-600">
-                            {productLine.completedDecisions}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-gray-600 mb-1">Annual Volume</div>
-                          <div className="text-lg font-semibold text-gray-900">
-                            {productLine.annualVolume}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-xs text-gray-600 mb-1">Opportunity</div>
-                          <div className="text-lg font-semibold text-gray-900">
-                            {productLine.opportunityValue}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Active Decisions Preview */}
-                      {productLine.decisions.length > 0 && (
-                        <div>
-                          <div className="text-xs font-semibold text-gray-600 mb-2">
-                            Active Decision Canvases:
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {productLine.decisions.map((decision) => (
-                              <span
-                                key={decision.id}
-                                className={`px-3 py-1 rounded text-sm font-medium border ${getStatusColor(decision.status)}`}
-                              >
-                                {decision.name}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Arrow */}
-                    {isActive && (
-                      <div className="flex items-center text-blue-600 ml-4">
-                        <ChevronRight className="w-8 h-8" />
-                      </div>
+                  {/* Header */}
+                  <div className="text-center mb-4">
+                    <h3 className="text-xl font-bold text-blue-900 mb-1">
+                      {productLine.name}
+                    </h3>
+                    {!isActive && (
+                      <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-semibold">
+                        Coming Q2 2025
+                      </span>
                     )}
+                    <p className="text-gray-600 text-sm mt-2">{productLine.description}</p>
                   </div>
+
+                  {/* Metrics Grid */}
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="bg-blue-50 rounded-lg p-3 text-center">
+                      <div className="text-xs text-gray-600 mb-1">Active</div>
+                      <div className="text-2xl font-bold text-blue-600">
+                        {productLine.activeDecisions}
+                      </div>
+                    </div>
+                    <div className="bg-green-50 rounded-lg p-3 text-center">
+                      <div className="text-xs text-gray-600 mb-1">Complete</div>
+                      <div className="text-2xl font-bold text-green-600">
+                        {productLine.completedDecisions}
+                      </div>
+                    </div>
+                    <div className="bg-amber-50 rounded-lg p-3 text-center">
+                      <div className="text-xs text-gray-600 mb-1">Volume</div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        {productLine.annualVolume}
+                      </div>
+                    </div>
+                    <div className="bg-purple-50 rounded-lg p-3 text-center">
+                      <div className="text-xs text-gray-600 mb-1">Value</div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        {productLine.opportunityValue}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Active Decisions Preview */}
+                  {productLine.decisions.length > 0 && (
+                    <div className="text-center">
+                      <div className="text-xs font-semibold text-gray-600 mb-2">
+                        Active Canvases
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        {productLine.decisions.map((decision) => (
+                          <span
+                            key={decision.id}
+                            className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(decision.status)}`}
+                          >
+                            {decision.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Arrow */}
+                  {isActive && (
+                    <div className="flex items-center justify-center text-blue-600 mt-4">
+                      <ChevronRight className="w-6 h-6" />
+                    </div>
+                  )}
                 </div>
               );
             })}
