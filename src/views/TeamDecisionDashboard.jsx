@@ -68,7 +68,7 @@ const TeamDecisionDashboard = () => {
         <div className="flex items-start justify-between mb-4">
           <div>
             <h3 className="text-2xl font-bold text-gray-900">
-              {scenarioId}: {scenario.shortName}
+              {scenario.name}
             </h3>
             <p className="text-sm text-gray-600 mt-1">{scenario.description}</p>
           </div>
