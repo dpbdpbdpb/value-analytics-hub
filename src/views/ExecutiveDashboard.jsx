@@ -2082,59 +2082,64 @@ const EnhancedOrthopedicDashboard = () => {
           </div>
         </div>
 
-        {/* Detailed Intelligence Cards */}
-        {industryIntelligence.map((category) => {
-          const CategoryIcon = category.icon;
-          return (
-            <div key={category.category} className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                <CategoryIcon className="w-6 h-6" style={{ color: category.color }} />
-                {category.category}
-              </h2>
-              <div className="space-y-4">
-                {category.events.map((event, idx) => (
-                  <div key={idx} className="border-l-4 pl-4 py-3" style={{ borderColor: getImpactColor(event.impact) }}>
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-bold text-lg">{event.title}</h3>
+        {/* Detailed Intelligence Cards - Horizontal Grid Layout */}
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h2 className="text-2xl font-bold mb-6">Industry Events & Strategic Intelligence</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {industryIntelligence.map((category) => {
+              const CategoryIcon = category.icon;
+              return (
+                <div key={category.category} className="border-2 rounded-lg p-4" style={{ borderColor: category.color }}>
+                  <div className="flex items-center gap-2 mb-4 pb-3 border-b-2" style={{ borderColor: category.color }}>
+                    <CategoryIcon className="w-5 h-5" style={{ color: category.color }} />
+                    <h3 className="font-bold text-lg" style={{ color: category.color }}>{category.category}</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {category.events.map((event, idx) => (
+                      <div key={idx} className="bg-gray-50 rounded-lg p-3">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <h4 className="font-bold text-sm flex-1">{event.title}</h4>
+                          <div className="flex gap-1 flex-shrink-0">
+                            <span
+                              className="px-1.5 py-0.5 rounded text-xs font-medium text-white"
+                              style={{ backgroundColor: getImpactColor(event.impact) }}
+                            >
+                              {event.impact}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-xs text-gray-500 mb-2">{event.date}</div>
+                        <p className="text-xs text-gray-700 mb-2">{event.description}</p>
+                        <div className="flex items-center gap-1 mb-2">
                           <span
-                            className="px-2 py-1 rounded text-xs font-medium text-white"
-                            style={{ backgroundColor: getImpactColor(event.impact) }}
-                          >
-                            {event.impact} Impact
-                          </span>
-                          <span
-                            className={`px-2 py-1 rounded text-xs font-medium ${
+                            className={`px-2 py-0.5 rounded text-xs font-medium ${
                               event.leverage === 'CommonSpirit'
-                                ? 'bg-green-100 text-green-800 border border-green-300'
-                                : 'bg-red-100 text-red-800 border border-red-300'
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-red-100 text-red-700'
                             }`}
                           >
                             {event.leverage === 'CommonSpirit' ? '✓ Favors CommonSpirit' : '⚠ Favors Vendor'}
                           </span>
                         </div>
-                        <div className="text-sm text-gray-500">{event.date}</div>
+                        <div className="bg-white rounded p-2 mt-2">
+                          <div className="text-xs font-semibold text-gray-600 mb-1">Key Implications:</div>
+                          <ul className="text-xs text-gray-600 space-y-0.5">
+                            {event.implications.slice(0, 2).map((imp, i) => (
+                              <li key={i} className="flex items-start gap-1">
+                                <span className="text-purple-600">•</span>
+                                <span>{imp}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
                       </div>
-                    </div>
-                    <p className="text-gray-700 mb-3">{event.description}</p>
-                    <div className="bg-gray-50 rounded-lg p-3">
-                      <div className="text-sm font-semibold text-gray-700 mb-2">Strategic Implications:</div>
-                      <ul className="text-sm text-gray-600 space-y-1">
-                        {event.implications.map((imp, i) => (
-                          <li key={i} className="flex items-start gap-2">
-                            <span className="text-purple-600 font-bold">•</span>
-                            <span>{imp}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Vendor-Specific Intelligence */}
         <div className="bg-white rounded-xl shadow-lg p-6">
@@ -2206,59 +2211,51 @@ const EnhancedOrthopedicDashboard = () => {
           </div>
         </div>
 
-        {/* Negotiating Windows - Fiscal Year Intelligence */}
+        {/* Negotiating Windows - Fiscal Year Intelligence - Compact Grid */}
         <div className="bg-white rounded-xl shadow-lg p-6">
           <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
             <Calendar className="w-6 h-6" style={{ color: COLORS.primary }} />
             Strategic Negotiating Windows
           </h2>
-          <p className="text-gray-600 mb-6">
-            Optimal timing for contract negotiations based on vendor fiscal years, earnings cycles, and market pressures
+          <p className="text-gray-600 mb-4">
+            Optimal timing for contract negotiations based on vendor fiscal years and market pressures
           </p>
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {negotiatingWindows.map((vendor, idx) => (
-              <div key={idx} className="border-2 border-purple-200 rounded-lg p-5">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="text-xl font-bold text-purple-900">{vendor.vendor}</h3>
-                    <div className="text-sm text-gray-600 mt-1">
-                      Fiscal Year End: <span className="font-semibold">{vendor.fiscalYearEnd}</span> |
-                      Next Earnings: <span className="font-semibold text-purple-600">{vendor.nextEarnings}</span>
-                    </div>
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    <div className="font-semibold mb-1">Earnings Calendar:</div>
-                    {vendor.earningsReports.map((date, i) => (
-                      <div key={i} className="text-gray-600">Q{i+1}: {date}</div>
-                    ))}
+              <div key={idx} className="border-2 border-purple-200 rounded-lg p-4">
+                <div className="mb-3 pb-3 border-b border-purple-200">
+                  <h3 className="text-lg font-bold text-purple-900">{vendor.vendor}</h3>
+                  <div className="text-xs text-gray-600 mt-1">
+                    FY End: <span className="font-semibold">{vendor.fiscalYearEnd}</span> |
+                    Next Earnings: <span className="font-semibold text-purple-600">{vendor.nextEarnings}</span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-3">
                   {vendor.optimalWindows.map((window, wIdx) => (
                     <div
                       key={wIdx}
-                      className={`rounded-lg p-4 ${
+                      className={`rounded-lg p-3 ${
                         window.leverage === 'Very High'
-                          ? 'bg-green-50 border-2 border-green-300'
-                          : 'bg-blue-50 border-2 border-blue-300'
+                          ? 'bg-green-50 border border-green-300'
+                          : 'bg-blue-50 border border-blue-300'
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-bold text-gray-900">{window.period}</h4>
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        <h4 className="font-bold text-sm text-gray-900">{window.period}</h4>
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                           window.leverage === 'Very High'
                             ? 'bg-green-600 text-white'
                             : 'bg-blue-600 text-white'
                         }`}>
-                          {window.leverage} Leverage
+                          {window.leverage}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-700 mb-3 italic">{window.rationale}</p>
+                      <p className="text-xs text-gray-700 mb-2 italic">{window.rationale}</p>
                       <div className="text-xs">
-                        <div className="font-semibold text-gray-700 mb-1">Negotiation Tactics:</div>
-                        <ul className="space-y-1">
-                          {window.tactics.map((tactic, tIdx) => (
+                        <div className="font-semibold text-gray-600 mb-1">Tactics:</div>
+                        <ul className="space-y-0.5">
+                          {window.tactics.slice(0, 2).map((tactic, tIdx) => (
                             <li key={tIdx} className="flex items-start gap-1">
                               <span className="text-purple-600">▸</span>
                               <span className="text-gray-600">{tactic}</span>
