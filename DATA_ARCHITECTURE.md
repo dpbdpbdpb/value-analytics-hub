@@ -59,17 +59,43 @@ Each `baseline.json` or `lookback-*.json` file follows this schema:
     }
   },
 
+  "hospitals": {
+    "HOSPITAL_NAME": {
+      "id": "HOSP001",
+      "region": "CALIFORNIA",
+      "totalCases": 1200,
+      "totalSpend": 1800000,
+      "surgeonCount": 8,
+      "primaryVendor": "STRYKER",
+      "vendorConcentration": 0.75,  // 75% of cases use top vendor
+      "vendors": {
+        "STRYKER": {"cases": 900, "spend": 1350000, "surgeons": 6},
+        "ZIMMER BIOMET": {"cases": 300, "spend": 450000, "surgeons": 2}
+      }
+    }
+  },
+
   "surgeons": [
     {
       "name": "Smith, John",
       "id": "SURG001",
+      "hospital": "HOSPITAL_NAME",
+      "hospitalId": "HOSP001",
+      "region": "CALIFORNIA",
       "totalCases": 450,
       "totalSpend": 675000,
       "primaryVendor": "STRYKER",
       "primaryVendorPercent": 0.85,
+      "volumeCategory": "high",  // high (>500), medium (200-500), low (<200)
+      "isSherpa": false,  // Will be calculated based on efficiency/quality
       "vendors": {
         "STRYKER": {"cases": 383, "spend": 573750},
         "ZIMMER BIOMET": {"cases": 67, "spend": 101250}
+      },
+      "peerInfluence": {
+        "hospitalPeers": 7,  // Other surgeons at same hospital
+        "samePrimaryVendor": 5,  // Peers using same primary vendor
+        "potentialSherpas": ["SURG002", "SURG003"]  // IDs of efficient peers
       }
     }
   ],

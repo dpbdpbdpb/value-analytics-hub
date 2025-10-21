@@ -28,13 +28,19 @@ INSTRUCTIONS:
 3. For vendor data: aggregate by vendor name, normalizing vendor naming variations
 4. For surgeon data: preserve individual surgeon records with vendor usage patterns
 5. For regional data: aggregate by region if available
-6. Generate scenario modeling if sufficient data exists (recommend 4-5 scenarios)
-7. Calculate Quintuple Aim scores for each scenario based on:
-   - Patient Experience: clinical outcomes, quality metrics
-   - Population Health: access, volume trends
-   - Cost Reduction: savings potential
-   - Provider Experience: surgeon adoption, workflow impact
-   - Health Equity: geographic/demographic access
+6. **For hospital data:** aggregate surgeons by hospital to identify:
+   - Vendor concentration patterns within each hospital
+   - Pockets of surgeons using the same vendor (change management cohorts)
+   - Potential peer influence and sherpa opportunities
+7. **Identify sherpas:** flag high-performing surgeons (high volume + low cost) who can mentor peers during vendor transitions
+8. **Calculate peer influence:** for each surgeon, identify hospital peers and potential sherpas
+9. Generate scenario modeling if sufficient data exists (recommend 4-5 scenarios)
+10. Calculate Quintuple Aim scores for each scenario based on:
+    - Patient Experience: clinical outcomes, quality metrics
+    - Population Health: access, volume trends
+    - Cost Reduction: savings potential
+    - Provider Experience: surgeon adoption, workflow impact
+    - Health Equity: geographic/demographic access
 
 OUTPUT FORMAT:
 Please provide the complete JSON file following this schema:
@@ -65,19 +71,47 @@ Please provide the complete JSON file following this schema:
       "surgeons": 0
     }
   },
+  "hospitals": {
+    "HOSPITAL_NAME": {
+      "id": "UNIQUE_HOSPITAL_ID",
+      "region": "REGION_NAME",
+      "totalCases": 0,
+      "totalSpend": 0,
+      "surgeonCount": 0,
+      "primaryVendor": "VENDOR_NAME",
+      "vendorConcentration": 0.0,
+      "vendors": {
+        "VENDOR_NAME": {
+          "cases": 0,
+          "spend": 0,
+          "surgeons": 0
+        }
+      }
+    }
+  },
   "surgeons": [
     {
       "name": "Last, First",
       "id": "UNIQUE_ID",
+      "hospital": "HOSPITAL_NAME",
+      "hospitalId": "UNIQUE_HOSPITAL_ID",
+      "region": "REGION_NAME",
       "totalCases": 0,
       "totalSpend": 0,
       "primaryVendor": "VENDOR_NAME",
       "primaryVendorPercent": 0.0,
+      "volumeCategory": "high | medium | low",
+      "isSherpa": false,
       "vendors": {
         "VENDOR_NAME": {
           "cases": 0,
           "spend": 0
         }
+      },
+      "peerInfluence": {
+        "hospitalPeers": 0,
+        "samePrimaryVendor": 0,
+        "potentialSherpas": ["SURG_ID_1", "SURG_ID_2"]
       }
     }
   ],
@@ -129,6 +163,37 @@ VALIDATION CHECKS:
 - Check that adoptionRate is between 0 and 1
 - Ensure all percentages are decimals (e.g., 0.12 for 12%)
 - Validate that primaryVendorPercent for each surgeon sums correctly
+- Verify each surgeon is assigned to a hospital
+- Confirm peerInfluence data is calculated for all surgeons
+
+HOSPITAL AGGREGATION GUIDELINES:
+For each hospital, calculate:
+- **Total cases and spend** from all surgeons at that hospital
+- **Primary vendor**: The vendor with the most cases at that hospital
+- **Vendor concentration**: % of cases using the top vendor (helps identify single-vendor hospitals)
+- **Surgeon count**: Number of unique surgeons practicing at that hospital
+- **Vendor distribution**: Break down cases/spend/surgeon count by vendor
+
+This helps identify:
+- **Cohort opportunities**: Hospitals where most surgeons use the same vendor (easier transitions)
+- **Sherpa potential**: Hospitals with high-performing surgeons who can mentor peers
+- **Change management priorities**: Hospitals with high vendor fragmentation need more support
+
+SHERPA IDENTIFICATION CRITERIA:
+A surgeon qualifies as a potential "sherpa" (peer mentor) if they meet these criteria:
+- **High volume**: >200 cases/year (experienced, credible)
+- **Cost efficient**: Average cost per case in bottom 40% (demonstrates value)
+- **Willing to help**: (Can be flagged manually or inferred from data)
+
+For each surgeon, identify:
+- **potentialSherpas**: List of sherpa IDs at the same hospital who use the target vendor
+- **hospitalPeers**: Count of other surgeons at same hospital
+- **samePrimaryVendor**: Count of peers using the same primary vendor
+
+This enables change management strategies like:
+- Pairing surgeons who need to switch with sherpas who already use the target vendor
+- Organizing hospital-based training sessions led by local sherpas
+- Identifying "vendor islands" (lone surgeons at hospitals where peers use different vendors)
 
 SCENARIO GENERATION GUIDELINES:
 1. **Status Quo**: All current vendors, 0 savings, 1.0 adoption, low risk
