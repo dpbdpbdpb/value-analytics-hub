@@ -6,6 +6,7 @@ import SurgeonTool from './views/SurgeonTool';
 import TeamDecisionDashboard from './views/TeamDecisionDashboard';
 import PortfolioOverview from './views/PortfolioOverview';
 import ServiceLineView from './views/ServiceLineView';
+import ProductLineView from './views/ProductLineView';
 import InitiativeDetail from './views/InitiativeDetail';
 import './App.css';
 
@@ -18,6 +19,7 @@ function App() {
 
         {/* New Hierarchy: Service Line → Product Line → Decision Canvas */}
         <Route path="/service-line/:serviceLineId" element={<ServiceLineView />} />
+        <Route path="/product-line/:serviceLineId/:productLineId" element={<ProductLineView />} />
 
         {/* Initiative Detail - Legacy */}
         <Route path="/initiative/:initiativeId" element={<InitiativeDetail />} />
