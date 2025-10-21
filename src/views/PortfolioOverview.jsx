@@ -41,15 +41,15 @@ const PortfolioOverview = () => {
       status: 'coming-soon'
     },
     {
-      id: 'neurology',
-      name: 'Neurology & Neurosurgery',
+      id: 'neuroscience',
+      name: 'Neuroscience',
       icon: Brain,
       color: 'from-purple-600 to-purple-700',
       bgColor: 'bg-purple-50',
       borderColor: 'border-purple-200',
       textColor: 'text-purple-900',
       accentColor: 'text-purple-600',
-      description: 'Neurosurgery, stroke, epilepsy, spine',
+      description: 'Neurosurgery, stroke, epilepsy, neuro spine',
       productLines: ['Neurosurgery', 'Stroke', 'Epilepsy', 'Neuro Spine'],
       activeDecisions: 0,
       annualVolume: 'TBD',
