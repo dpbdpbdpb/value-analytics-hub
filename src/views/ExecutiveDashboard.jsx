@@ -569,8 +569,7 @@ const EnhancedOrthopedicDashboard = () => {
       { id: 'components', label: 'Component Analysis', icon: Package, personas: ['financial', 'operational'] },
       { id: 'risk', label: 'Risk Assessment', icon: Shield, personas: ['financial', 'operational'] },
       { id: 'mission', label: 'Mission Impact', icon: Heart, personas: ['financial'] },
-      { id: 'industry', label: 'Industry Intelligence', icon: AlertCircle, personas: ['financial', 'operational'] },
-      { id: 'decision', label: 'Decision Framework', icon: Target, personas: ['financial', 'operational'] }
+      { id: 'industry', label: 'Industry Intelligence', icon: AlertCircle, personas: ['financial', 'operational'] }
     ];
 
     // Filter tabs based on current persona
@@ -2274,45 +2273,6 @@ const EnhancedOrthopedicDashboard = () => {
     );
   };
 
-  // DECISION FRAMEWORK TAB
-  const renderDecisionTab = () => {
-    return (
-      <div className="space-y-6">
-        <ExecutiveSummaryCard scenario={selectedScenario} />
-
-        {/* Decision Matrix */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-2xl font-bold mb-4">Decision Support Matrix</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="border rounded-lg p-4 bg-green-50">
-              <h3 className="font-bold text-green-900 mb-2 flex items-center gap-2">
-                <CheckCircle className="w-5 h-5" />
-                Strengths
-              </h3>
-              <ul className="space-y-1 text-sm text-green-800">
-                <li>• {SCENARIOS[selectedScenario]?.adoptionRate >= 85 ? 'High adoption rate' : 'Moderate adoption expected'}</li>
-                <li>• ${SCENARIOS[selectedScenario]?.annualSavings.toFixed(2)}M annual savings potential</li>
-                <li>• {SCENARIOS[selectedScenario]?.quintupleMissionScore >= 80 ? 'Strong' : 'Good'} mission alignment</li>
-                <li>• {SCENARIOS[selectedScenario]?.implementation.timeline} month implementation timeline</li>
-              </ul>
-            </div>
-            <div className="border rounded-lg p-4 bg-red-50">
-              <h3 className="font-bold text-red-900 mb-2 flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5" />
-                Risks & Challenges
-              </h3>
-              <ul className="space-y-1 text-sm text-red-800">
-                <li>• {SCENARIOS[selectedScenario]?.riskLevel.charAt(0).toUpperCase() + SCENARIOS[selectedScenario]?.riskLevel.slice(1)} risk level (score: {SCENARIOS[selectedScenario]?.riskScore}/10)</li>
-                <li>• ${SCENARIOS[selectedScenario]?.implementation.costMillions}M implementation cost</li>
-                <li>• {SCENARIOS[selectedScenario]?.implementation.complexity} implementation complexity</li>
-                <li>• Change management across {realData ? Object.values(realData.regions).reduce((sum, r) => sum + r.surgeons, 0) : 0} surgeons</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   // WHAT-IF SCENARIO TOOLS
   const renderWhatIfTools = () => (
@@ -2545,7 +2505,6 @@ const EnhancedOrthopedicDashboard = () => {
           {activeTab === 'risk' && renderRiskTab()}
           {activeTab === 'mission' && renderMissionTab()}
           {activeTab === 'industry' && renderIndustryTab()}
-          {activeTab === 'decision' && renderDecisionTab()}
         </div>
 
         {/* Footer with Data Source */}
