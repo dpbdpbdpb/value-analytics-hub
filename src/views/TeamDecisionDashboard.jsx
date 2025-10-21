@@ -487,15 +487,17 @@ const TeamDecisionDashboard = () => {
               </div>
 
               {/* Scenario Cards */}
-              {Object.entries(SCENARIOS).map(([id, scenario]) => (
-                <ThreePillarScenarioCard
-                  key={id}
-                  scenarioId={id}
-                  scenario={scenario}
-                  isSelected={selectedScenario === id}
-                  onClick={() => setSelectedScenario(id)}
-                />
-              ))}
+              <div className="grid grid-cols-3 gap-6 mt-6">
+                {Object.entries(SCENARIOS).map(([id, scenario]) => (
+                  <ThreePillarScenarioCard
+                    key={id}
+                    scenarioId={id}
+                    scenario={scenario}
+                    isSelected={selectedScenario === id}
+                    onClick={() => setSelectedScenario(id)}
+                  />
+                ))}
+              </div>
             </div>
           )}
 
