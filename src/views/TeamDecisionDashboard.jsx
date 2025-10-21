@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Stethoscope, Shield, DollarSign, Users, Package, AlertCircle, Eye, Heart, Target } from 'lucide-react';
+import { TrendingUp, Stethoscope, Shield, DollarSign, Users, Package, AlertCircle, Eye, Heart, Target, Star, Activity } from 'lucide-react';
 import NavigationHeader from '../components/shared/NavigationHeader';
 
 const TeamDecisionDashboard = () => {
@@ -30,6 +30,11 @@ const TeamDecisionDashboard = () => {
     operations: '#10B981'
   };
 
+  // Calculate total surgeons from vendor data
+  const totalSurgeons = realData?.vendors
+    ? Object.values(realData.vendors).reduce((sum, vendor) => sum + (vendor.uniqueSurgeons || 0), 0)
+    : 0;
+
   // Scenarios data
   const SCENARIOS = realData?.scenarios || {};
 
@@ -50,7 +55,7 @@ const TeamDecisionDashboard = () => {
         <div className="flex items-start justify-between mb-4">
           <div>
             <h3 className="text-2xl font-bold text-gray-900">
-              Scenario {scenarioId}: {scenario.shortName}
+              {scenarioId}: {scenario.shortName}
             </h3>
             <p className="text-sm text-gray-600 mt-1">{scenario.description}</p>
           </div>
@@ -61,14 +66,59 @@ const TeamDecisionDashboard = () => {
           )}
         </div>
 
+        {/* Quintuple Aim North Star */}
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg p-4 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Star className="w-5 h-5 text-yellow-300" />
+              <h4 className="font-bold">Quintuple Aim</h4>
+            </div>
+            <div className="text-right">
+              <div className="text-xs opacity-90">Mission Alignment</div>
+              <div className="text-2xl font-bold">{(scenario.quintupleMissionScore || 0).toFixed(0)}/100</div>
+            </div>
+          </div>
+          <div className="grid grid-cols-5 gap-2 text-xs">
+            <div className="text-center">
+              <div className="mb-1">👤</div>
+              <div className="font-semibold">Patient Exp</div>
+              <div className="opacity-90">{scenario.quintupleScores?.patientExperience || 'N/A'}</div>
+            </div>
+            <div className="text-center">
+              <div className="mb-1">🏥</div>
+              <div className="font-semibold">Pop Health</div>
+              <div className="opacity-90">{scenario.quintupleScores?.populationHealth || 'N/A'}</div>
+            </div>
+            <div className="text-center">
+              <div className="mb-1">💰</div>
+              <div className="font-semibold">Cost</div>
+              <div className="opacity-90">{scenario.quintupleScores?.costReduction || 'N/A'}</div>
+            </div>
+            <div className="text-center">
+              <div className="mb-1">⚕️</div>
+              <div className="font-semibold">Provider</div>
+              <div className="opacity-90">{scenario.quintupleScores?.providerExperience || 'N/A'}</div>
+            </div>
+            <div className="text-center">
+              <div className="mb-1">⚖️</div>
+              <div className="font-semibold">Equity</div>
+              <div className="opacity-90">{scenario.quintupleScores?.healthEquity || 'N/A'}</div>
+            </div>
+          </div>
+        </div>
+
         {/* Three Pillar Grid */}
+        <div className="mb-3 text-center text-sm text-gray-600">
+          <span className="font-semibold">How each pillar serves the Quintuple Aim:</span>
+        </div>
         <div className="grid grid-cols-3 gap-3 mb-4">
           {/* Finance Pillar */}
           <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-2 mb-2">
               <DollarSign className="w-5 h-5 text-amber-600" />
               <h4 className="font-bold text-amber-900">Finance</h4>
             </div>
+            <div className="text-xs text-amber-700 mb-3 italic">Funding the mission</div>
             <div className="space-y-2 text-sm">
               <div>
                 <div className="text-xs text-amber-700">Projected Annual Savings</div>
@@ -95,18 +145,22 @@ const TeamDecisionDashboard = () => {
 
           {/* Clinical Pillar */}
           <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-2 mb-2">
               <Stethoscope className="w-5 h-5 text-blue-600" />
               <h4 className="font-bold text-blue-900">Clinical</h4>
             </div>
+            <div className="text-xs text-blue-700 mb-3 italic">Delivering excellent care</div>
             <div className="space-y-2 text-sm">
               <div>
                 <div className="text-xs text-blue-700">Vendor Switching Impact</div>
                 <div className="text-xl font-bold text-blue-900">
-                  {(100 - (scenario.adoptionRate || 0) * 100).toFixed(0)}%
+                  {Math.round(totalSurgeons * (1 - (scenario.adoptionRate || 0)))} surgeons
                 </div>
                 <div className="text-xs text-blue-600 mt-0.5">
-                  surgeons affected
+                  {(100 - (scenario.adoptionRate || 0) * 100).toFixed(0)}% of total surgeons affected
+                </div>
+                <div className="text-xs text-blue-500 mt-1 italic">
+                  Surgeons who must switch from their preferred vendor
                 </div>
               </div>
               <div>
@@ -129,10 +183,11 @@ const TeamDecisionDashboard = () => {
 
           {/* Operations Pillar */}
           <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-2 mb-2">
               <Shield className="w-5 h-5 text-green-600" />
               <h4 className="font-bold text-green-900">Operations</h4>
             </div>
+            <div className="text-xs text-green-700 mb-3 italic">Executing efficiently</div>
             <div className="space-y-2 text-sm">
               <div>
                 <div className="text-xs text-green-700">Complexity</div>
@@ -159,20 +214,59 @@ const TeamDecisionDashboard = () => {
           </div>
         </div>
 
-        {/* Tradeoff Summary */}
-        <div className="bg-purple-50 border-l-4 border-purple-600 p-4 rounded">
-          <div className="flex items-start gap-2">
-            <Target className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <div className="font-bold text-purple-900 text-sm mb-1">Key Tradeoff</div>
-              <div className="text-sm text-purple-800">
-                {scenario.savingsPercent >= 18 && (100 - scenario.adoptionRate * 100) <= 25
-                  ? 'Strong financial case with low clinical disruption - balanced option'
-                  : scenario.savingsPercent >= 20
-                  ? `High savings ($${(scenario.annualSavings || 0).toFixed(1)}M) but ${(100 - (scenario.adoptionRate * 100)).toFixed(0)}% of surgeons must switch vendors`
-                  : (100 - scenario.adoptionRate * 100) <= 15
-                  ? `Minimal clinical disruption but lower savings ($${(scenario.annualSavings || 0).toFixed(1)}M annually)`
-                  : 'Moderate savings with moderate disruption - baseline option'}
+        {/* Tradeoffs by Pillar */}
+        <div className="grid grid-cols-3 gap-3 mt-4">
+          {/* Finance Tradeoffs */}
+          <div className="bg-amber-50 border-l-4 border-amber-600 p-3 rounded">
+            <div className="flex items-start gap-2">
+              <DollarSign className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <div className="font-bold text-amber-900 text-xs mb-1">Finance Tradeoffs</div>
+                <div className="text-xs text-amber-800">
+                  {scenario.annualSavings === 0
+                    ? 'No savings - maintains current spend levels'
+                    : scenario.savingsPercent >= 18
+                    ? `Strong ROI: $${(scenario.annualSavings || 0).toFixed(1)}M annually with ${((scenario.npv5Year || 0) / (scenario.implementation?.costMillions || 1)).toFixed(1)}x payback`
+                    : scenario.savingsPercent >= 10
+                    ? `Moderate savings of $${(scenario.annualSavings || 0).toFixed(1)}M offset by $${(scenario.implementation?.costMillions || 0).toFixed(1)}M implementation cost`
+                    : `Limited financial benefit ($${(scenario.annualSavings || 0).toFixed(1)}M) may not justify change`}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Clinical Tradeoffs */}
+          <div className="bg-blue-50 border-l-4 border-blue-600 p-3 rounded">
+            <div className="flex items-start gap-2">
+              <Stethoscope className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <div className="font-bold text-blue-900 text-xs mb-1">Clinical Tradeoffs</div>
+                <div className="text-xs text-blue-800">
+                  {(100 - scenario.adoptionRate * 100) === 0
+                    ? 'Zero disruption - all surgeons continue with current vendors'
+                    : (100 - scenario.adoptionRate * 100) <= 15
+                    ? `Minimal impact: ${Math.round(totalSurgeons * (1 - scenario.adoptionRate))} surgeons switch (${(100 - scenario.adoptionRate * 100).toFixed(0)}%)`
+                    : (100 - scenario.adoptionRate * 100) <= 30
+                    ? `Moderate disruption: ${Math.round(totalSurgeons * (1 - scenario.adoptionRate))} surgeons must adopt new vendors (${(100 - scenario.adoptionRate * 100).toFixed(0)}%)`
+                    : `Significant change: ${Math.round(totalSurgeons * (1 - scenario.adoptionRate))} surgeons affected (${(100 - scenario.adoptionRate * 100).toFixed(0)}%) - requires strong engagement`}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Operations Tradeoffs */}
+          <div className="bg-green-50 border-l-4 border-green-600 p-3 rounded">
+            <div className="flex items-start gap-2">
+              <Shield className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <div className="font-bold text-green-900 text-xs mb-1">Operations Tradeoffs</div>
+                <div className="text-xs text-green-800">
+                  {scenario.implementation?.complexity === 'Low'
+                    ? `Simple ${scenario.implementation?.timeline || 0}-month rollout with ${scenario.riskLevel} risk`
+                    : scenario.implementation?.complexity === 'Medium'
+                    ? `${scenario.implementation?.timeline || 0}-month implementation requires coordination across ${scenario.vendors?.length || 0} vendors`
+                    : `Complex ${scenario.implementation?.timeline || 0}-month project with ${scenario.riskLevel} risk - needs dedicated resources`}
+                </div>
               </div>
             </div>
           </div>
@@ -209,28 +303,14 @@ const TeamDecisionDashboard = () => {
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between mb-6">
               <div>
                 <h1 className="text-4xl font-bold text-gray-900 mb-2">
                   Integrated Decision Dashboard
                 </h1>
                 <p className="text-gray-600 text-lg">
-                  Multi-perspective analysis integrating Finance, Clinical, and Operations viewpoints
+                  Multi-perspective analysis guided by the Quintuple Aim
                 </p>
-                <div className="flex items-center gap-6 mt-4 text-sm">
-                  <div className="flex items-center gap-2 text-amber-700">
-                    <DollarSign className="w-5 h-5" />
-                    <span className="font-semibold">Finance Impact</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-blue-700">
-                    <Stethoscope className="w-5 h-5" />
-                    <span className="font-semibold">Clinical Impact</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-green-700">
-                    <Shield className="w-5 h-5" />
-                    <span className="font-semibold">Operations Impact</span>
-                  </div>
-                </div>
               </div>
               <div className="text-right">
                 <div className="text-sm text-gray-600">Total Cases</div>
@@ -238,6 +318,73 @@ const TeamDecisionDashboard = () => {
                   {realData ? (realData.metadata?.totalCases || 0).toLocaleString() : '0'}
                 </div>
                 <div className="text-sm text-gray-600 mt-1">procedures analyzed</div>
+              </div>
+            </div>
+
+            {/* Quintuple Aim North Star Banner */}
+            <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 text-white rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <Star className="w-8 h-8 text-yellow-300" />
+                  <div>
+                    <h2 className="text-2xl font-bold">Quintuple Aim - Our North Star</h2>
+                    <p className="text-purple-100 text-sm mt-1">
+                      All decisions evaluated through CommonSpirit's mission framework
+                    </p>
+                  </div>
+                </div>
+                <Heart className="w-12 h-12 text-purple-300 opacity-50" />
+              </div>
+              <div className="grid grid-cols-5 gap-4">
+                <div className="text-center">
+                  <div className="text-3xl mb-2">👤</div>
+                  <div className="font-bold">Patient</div>
+                  <div className="font-bold">Experience</div>
+                  <div className="text-xs text-purple-200 mt-1">Quality care delivery</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl mb-2">🏥</div>
+                  <div className="font-bold">Population</div>
+                  <div className="font-bold">Health</div>
+                  <div className="text-xs text-purple-200 mt-1">Community outcomes</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl mb-2">💰</div>
+                  <div className="font-bold">Cost</div>
+                  <div className="font-bold">Reduction</div>
+                  <div className="text-xs text-purple-200 mt-1">Sustainable value</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl mb-2">⚕️</div>
+                  <div className="font-bold">Provider</div>
+                  <div className="font-bold">Experience</div>
+                  <div className="text-xs text-purple-200 mt-1">Team well-being</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl mb-2">⚖️</div>
+                  <div className="font-bold">Health</div>
+                  <div className="font-bold">Equity</div>
+                  <div className="text-xs text-purple-200 mt-1">Access for all</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Three Pillars Serve the Quintuple Aim */}
+            <div className="mt-6 grid grid-cols-3 gap-4">
+              <div className="text-center p-4 bg-amber-50 rounded-lg border border-amber-200">
+                <DollarSign className="w-8 h-8 text-amber-600 mx-auto mb-2" />
+                <div className="font-bold text-amber-900">Finance</div>
+                <div className="text-xs text-amber-700 mt-1">Funding the mission</div>
+              </div>
+              <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <Stethoscope className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                <div className="font-bold text-blue-900">Clinical</div>
+                <div className="text-xs text-blue-700 mt-1">Delivering excellent care</div>
+              </div>
+              <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
+                <Shield className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                <div className="font-bold text-green-900">Operations</div>
+                <div className="text-xs text-green-700 mt-1">Executing efficiently</div>
               </div>
             </div>
           </div>
