@@ -919,9 +919,9 @@ const SurgeonTool = () => {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              <div className="text-lg">My Profile</div>
+              <div className="text-lg">Surgeon Profile</div>
               <div className="text-xs opacity-80 mt-1">
-                Your Analytics & Impact
+                Individual Analytics & Impact
               </div>
             </button>
           </div>
@@ -1296,7 +1296,7 @@ const SurgeonTool = () => {
           );
         })()}
 
-        {/* Individual View Content - My Profile */}
+        {/* Individual View Content - Surgeon Profile */}
         {activeView === 'individual' && selectedSurgeon && (
           <div className="space-y-3">
             {/* Individual Sub-Tabs Navigation */}
