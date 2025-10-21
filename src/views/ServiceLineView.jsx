@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronRight, ArrowLeft, Target, TrendingUp, Clock, Users, CheckCircle } from 'lucide-react';
 import NavigationHeader from '../components/shared/NavigationHeader';
@@ -6,69 +6,51 @@ import NavigationHeader from '../components/shared/NavigationHeader';
 const ServiceLineView = () => {
   const navigate = useNavigate();
   const { serviceLineId } = useParams();
+  const [orthoData, setOrthoData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // For now, hardcoded for Orthopedic - will expand later
+  // Load orthopedic data
+  useEffect(() => {
+    const jsonPath = `${process.env.PUBLIC_URL}/orthopedic-data.json`;
+    fetch(jsonPath)
+      .then(response => response.json())
+      .then(data => {
+        setOrthoData(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error loading orthopedic data:', err);
+        setLoading(false);
+      });
+  }, []);
+
+  // Calculate metrics from real data
+  const hipKneeMetrics = orthoData ? {
+    annualVolume: `${orthoData.metadata.totalCases.toLocaleString()} cases`,
+    opportunityValue: `$${(orthoData.metadata.totalSpend / 1000000).toFixed(0)}M`,
+    activeDecisions: Object.keys(orthoData.scenarios || {}).length - 1, // Exclude status-quo
+    completedDecisions: 0 // Will track this in future
+  } : {
+    annualVolume: 'Loading...',
+    opportunityValue: 'Loading...',
+    activeDecisions: 0,
+    completedDecisions: 0
+  };
+
+  // Product lines - only Hip/Knee has data
   const productLines = [
     {
       id: 'hip-knee',
       name: 'Hip & Knee',
       description: 'Total joint replacement, revision arthroplasty',
-      activeDecisions: 5,
-      completedDecisions: 3,
-      annualVolume: '8,500 cases',
-      opportunityValue: '$28M',
+      activeDecisions: hipKneeMetrics.activeDecisions,
+      completedDecisions: hipKneeMetrics.completedDecisions,
+      annualVolume: hipKneeMetrics.annualVolume,
+      opportunityValue: hipKneeMetrics.opportunityValue,
       status: 'active',
       decisions: [
-        { id: 'vendor-consolidation', name: 'Vendor Consolidation Strategy', status: 'analyzing' },
-        { id: 'asc-expansion', name: 'ASC Expansion Analysis', status: 'implementing' },
-        { id: 'implant-standardization', name: 'Implant Standardization', status: 'planning' }
+        { id: 'vendor-consolidation', name: 'Vendor Consolidation Strategy', status: 'analyzing' }
       ]
-    },
-    {
-      id: 'shoulder',
-      name: 'Shoulder',
-      description: 'Total shoulder, reverse shoulder arthroplasty',
-      activeDecisions: 2,
-      completedDecisions: 1,
-      annualVolume: '1,800 cases',
-      opportunityValue: '$6M',
-      status: 'active',
-      decisions: [
-        { id: 'vendor-analysis', name: 'Vendor Portfolio Analysis', status: 'analyzing' }
-      ]
-    },
-    {
-      id: 'spine',
-      name: 'Spine',
-      description: 'Spinal fusion, disc replacement, decompression',
-      activeDecisions: 1,
-      completedDecisions: 0,
-      annualVolume: '2,200 cases',
-      opportunityValue: '$11M',
-      status: 'active',
-      decisions: []
-    },
-    {
-      id: 'sports',
-      name: 'Sports Medicine',
-      description: 'ACL reconstruction, meniscus repair, rotator cuff',
-      activeDecisions: 0,
-      completedDecisions: 0,
-      annualVolume: 'TBD',
-      opportunityValue: 'TBD',
-      status: 'coming-soon',
-      decisions: []
-    },
-    {
-      id: 'trauma',
-      name: 'Trauma',
-      description: 'Fracture fixation, external fixation',
-      activeDecisions: 0,
-      completedDecisions: 0,
-      annualVolume: 'TBD',
-      opportunityValue: 'TBD',
-      status: 'coming-soon',
-      decisions: []
     }
   ];
 
@@ -87,6 +69,17 @@ const ServiceLineView = () => {
       navigate(`/product-line/${serviceLineId}/${productLine.id}`);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading service line data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -116,8 +109,8 @@ const ServiceLineView = () => {
               </div>
               <div className="text-right">
                 <div className="text-sm text-gray-600">Total Opportunity</div>
-                <div className="text-3xl font-bold text-blue-600">$45M</div>
-                <div className="text-sm text-gray-600 mt-1">across all product lines</div>
+                <div className="text-3xl font-bold text-blue-600">{hipKneeMetrics.opportunityValue}</div>
+                <div className="text-sm text-gray-600 mt-1">Hip & Knee product line</div>
               </div>
             </div>
 
@@ -128,28 +121,30 @@ const ServiceLineView = () => {
                   <Target className="w-5 h-5 text-blue-600" />
                   <div className="text-sm text-gray-600">Product Lines</div>
                 </div>
-                <div className="text-2xl font-bold text-blue-900">5</div>
+                <div className="text-2xl font-bold text-blue-900">{productLines.length}</div>
               </div>
               <div className="bg-green-50 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <TrendingUp className="w-5 h-5 text-green-600" />
                   <div className="text-sm text-gray-600">Active Decisions</div>
                 </div>
-                <div className="text-2xl font-bold text-green-900">8</div>
+                <div className="text-2xl font-bold text-green-900">{hipKneeMetrics.activeDecisions}</div>
               </div>
               <div className="bg-purple-50 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <CheckCircle className="w-5 h-5 text-purple-600" />
                   <div className="text-sm text-gray-600">Completed</div>
                 </div>
-                <div className="text-2xl font-bold text-purple-900">4</div>
+                <div className="text-2xl font-bold text-purple-900">{hipKneeMetrics.completedDecisions}</div>
               </div>
               <div className="bg-amber-50 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Users className="w-5 h-5 text-amber-600" />
                   <div className="text-sm text-gray-600">Annual Volume</div>
                 </div>
-                <div className="text-2xl font-bold text-amber-900">12.5K</div>
+                <div className="text-2xl font-bold text-amber-900">
+                  {orthoData ? `${(orthoData.metadata.totalCases / 1000).toFixed(1)}K` : 'Loading...'}
+                </div>
               </div>
             </div>
           </div>
@@ -163,7 +158,7 @@ const ServiceLineView = () => {
           </div>
 
           {/* Product Line Cards */}
-          <div className="grid grid-cols-3 gap-6">
+          <div className="max-w-2xl mx-auto">
             {productLines.map((productLine) => {
               const isActive = productLine.status === 'active';
 

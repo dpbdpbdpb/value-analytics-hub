@@ -1,10 +1,38 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, Heart, Activity, Brain, Bone, Stethoscope, TrendingUp, Target, Users } from 'lucide-react';
 import NavigationHeader from '../components/shared/NavigationHeader';
 
 const PortfolioOverview = () => {
   const navigate = useNavigate();
+  const [orthoData, setOrthoData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Load orthopedic data
+  useEffect(() => {
+    const jsonPath = `${process.env.PUBLIC_URL}/orthopedic-data.json`;
+    fetch(jsonPath)
+      .then(response => response.json())
+      .then(data => {
+        setOrthoData(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error loading orthopedic data:', err);
+        setLoading(false);
+      });
+  }, []);
+
+  // Calculate real metrics from orthopedic data
+  const orthopedicMetrics = orthoData ? {
+    annualVolume: `${orthoData.metadata.totalCases.toLocaleString()} cases`,
+    opportunityValue: `$${(orthoData.metadata.totalSpend / 1000000).toFixed(0)}M`,
+    activeDecisions: Object.keys(orthoData.scenarios || {}).length - 1 // Exclude status-quo
+  } : {
+    annualVolume: 'Loading...',
+    opportunityValue: 'Loading...',
+    activeDecisions: 0
+  };
 
   // Service lines configuration
   const serviceLines = [
@@ -17,11 +45,11 @@ const PortfolioOverview = () => {
       borderColor: 'border-blue-200',
       textColor: 'text-blue-900',
       accentColor: 'text-blue-600',
-      description: 'Joint replacement, spine, sports medicine, trauma',
-      productLines: ['Hip/Knee', 'Shoulder', 'Spine', 'Sports Medicine', 'Trauma'],
-      activeDecisions: 8,
-      annualVolume: '27,623 cases',
-      opportunityValue: '$42M',
+      description: 'Joint replacement (hip & knee)',
+      productLines: ['Hip/Knee'],
+      activeDecisions: orthopedicMetrics.activeDecisions,
+      annualVolume: orthopedicMetrics.annualVolume,
+      opportunityValue: orthopedicMetrics.opportunityValue,
       status: 'active'
     },
     {
@@ -79,6 +107,17 @@ const PortfolioOverview = () => {
       navigate(`/service-line/${serviceLine.id}`);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading portfolio data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
