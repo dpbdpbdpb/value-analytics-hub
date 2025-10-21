@@ -44,18 +44,136 @@
   },
   "strategicInitiatives": [
     {
-      "id": "ortho-value-transformation",
-      "name": "Orthopedic Value Transformation",
-      "description": "Optimize orthopedic service line through evidence-based vendor partnerships and clinical standardization",
+      "id": "EPIC-001",
+      "name": "Vendor Consolidation & Cost Optimization",
+      "description": "Enterprise vendor ecosystem transformation - $45M savings",
       "timeframe": "2025-2027",
-      "owner": "Orthopedic Service Line Leadership",
-      "status": "active",
+      "owner": "Kristy Waters",
+      "status": "implementing",
+      "completion": 96,
+      "health": "caution",
+      "financialImpact": "$45M savings",
+      "programEpics": ["A1", "A2", "A3", "A10", "A11"],
+      "quintupleAimAlignment": {
+        "patientExperience": 80,
+        "populationHealth": 75,
+        "costReduction": 95,
+        "providerExperience": 70,
+        "healthEquity": 75
+      }
+    },
+    {
+      "id": "EPIC-002",
+      "name": "Clinical Leadership & Service Lines",
+      "description": "Physician-led governance framework",
+      "timeframe": "2025-2027",
+      "owner": "Doug Barnaby",
+      "status": "implementing",
+      "completion": 90,
+      "health": "excellent",
+      "financialImpact": "Strategic",
+      "programEpics": ["B1", "B2", "B3", "B4"],
+      "quintupleAimAlignment": {
+        "patientExperience": 90,
+        "populationHealth": 85,
+        "costReduction": 80,
+        "providerExperience": 95,
+        "healthEquity": 85
+      }
+    },
+    {
+      "id": "EPIC-003",
+      "name": "SAFe Transformation",
+      "description": "Portfolio Kanban with WSJF prioritization",
+      "timeframe": "2025-2026",
+      "owner": "Doug Barnaby",
+      "status": "implementing",
+      "completion": 95,
+      "health": "excellent",
+      "financialImpact": "Foundational",
+      "programEpics": ["C1"],
+      "quintupleAimAlignment": {
+        "patientExperience": 75,
+        "populationHealth": 70,
+        "costReduction": 85,
+        "providerExperience": 80,
+        "healthEquity": 70
+      }
+    },
+    {
+      "id": "EPIC-004",
+      "name": "Data Platform & AI Innovation",
+      "description": "Enterprise analytics platform + AI breakthrough",
+      "timeframe": "2025-2026",
+      "owner": "Doug Barnaby",
+      "status": "implementing",
+      "completion": 98,
+      "health": "excellent",
+      "financialImpact": "CTO Pathway",
+      "programEpics": ["D1", "D9", "D10"],
+      "quintupleAimAlignment": {
+        "patientExperience": 85,
+        "populationHealth": 90,
+        "costReduction": 80,
+        "providerExperience": 85,
+        "healthEquity": 85
+      }
+    },
+    {
+      "id": "EPIC-005",
+      "name": "Multi-Disciplinary VAT Transformation",
+      "description": "Converting 30+ SATs/CATs systematically",
+      "timeframe": "2025-2027",
+      "owner": "Doug Barnaby + Jonathan Hovey",
+      "status": "implementing",
+      "completion": 50,
+      "health": "excellent",
+      "financialImpact": "Operational",
+      "programEpics": ["VAT-B1", "VAT-B2", "VAT-B3", "WC1"],
       "quintupleAimAlignment": {
         "patientExperience": 85,
         "populationHealth": 80,
         "costReduction": 90,
-        "providerExperience": 75,
+        "providerExperience": 90,
         "healthEquity": 80
+      }
+    },
+    {
+      "id": "EPIC-006",
+      "name": "Product Evaluation Excellence",
+      "description": "60% cycle time reduction validated",
+      "timeframe": "2025-2026",
+      "owner": "Doug Barnaby + Dana Ringer",
+      "status": "implementing",
+      "completion": 100,
+      "health": "excellent",
+      "financialImpact": "Strategic",
+      "programEpics": ["A5", "A6", "A7", "A8", "A9", "ROB1", "WC2"],
+      "quintupleAimAlignment": {
+        "patientExperience": 90,
+        "populationHealth": 85,
+        "costReduction": 85,
+        "providerExperience": 95,
+        "healthEquity": 80
+      }
+    },
+    {
+      "id": "EPIC-007",
+      "name": "AI-Powered Sourcing Intelligence",
+      "description": "2-3 day cycle time with interactive dashboards",
+      "timeframe": "2025-2026",
+      "owner": "Doug Barnaby + Jonathan Hovey + John Young (Huron)",
+      "status": "analyzing",
+      "completion": 15,
+      "health": "excellent",
+      "financialImpact": "Strategic",
+      "programEpics": ["D11"],
+      "quintupleAimAlignment": {
+        "patientExperience": 75,
+        "populationHealth": 70,
+        "costReduction": 95,
+        "providerExperience": 80,
+        "healthEquity": 75
       }
     }
   ],
@@ -91,17 +209,49 @@
       "applicableTo": ["all-service-lines"]
     }
   ],
+  "programEpicMapping": {
+    "EPIC-001": {
+      "programEpics": ["A1", "A2", "A3", "A10", "A11"],
+      "description": "Vendor consolidation across service lines - $45M savings opportunity"
+    },
+    "EPIC-002": {
+      "programEpics": ["B1", "B2", "B3", "B4"],
+      "description": "Physician-led service line governance - orthopedic, cardiovascular, neuroscience, women's & children's"
+    },
+    "EPIC-003": {
+      "programEpics": ["C1"],
+      "description": "SAFe portfolio management transformation"
+    },
+    "EPIC-004": {
+      "programEpics": ["D1", "D9", "D10"],
+      "description": "Data platform and AI capabilities"
+    },
+    "EPIC-005": {
+      "programEpics": ["VAT-B1", "VAT-B2", "VAT-B3", "WC1"],
+      "description": "Value Analysis Team transformation across service lines"
+    },
+    "EPIC-006": {
+      "programEpics": ["A5", "A6", "A7", "A8", "A9", "ROB1", "WC2"],
+      "description": "Product evaluation process excellence - 60% cycle time reduction"
+    },
+    "EPIC-007": {
+      "programEpics": ["D11"],
+      "description": "AI-powered sourcing intelligence with Huron partnership"
+    }
+  },
   "decisions": [
     {
-      "id": "hip-knee-vendor-strategy-2025",
-      "name": "Hip & Knee Vendor Strategy",
-      "initiativeId": "ortho-value-transformation",
+      "id": "A1-orthopedic-consolidation",
+      "name": "Orthopedic Consolidation (A1)",
+      "programEpicId": "A1",
+      "initiativeId": "EPIC-001",
       "categoryId": "vendor-selection",
-      "description": "Strategic vendor consolidation for hip and knee joint replacements",
-      "decisionDate": "2025-Q2",
-      "status": "evaluation",
+      "description": "73% vendor reduction (38→10), $15M savings, methodology validation",
+      "decisionDate": "2025-10-31",
+      "status": "implementing",
+      "completion": 98,
       "committee": {
-        "members": ["Finance Leadership", "Clinical Leadership", "Operations Leadership"],
+        "members": ["Doug Barnaby", "Kristy Waters", "Finance Leadership", "Clinical Leadership"],
         "decisionRule": "Consensus required - no veto power"
       },
       "currentScenario": "hip-knee-scenarios",
