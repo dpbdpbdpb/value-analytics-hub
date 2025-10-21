@@ -55,8 +55,12 @@ const NavigationHeader = ({ role, specialty, specialtyName, persona }) => {
               <div className="flex items-center gap-2 text-purple-100 text-sm">
                 <RoleIcon className="w-3 h-3" />
                 <span>{displayName}</span>
-                <span className="text-purple-300">•</span>
-                <span>{specialtyName || specialty.toUpperCase()}</span>
+                {(specialtyName || specialty) && (
+                  <>
+                    <span className="text-purple-300">•</span>
+                    <span>{specialtyName || specialty?.toUpperCase()}</span>
+                  </>
+                )}
               </div>
             </div>
           </div>
