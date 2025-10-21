@@ -142,8 +142,6 @@ const EnhancedOrthopedicDashboard = () => {
     return generateScenarios(realData);
   }, [realData]);
 
-  }, [realData]);
-
   // Matrix Pricing Component Details from real data
   const MATRIX_COMPONENTS = useMemo(() => {
     if (!realData?.matrixPricing) {
