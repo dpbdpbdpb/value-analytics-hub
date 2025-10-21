@@ -444,22 +444,410 @@ const TeamDecisionDashboard = () => {
 
           {activeTab === 'finance' && (
             <div className="bg-white rounded-xl shadow-lg p-8">
-              <h2 className="text-2xl font-bold mb-4">Financial Deep Dive</h2>
-              <p className="text-gray-600">Coming soon: Detailed financial analysis with clinical and operational callouts</p>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-amber-900 mb-2 flex items-center gap-2">
+                  <DollarSign className="w-7 h-7" />
+                  Financial Deep Dive
+                </h2>
+                <p className="text-gray-600 italic">Funding the mission through sustainable economics</p>
+              </div>
+
+              {/* Financial Comparison Table */}
+              <div className="overflow-x-auto mb-8">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-amber-100 border-b-2 border-amber-300">
+                      <th className="text-left p-4 font-bold text-amber-900">Metric</th>
+                      {Object.entries(SCENARIOS).map(([id, scenario]) => (
+                        <th key={id} className="text-center p-4 font-bold text-amber-900">
+                          {scenario.name}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-gray-200 hover:bg-amber-50">
+                      <td className="p-4 font-semibold text-gray-700">Annual Savings</td>
+                      {Object.values(SCENARIOS).map((scenario, idx) => (
+                        <td key={idx} className="text-center p-4 font-bold text-amber-900">
+                          ${(scenario.annualSavings || 0).toFixed(1)}M
+                        </td>
+                      ))}
+                    </tr>
+                    <tr className="border-b border-gray-200 hover:bg-amber-50">
+                      <td className="p-4 font-semibold text-gray-700">Savings Percentage</td>
+                      {Object.values(SCENARIOS).map((scenario, idx) => (
+                        <td key={idx} className="text-center p-4 text-amber-900">
+                          {(scenario.savingsPercent || 0).toFixed(1)}%
+                        </td>
+                      ))}
+                    </tr>
+                    <tr className="border-b border-gray-200 hover:bg-amber-50">
+                      <td className="p-4 font-semibold text-gray-700">5-Year NPV</td>
+                      {Object.values(SCENARIOS).map((scenario, idx) => (
+                        <td key={idx} className="text-center p-4 font-bold text-amber-900">
+                          ${(scenario.npv5Year || 0).toFixed(1)}M
+                        </td>
+                      ))}
+                    </tr>
+                    <tr className="border-b border-gray-200 hover:bg-amber-50">
+                      <td className="p-4 font-semibold text-gray-700">Implementation Cost</td>
+                      {Object.values(SCENARIOS).map((scenario, idx) => (
+                        <td key={idx} className="text-center p-4 text-amber-900">
+                          ${(scenario.implementation?.costMillions || 0).toFixed(1)}M
+                        </td>
+                      ))}
+                    </tr>
+                    <tr className="border-b border-gray-200 hover:bg-amber-50">
+                      <td className="p-4 font-semibold text-gray-700">Payback Multiple</td>
+                      {Object.values(SCENARIOS).map((scenario, idx) => {
+                        const payback = scenario.implementation?.costMillions > 0
+                          ? (scenario.npv5Year / scenario.implementation.costMillions).toFixed(1)
+                          : 'N/A';
+                        return (
+                          <td key={idx} className="text-center p-4 text-amber-900">
+                            {payback}x
+                          </td>
+                        );
+                      })}
+                    </tr>
+                    <tr className="bg-blue-50 border-b border-blue-200">
+                      <td className="p-4 font-semibold text-blue-900">Clinical Impact</td>
+                      {Object.values(SCENARIOS).map((scenario, idx) => (
+                        <td key={idx} className="text-center p-4 text-blue-900 text-sm">
+                          {Math.round(totalSurgeons * (1 - scenario.adoptionRate))} surgeons affected
+                        </td>
+                      ))}
+                    </tr>
+                    <tr className="bg-green-50">
+                      <td className="p-4 font-semibold text-green-900">Implementation Timeline</td>
+                      {Object.values(SCENARIOS).map((scenario, idx) => (
+                        <td key={idx} className="text-center p-4 text-green-900 text-sm">
+                          {scenario.implementation?.timeline || 0} months
+                        </td>
+                      ))}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Key Insights */}
+              <div className="grid grid-cols-2 gap-6">
+                <div className="bg-amber-50 border-l-4 border-amber-600 p-6 rounded">
+                  <h3 className="font-bold text-amber-900 mb-3">Financial Highlights</h3>
+                  <ul className="space-y-2 text-sm text-amber-800">
+                    <li>• Potential savings range from $0 (Status Quo) to ${Math.max(...Object.values(SCENARIOS).map(s => s.annualSavings || 0)).toFixed(1)}M annually</li>
+                    <li>• 5-year NPV varies from ${Math.min(...Object.values(SCENARIOS).map(s => s.npv5Year || 0)).toFixed(1)}M to ${Math.max(...Object.values(SCENARIOS).map(s => s.npv5Year || 0)).toFixed(1)}M</li>
+                    <li>• Implementation costs range from ${Math.min(...Object.values(SCENARIOS).map(s => s.implementation?.costMillions || 0)).toFixed(1)}M to ${Math.max(...Object.values(SCENARIOS).map(s => s.implementation?.costMillions || 0)).toFixed(1)}M</li>
+                  </ul>
+                </div>
+                <div className="bg-purple-50 border-l-4 border-purple-600 p-6 rounded">
+                  <h3 className="font-bold text-purple-900 mb-3">Mission Alignment</h3>
+                  <p className="text-sm text-purple-800 mb-3">
+                    Financial sustainability enables us to fulfill our Quintuple Aim commitments:
+                  </p>
+                  <ul className="space-y-2 text-sm text-purple-800">
+                    <li>• Savings can be reinvested in patient care and health equity initiatives</li>
+                    <li>• Cost reduction supports affordable care for our communities</li>
+                    <li>• Efficient resource allocation improves provider experience</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           )}
 
           {activeTab === 'clinical' && (
             <div className="bg-white rounded-xl shadow-lg p-8">
-              <h2 className="text-2xl font-bold mb-4">Clinical Deep Dive</h2>
-              <p className="text-gray-600">Coming soon: Surgeon preferences and adoption analysis with financial and operational context</p>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-blue-900 mb-2 flex items-center gap-2">
+                  <Stethoscope className="w-7 h-7" />
+                  Clinical Deep Dive
+                </h2>
+                <p className="text-gray-600 italic">Delivering excellent care through engaged clinicians</p>
+              </div>
+
+              {/* Surgeon Impact Comparison */}
+              <div className="overflow-x-auto mb-8">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-blue-100 border-b-2 border-blue-300">
+                      <th className="text-left p-4 font-bold text-blue-900">Clinical Metric</th>
+                      {Object.entries(SCENARIOS).map(([id, scenario]) => (
+                        <th key={id} className="text-center p-4 font-bold text-blue-900">
+                          {scenario.name}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-gray-200 hover:bg-blue-50">
+                      <td className="p-4 font-semibold text-gray-700">Surgeons Affected</td>
+                      {Object.values(SCENARIOS).map((scenario, idx) => (
+                        <td key={idx} className="text-center p-4 font-bold text-blue-900">
+                          {Math.round(totalSurgeons * (1 - scenario.adoptionRate))}
+                        </td>
+                      ))}
+                    </tr>
+                    <tr className="border-b border-gray-200 hover:bg-blue-50">
+                      <td className="p-4 font-semibold text-gray-700">Percentage Switching</td>
+                      {Object.values(SCENARIOS).map((scenario, idx) => (
+                        <td key={idx} className="text-center p-4 text-blue-900">
+                          {(100 - scenario.adoptionRate * 100).toFixed(0)}%
+                        </td>
+                      ))}
+                    </tr>
+                    <tr className="border-b border-gray-200 hover:bg-blue-50">
+                      <td className="p-4 font-semibold text-gray-700">Vendor Count</td>
+                      {Object.values(SCENARIOS).map((scenario, idx) => (
+                        <td key={idx} className="text-center p-4 text-blue-900">
+                          {scenario.vendors?.length || 0} vendors
+                        </td>
+                      ))}
+                    </tr>
+                    <tr className="border-b border-gray-200 hover:bg-blue-50">
+                      <td className="p-4 font-semibold text-gray-700">Disruption Level</td>
+                      {Object.values(SCENARIOS).map((scenario, idx) => {
+                        const switchPct = 100 - scenario.adoptionRate * 100;
+                        const level = switchPct === 0 ? 'None' : switchPct <= 15 ? 'Minimal' : switchPct <= 30 ? 'Moderate' : 'Significant';
+                        const color = switchPct === 0 ? 'text-green-700' : switchPct <= 15 ? 'text-blue-700' : switchPct <= 30 ? 'text-amber-700' : 'text-red-700';
+                        return (
+                          <td key={idx} className={`text-center p-4 font-semibold ${color}`}>
+                            {level}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                    <tr className="border-b border-gray-200 hover:bg-blue-50">
+                      <td className="p-4 font-semibold text-gray-700">Mission Alignment Score</td>
+                      {Object.values(SCENARIOS).map((scenario, idx) => (
+                        <td key={idx} className="text-center p-4 font-bold text-blue-900">
+                          {(scenario.quintupleMissionScore || 0).toFixed(0)}/100
+                        </td>
+                      ))}
+                    </tr>
+                    <tr className="bg-amber-50 border-b border-amber-200">
+                      <td className="p-4 font-semibold text-amber-900">Annual Savings</td>
+                      {Object.values(SCENARIOS).map((scenario, idx) => (
+                        <td key={idx} className="text-center p-4 text-amber-900 text-sm">
+                          ${(scenario.annualSavings || 0).toFixed(1)}M
+                        </td>
+                      ))}
+                    </tr>
+                    <tr className="bg-green-50">
+                      <td className="p-4 font-semibold text-green-900">Implementation Timeline</td>
+                      {Object.values(SCENARIOS).map((scenario, idx) => (
+                        <td key={idx} className="text-center p-4 text-green-900 text-sm">
+                          {scenario.implementation?.timeline || 0} months
+                        </td>
+                      ))}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Clinical Insights */}
+              <div className="grid grid-cols-2 gap-6">
+                <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded">
+                  <h3 className="font-bold text-blue-900 mb-3">Clinical Considerations</h3>
+                  <ul className="space-y-2 text-sm text-blue-800">
+                    <li>• Total of {totalSurgeons} surgeons performing orthopedic procedures</li>
+                    <li>• Vendor switching requires training, adaptation period, and strong communication</li>
+                    <li>• Lower vendor count can simplify inventory but may limit surgeon choice</li>
+                    <li>• Surgeon engagement critical for successful implementation</li>
+                  </ul>
+                </div>
+                <div className="bg-purple-50 border-l-4 border-purple-600 p-6 rounded">
+                  <h3 className="font-bold text-purple-900 mb-3">Mission Alignment</h3>
+                  <p className="text-sm text-purple-800 mb-3">
+                    Clinical excellence supports our Quintuple Aim:
+                  </p>
+                  <ul className="space-y-2 text-sm text-purple-800">
+                    <li>• Surgeon satisfaction impacts provider experience scores</li>
+                    <li>• Standardization can improve patient outcomes and safety</li>
+                    <li>• Clinical buy-in enables successful transformation</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Vendor Switching Definition */}
+              <div className="mt-6 bg-blue-100 border border-blue-300 p-4 rounded">
+                <h4 className="font-bold text-blue-900 mb-2 flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5" />
+                  What does "Surgeons Affected" mean?
+                </h4>
+                <p className="text-sm text-blue-800">
+                  This metric represents surgeons who currently use vendors that would not be included in the proposed scenario.
+                  These surgeons would need to switch to one of the contracted vendors, requiring training and adjustment to new
+                  equipment and workflows. The percentage reflects the proportion of our total surgeon population that would
+                  experience this change.
+                </p>
+              </div>
             </div>
           )}
 
           {activeTab === 'operations' && (
             <div className="bg-white rounded-xl shadow-lg p-8">
-              <h2 className="text-2xl font-bold mb-4">Operations Deep Dive</h2>
-              <p className="text-gray-600">Coming soon: Implementation planning with clinical and financial impact indicators</p>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-green-900 mb-2 flex items-center gap-2">
+                  <Shield className="w-7 h-7" />
+                  Operations Deep Dive
+                </h2>
+                <p className="text-gray-600 italic">Executing efficiently to enable mission success</p>
+              </div>
+
+              {/* Implementation Comparison */}
+              <div className="overflow-x-auto mb-8">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-green-100 border-b-2 border-green-300">
+                      <th className="text-left p-4 font-bold text-green-900">Implementation Factor</th>
+                      {Object.entries(SCENARIOS).map(([id, scenario]) => (
+                        <th key={id} className="text-center p-4 font-bold text-green-900">
+                          {scenario.name}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-gray-200 hover:bg-green-50">
+                      <td className="p-4 font-semibold text-gray-700">Timeline</td>
+                      {Object.values(SCENARIOS).map((scenario, idx) => (
+                        <td key={idx} className="text-center p-4 font-bold text-green-900">
+                          {scenario.implementation?.timeline || 0} months
+                        </td>
+                      ))}
+                    </tr>
+                    <tr className="border-b border-gray-200 hover:bg-green-50">
+                      <td className="p-4 font-semibold text-gray-700">Complexity</td>
+                      {Object.values(SCENARIOS).map((scenario, idx) => {
+                        const complexity = scenario.implementation?.complexity || 'N/A';
+                        const color = complexity === 'Low' ? 'text-green-700' : complexity === 'Medium' ? 'text-amber-700' : 'text-red-700';
+                        return (
+                          <td key={idx} className={`text-center p-4 font-semibold ${color}`}>
+                            {complexity}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                    <tr className="border-b border-gray-200 hover:bg-green-50">
+                      <td className="p-4 font-semibold text-gray-700">Risk Level</td>
+                      {Object.values(SCENARIOS).map((scenario, idx) => {
+                        const risk = scenario.riskLevel || 'N/A';
+                        const color = risk === 'Low' ? 'text-green-700' : risk === 'Medium' ? 'text-amber-700' : 'text-red-700';
+                        return (
+                          <td key={idx} className={`text-center p-4 ${color}`}>
+                            {risk} ({(scenario.riskScore || 0).toFixed(0)}/10)
+                          </td>
+                        );
+                      })}
+                    </tr>
+                    <tr className="border-b border-gray-200 hover:bg-green-50">
+                      <td className="p-4 font-semibold text-gray-700">Implementation Cost</td>
+                      {Object.values(SCENARIOS).map((scenario, idx) => (
+                        <td key={idx} className="text-center p-4 text-green-900">
+                          ${(scenario.implementation?.costMillions || 0).toFixed(1)}M
+                        </td>
+                      ))}
+                    </tr>
+                    <tr className="border-b border-gray-200 hover:bg-green-50">
+                      <td className="p-4 font-semibold text-gray-700">Vendor Coordination</td>
+                      {Object.values(SCENARIOS).map((scenario, idx) => (
+                        <td key={idx} className="text-center p-4 text-green-900">
+                          {scenario.vendors?.length || 0} vendors
+                        </td>
+                      ))}
+                    </tr>
+                    <tr className="bg-blue-50 border-b border-blue-200">
+                      <td className="p-4 font-semibold text-blue-900">Surgeons to Train</td>
+                      {Object.values(SCENARIOS).map((scenario, idx) => (
+                        <td key={idx} className="text-center p-4 text-blue-900 text-sm">
+                          {Math.round(totalSurgeons * (1 - scenario.adoptionRate))} surgeons
+                        </td>
+                      ))}
+                    </tr>
+                    <tr className="bg-amber-50">
+                      <td className="p-4 font-semibold text-amber-900">ROI (5-Year NPV / Cost)</td>
+                      {Object.values(SCENARIOS).map((scenario, idx) => {
+                        const roi = scenario.implementation?.costMillions > 0
+                          ? (scenario.npv5Year / scenario.implementation.costMillions).toFixed(1)
+                          : 'N/A';
+                        return (
+                          <td key={idx} className="text-center p-4 text-amber-900 text-sm font-bold">
+                            {roi}x
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Implementation Phases */}
+              <div className="mb-8">
+                <h3 className="font-bold text-green-900 mb-4 text-lg">Typical Implementation Phases</h3>
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="bg-green-50 border-l-4 border-green-600 p-4 rounded">
+                    <div className="font-bold text-green-900 mb-2">Phase 1: Planning</div>
+                    <ul className="text-xs text-green-800 space-y-1">
+                      <li>• Contract negotiation</li>
+                      <li>• Stakeholder alignment</li>
+                      <li>• Timeline development</li>
+                      <li>• Resource allocation</li>
+                    </ul>
+                  </div>
+                  <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded">
+                    <div className="font-bold text-blue-900 mb-2">Phase 2: Training</div>
+                    <ul className="text-xs text-blue-800 space-y-1">
+                      <li>• Surgeon education</li>
+                      <li>• OR staff training</li>
+                      <li>• Equipment familiarization</li>
+                      <li>• Process updates</li>
+                    </ul>
+                  </div>
+                  <div className="bg-amber-50 border-l-4 border-amber-600 p-4 rounded">
+                    <div className="font-bold text-amber-900 mb-2">Phase 3: Rollout</div>
+                    <ul className="text-xs text-amber-800 space-y-1">
+                      <li>• Phased implementation</li>
+                      <li>• Inventory transition</li>
+                      <li>• Real-time support</li>
+                      <li>• Issue resolution</li>
+                    </ul>
+                  </div>
+                  <div className="bg-purple-50 border-l-4 border-purple-600 p-4 rounded">
+                    <div className="font-bold text-purple-900 mb-2">Phase 4: Optimization</div>
+                    <ul className="text-xs text-purple-800 space-y-1">
+                      <li>• Performance tracking</li>
+                      <li>• Feedback integration</li>
+                      <li>• Process refinement</li>
+                      <li>• Savings validation</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Operational Insights */}
+              <div className="grid grid-cols-2 gap-6">
+                <div className="bg-green-50 border-l-4 border-green-600 p-6 rounded">
+                  <h3 className="font-bold text-green-900 mb-3">Operational Considerations</h3>
+                  <ul className="space-y-2 text-sm text-green-800">
+                    <li>• Timeline varies based on vendor count and surgeon adoption rates</li>
+                    <li>• Higher complexity requires more dedicated project management resources</li>
+                    <li>• Risk mitigation through phased rollout and strong communication</li>
+                    <li>• Success depends on coordination across Finance, Clinical, and Operations</li>
+                  </ul>
+                </div>
+                <div className="bg-purple-50 border-l-4 border-purple-600 p-6 rounded">
+                  <h3 className="font-bold text-purple-900 mb-3">Mission Alignment</h3>
+                  <p className="text-sm text-purple-800 mb-3">
+                    Operational excellence enables our Quintuple Aim:
+                  </p>
+                  <ul className="space-y-2 text-sm text-purple-800">
+                    <li>• Efficient implementation minimizes disruption to patient care</li>
+                    <li>• Strong project management reduces provider burden</li>
+                    <li>• Successful execution captures financial benefits for mission</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           )}
 
