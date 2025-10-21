@@ -5,7 +5,8 @@
     "version": "1.0",
     "analysisDate": "2025-10-18",
     "totalCases": 27623,
-    "totalSpend": 42080676.129700005
+    "totalSpend": 42080676.129700005,
+    "totalSurgeons": 205
   },
   "vendors": {
     "ANIKA THERAPEUTICS": {

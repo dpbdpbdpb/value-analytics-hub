@@ -40,12 +40,12 @@ const ProductLineView = () => {
       route: '/team-decision/hipknee',
       features: [
         'Unified tri-pillar view',
-        '7-scenario value framework',
+        '5-scenario value framework',
         'Real-time tradeoff analysis',
         'Collaborative decision support'
       ],
       metrics: {
-        scenarios: 7,
+        scenarios: 5,
         dataPoints: '150+',
         lastUpdated: '2025-10-21'
       }
@@ -69,8 +69,8 @@ const ProductLineView = () => {
         'Surgeon-level insights'
       ],
       metrics: {
-        surgeons: 25,
-        procedures: '8,500/yr',
+        surgeons: 205,
+        procedures: '27,623/yr',
         lastUpdated: '2025-10-21'
       }
     },
@@ -89,12 +89,12 @@ const ProductLineView = () => {
       features: [
         'Cost per case analysis',
         'Value opportunity modeling',
-        '$28M savings scenarios',
+        '$8M savings scenarios',
         'Vendor consolidation impact'
       ],
       metrics: {
-        opportunity: '$28M',
-        scenarios: 7,
+        opportunity: '$8M',
+        scenarios: 5,
         lastUpdated: '2025-10-21'
       }
     },
@@ -141,8 +141,8 @@ const ProductLineView = () => {
         'Volume and outcomes'
       ],
       metrics: {
-        surgeons: 25,
-        avgCost: '$8,450',
+        surgeons: 205,
+        avgCost: '$1,523',
         lastUpdated: '2025-10-21'
       }
     }
@@ -208,7 +208,7 @@ const ProductLineView = () => {
                   <div className="text-sm text-gray-600">Surgeons</div>
                 </div>
                 <div className="text-2xl font-bold text-blue-900">
-                  {orthoData ? Object.values(orthoData.vendors).reduce((sum, v) => sum + (v.uniqueSurgeons || 0), 0) : '-'}
+                  {orthoData ? (orthoData.metadata.totalSurgeons || 205) : '-'}
                 </div>
               </div>
               <div className="bg-green-50 rounded-lg p-4">
