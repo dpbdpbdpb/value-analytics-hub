@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Stethoscope, Shield, DollarSign, Users, Package, AlertCircle, Eye, Heart, Target, Star, Activity, ChevronRight, MapPin, Lightbulb, FileCheck } from 'lucide-react';
+import { TrendingUp, Stethoscope, Shield, DollarSign, Users, Package, AlertCircle, Eye, Heart, Target, Star, Activity, ChevronRight, MapPin, Lightbulb, FileCheck, Building2 } from 'lucide-react';
 import NavigationHeader from '../components/shared/NavigationHeader';
 
 const TeamDecisionDashboard = () => {
@@ -292,6 +292,7 @@ const TeamDecisionDashboard = () => {
   const tabs = [
     { id: 'scenarios', label: 'Scenario Comparison', icon: Eye },
     { id: 'assumptions', label: 'Assumptions & Validation', icon: FileCheck },
+    { id: 'hospitals', label: 'Hospital & Sherpa Analysis', icon: Building2 },
     { id: 'finance', label: 'Financial Deep Dive', icon: DollarSign },
     { id: 'clinical', label: 'Clinical Deep Dive', icon: Stethoscope },
     { id: 'operations', label: 'Operations Deep Dive', icon: Shield },
@@ -1029,6 +1030,73 @@ const TeamDecisionDashboard = () => {
                     <li>• Successful execution captures financial benefits for mission</li>
                   </ul>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'hospitals' && (
+            <div className="bg-white rounded-xl shadow-lg p-8">
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-slate-900 mb-2 flex items-center gap-2">
+                  <Building2 className="w-7 h-7" />
+                  Hospital & Sherpa Analysis
+                </h2>
+                <p className="text-gray-600 italic">Leverage peer influence and local expertise for successful vendor transitions</p>
+              </div>
+
+              {/* Info Banner */}
+              <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-lg mb-8">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="font-bold text-blue-900 mb-2">Why Hospital-Level Analysis Matters</h3>
+                    <p className="text-blue-800 text-sm mb-3">
+                      Surgeons are more likely to adopt new vendors when supported by respected peers at their own hospital.
+                      This view helps identify:
+                    </p>
+                    <ul className="text-blue-800 text-sm space-y-1 ml-4">
+                      <li>• <strong>Vendor cohorts</strong>: Hospitals where most surgeons already use the target vendor</li>
+                      <li>• <strong>Sherpas</strong>: High-volume, cost-efficient surgeons who can mentor peers</li>
+                      <li>• <strong>Peer influence opportunities</strong>: Pairing surgeons with hospital-based mentors</li>
+                      <li>• <strong>Change management priorities</strong>: Hospitals needing more support vs. easier transitions</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Coming Soon Message */}
+              <div className="bg-gradient-to-r from-slate-50 to-gray-50 border-2 border-slate-200 rounded-xl p-12 text-center">
+                <Building2 className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+                <h3 className="text-2xl font-bold text-slate-700 mb-3">Hospital Data Coming Soon</h3>
+                <p className="text-gray-600 mb-4">
+                  Hospital-level aggregation and sherpa identification will be available once your data includes hospital assignments for each surgeon.
+                </p>
+                <div className="bg-white rounded-lg p-6 max-w-2xl mx-auto text-left">
+                  <h4 className="font-bold text-slate-900 mb-3">What We'll Show Here:</h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <div className="font-semibold text-blue-900 mb-2">By Hospital:</div>
+                      <ul className="text-gray-700 space-y-1">
+                        <li>• Vendor concentration patterns</li>
+                        <li>• Surgeon cohorts by vendor</li>
+                        <li>• Change management readiness</li>
+                        <li>• Multi-hospital surgeon tracking</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <div className="font-semibold text-green-900 mb-2">Sherpa Analysis:</div>
+                      <ul className="text-gray-700 space-y-1">
+                        <li>• High-volume + efficient surgeons</li>
+                        <li>• Peer mentoring opportunities</li>
+                        <li>• Hospital-based training leads</li>
+                        <li>• Vendor adoption champions</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500 mt-4">
+                  Use the <strong>ORTHOPEDIC_DATA_STANDARDIZATION_PROMPT.md</strong> file to prepare your data with hospital assignments and sherpa flags.
+                </p>
               </div>
             </div>
           )}

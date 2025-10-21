@@ -79,8 +79,23 @@ Each `baseline.json` or `lookback-*.json` file follows this schema:
     {
       "name": "Smith, John",
       "id": "SURG001",
-      "hospital": "HOSPITAL_NAME",
-      "hospitalId": "HOSP001",
+      "hospitals": [
+        {
+          "name": "HOSPITAL_NAME",
+          "id": "HOSP001",
+          "isPrimary": true,
+          "cases": 350,
+          "spend": 525000
+        },
+        {
+          "name": "ANOTHER_HOSPITAL",
+          "id": "HOSP002",
+          "isPrimary": false,
+          "cases": 100,
+          "spend": 150000
+        }
+      ],
+      "primaryHospital": "HOSPITAL_NAME",  // Most cases
       "region": "CALIFORNIA",
       "totalCases": 450,
       "totalSpend": 675000,
@@ -93,9 +108,19 @@ Each `baseline.json` or `lookback-*.json` file follows this schema:
         "ZIMMER BIOMET": {"cases": 67, "spend": 101250}
       },
       "peerInfluence": {
-        "hospitalPeers": 7,  // Other surgeons at same hospital
-        "samePrimaryVendor": 5,  // Peers using same primary vendor
-        "potentialSherpas": ["SURG002", "SURG003"]  // IDs of efficient peers
+        "totalHospitalPeers": 12,  // Across all hospitals
+        "peersByHospital": {
+          "HOSP001": {
+            "peers": 7,
+            "samePrimaryVendor": 5,
+            "potentialSherpas": ["SURG002", "SURG003"]
+          },
+          "HOSP002": {
+            "peers": 5,
+            "samePrimaryVendor": 2,
+            "potentialSherpas": ["SURG005"]
+          }
+        }
       }
     }
   ],

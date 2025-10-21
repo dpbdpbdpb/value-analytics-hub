@@ -93,8 +93,16 @@ Please provide the complete JSON file following this schema:
     {
       "name": "Last, First",
       "id": "UNIQUE_ID",
-      "hospital": "HOSPITAL_NAME",
-      "hospitalId": "UNIQUE_HOSPITAL_ID",
+      "hospitals": [
+        {
+          "name": "HOSPITAL_NAME",
+          "id": "UNIQUE_HOSPITAL_ID",
+          "isPrimary": true,
+          "cases": 0,
+          "spend": 0
+        }
+      ],
+      "primaryHospital": "HOSPITAL_NAME",
       "region": "REGION_NAME",
       "totalCases": 0,
       "totalSpend": 0,
@@ -109,9 +117,14 @@ Please provide the complete JSON file following this schema:
         }
       },
       "peerInfluence": {
-        "hospitalPeers": 0,
-        "samePrimaryVendor": 0,
-        "potentialSherpas": ["SURG_ID_1", "SURG_ID_2"]
+        "totalHospitalPeers": 0,
+        "peersByHospital": {
+          "HOSP_ID": {
+            "peers": 0,
+            "samePrimaryVendor": 0,
+            "potentialSherpas": ["SURG_ID_1"]
+          }
+        }
       }
     }
   ],
