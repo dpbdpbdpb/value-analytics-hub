@@ -142,9 +142,9 @@ const PortfolioOverview = () => {
                   <div className="text-sm text-gray-600">Tri-Pillar Approach</div>
                 </div>
                 <div className="flex gap-2 text-xs">
-                  <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded font-semibold">Clinical</span>
-                  <span className="px-2 py-1 bg-green-100 text-green-800 rounded font-semibold">Financial</span>
-                  <span className="px-2 py-1 bg-amber-100 text-amber-800 rounded font-semibold">Operational</span>
+                  <span className="px-2 py-1 bg-green-100 text-green-800 rounded font-semibold">Clinical</span>
+                  <span className="px-2 py-1 bg-amber-100 text-amber-800 rounded font-semibold">Financial</span>
+                  <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded font-semibold">Operational</span>
                 </div>
               </div>
             </div>
