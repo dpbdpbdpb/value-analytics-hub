@@ -262,7 +262,7 @@ const ProductLineView = () => {
           </div>
 
           {/* Decision Canvas Cards */}
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-5 gap-4">
             {decisionCanvases.map((canvas) => {
               const IconComponent = canvas.icon;
               const isActive = canvas.status === 'active';
