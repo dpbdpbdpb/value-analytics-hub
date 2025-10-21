@@ -71,23 +71,23 @@ const TeamDecisionDashboard = () => {
             </div>
             <div className="space-y-2 text-sm">
               <div>
-                <div className="text-xs text-amber-700">Annual Savings</div>
+                <div className="text-xs text-amber-700">Projected Annual Savings</div>
                 <div className="text-xl font-bold text-amber-900">
-                  ${scenario.annualSavings?.toFixed(1) || 0}M
+                  ${(scenario.annualSavings || 0).toFixed(1)}M
                 </div>
               </div>
               <div>
                 <div className="text-xs text-amber-700">Savings %</div>
-                <div className="font-semibold text-amber-900">{scenario.savingsPercent || 0}%</div>
+                <div className="font-semibold text-amber-900">{(scenario.savingsPercent || 0).toFixed(1)}%</div>
               </div>
               <div>
-                <div className="text-xs text-amber-700">5-Year NPV</div>
-                <div className="font-semibold text-amber-900">${scenario.npv5Year?.toFixed(1) || 0}M</div>
+                <div className="text-xs text-amber-700">Projected 5-Year NPV</div>
+                <div className="font-semibold text-amber-900">${(scenario.npv5Year || 0).toFixed(1)}M</div>
               </div>
               <div>
-                <div className="text-xs text-amber-700">Implementation Cost</div>
+                <div className="text-xs text-amber-700">Projected Implementation Cost</div>
                 <div className="font-semibold text-amber-900">
-                  ${scenario.implementation?.costMillions || 0}M
+                  ${(scenario.implementation?.costMillions || 0).toFixed(1)}M
                 </div>
               </div>
             </div>
@@ -101,23 +101,28 @@ const TeamDecisionDashboard = () => {
             </div>
             <div className="space-y-2 text-sm">
               <div>
-                <div className="text-xs text-blue-700">Surgeon Adoption</div>
-                <div className="text-xl font-bold text-blue-900">{scenario.adoptionRate || 0}%</div>
+                <div className="text-xs text-blue-700">Switching Burden</div>
+                <div className="text-xl font-bold text-blue-900">
+                  {(100 - (scenario.adoptionRate || 0) * 100).toFixed(0)}%
+                </div>
+                <div className="text-xs text-blue-600 mt-0.5">
+                  surgeons switching vendors
+                </div>
               </div>
               <div>
                 <div className="text-xs text-blue-700">Vendor Count</div>
                 <div className="font-semibold text-blue-900">
-                  {scenario.vendorSplit ? Object.keys(scenario.vendorSplit).length : 0} vendors
+                  {scenario.vendors ? scenario.vendors.length : 0} vendors
                 </div>
               </div>
               <div>
                 <div className="text-xs text-blue-700">Mission Score</div>
                 <div className="font-semibold text-blue-900">
-                  {scenario.quintupleMissionScore || 0}/100
+                  {(scenario.quintupleMissionScore || 0).toFixed(0)}/100
                 </div>
               </div>
               <div className="text-xs text-blue-700 mt-2">
-                {scenario.adoptionRate >= 85 ? '✓ High surgeon buy-in' : '⚠ Some surgeon changes needed'}
+                {(100 - scenario.adoptionRate * 100) <= 15 ? '✓ Minimal disruption' : (100 - scenario.adoptionRate * 100) <= 30 ? '⚠ Moderate disruption' : '⚠ Significant disruption'}
               </div>
             </div>
           </div>
@@ -144,7 +149,7 @@ const TeamDecisionDashboard = () => {
               <div>
                 <div className="text-xs text-green-700">Risk Level</div>
                 <div className="font-semibold text-green-900">
-                  {scenario.riskLevel || 'N/A'} ({scenario.riskScore || 0}/10)
+                  {scenario.riskLevel || 'N/A'} ({(scenario.riskScore || 0).toFixed(0)}/10)
                 </div>
               </div>
               <div className="text-xs text-green-700 mt-2">
@@ -161,13 +166,13 @@ const TeamDecisionDashboard = () => {
             <div>
               <div className="font-bold text-purple-900 text-sm mb-1">Key Tradeoff</div>
               <div className="text-sm text-purple-800">
-                {scenario.savingsPercent >= 18 && scenario.adoptionRate >= 75
-                  ? 'Strong financial case with good clinical buy-in - balanced option'
+                {scenario.savingsPercent >= 18 && (100 - scenario.adoptionRate * 100) <= 25
+                  ? 'Strong financial case with low clinical disruption - balanced option'
                   : scenario.savingsPercent >= 20
-                  ? `High savings ($${scenario.annualSavings?.toFixed(1)}M) but requires ${100 - scenario.adoptionRate}% of surgeons to adapt`
-                  : scenario.adoptionRate >= 85
-                  ? `High surgeon satisfaction but lower savings ($${scenario.annualSavings?.toFixed(1)}M annually)`
-                  : 'Moderate savings with moderate adoption - baseline option'}
+                  ? `High savings ($${(scenario.annualSavings || 0).toFixed(1)}M) but ${(100 - (scenario.adoptionRate * 100)).toFixed(0)}% of surgeons must switch vendors`
+                  : (100 - scenario.adoptionRate * 100) <= 15
+                  ? `Minimal clinical disruption but lower savings ($${(scenario.annualSavings || 0).toFixed(1)}M annually)`
+                  : 'Moderate savings with moderate disruption - baseline option'}
               </div>
             </div>
           </div>

@@ -10,10 +10,13 @@ function App() {
   return (
     <Router basename="/orthopedic-dashboard">
       <Routes>
-        {/* Landing Page */}
-        <Route path="/" element={<LandingPage />} />
+        {/* Team Decision Dashboard - Default landing */}
+        <Route path="/" element={<TeamDecisionDashboard />} />
 
-        {/* Team Decision Dashboard (Primary collaborative view) */}
+        {/* Legacy landing page for persona selection */}
+        <Route path="/select-view" element={<LandingPage />} />
+
+        {/* Team Decision Dashboard with specialty */}
         <Route path="/team-decision/hipknee" element={<TeamDecisionDashboard />} />
 
         {/* Executive Dashboard Routes */}

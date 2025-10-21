@@ -63,14 +63,24 @@ const NavigationHeader = ({ role, specialty, specialtyName, persona }) => {
 
           {/* Right: Navigation Actions */}
           <div className="flex items-center gap-3">
-            {/* Change View Button */}
-            <button
-              onClick={() => navigate('/')}
-              className="flex items-center gap-2 px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg transition-all backdrop-blur-sm font-medium border border-white border-opacity-20"
-            >
-              <RefreshCw className="w-4 h-4" />
-              <span className="hidden sm:inline">Change View</span>
-            </button>
+            {/* Switch View Button - Conditional based on current view */}
+            {persona === 'team' ? (
+              <button
+                onClick={() => navigate('/select-view')}
+                className="flex items-center gap-2 px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg transition-all backdrop-blur-sm font-medium border border-white border-opacity-20"
+              >
+                <RefreshCw className="w-4 h-4" />
+                <span className="hidden sm:inline">Switch to Individual View</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate('/')}
+                className="flex items-center gap-2 px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg transition-all backdrop-blur-sm font-medium border border-white border-opacity-20"
+              >
+                <RefreshCw className="w-4 h-4" />
+                <span className="hidden sm:inline">Switch to Team View</span>
+              </button>
+            )}
 
             {/* Home Button */}
             <button
