@@ -4,14 +4,19 @@ import LandingPage from './views/LandingPage';
 import ExecutiveDashboard from './views/ExecutiveDashboard';
 import SurgeonTool from './views/SurgeonTool';
 import TeamDecisionDashboard from './views/TeamDecisionDashboard';
+import PortfolioOverview from './views/PortfolioOverview';
+import InitiativeDetail from './views/InitiativeDetail';
 import './App.css';
 
 function App() {
   return (
     <Router basename="/orthopedic-dashboard">
       <Routes>
-        {/* Team Decision Dashboard - Default landing */}
-        <Route path="/" element={<TeamDecisionDashboard />} />
+        {/* Portfolio Overview - Default home page */}
+        <Route path="/" element={<PortfolioOverview />} />
+
+        {/* Initiative Detail */}
+        <Route path="/initiative/:initiativeId" element={<InitiativeDetail />} />
 
         {/* Legacy landing page for persona selection */}
         <Route path="/select-view" element={<LandingPage />} />
