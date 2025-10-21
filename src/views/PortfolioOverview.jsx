@@ -1,59 +1,84 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Star, ChevronRight, TrendingUp, DollarSign, Target, AlertCircle, CheckCircle, Clock, Users } from 'lucide-react';
+import { ChevronRight, Heart, Activity, Brain, Bone, Stethoscope, TrendingUp, Target, Users } from 'lucide-react';
 import NavigationHeader from '../components/shared/NavigationHeader';
 
 const PortfolioOverview = () => {
-  const [strategyData, setStrategyData] = useState(null);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Load strategic framework data
-  useEffect(() => {
-    const strategyPath = `${process.env.PUBLIC_URL}/strategic-framework.json`;
-    fetch(strategyPath)
-      .then(response => response.json())
-      .then(data => {
-        setStrategyData(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Error loading strategy data:', err);
-        setLoading(false);
-      });
-  }, []);
+  // Service lines configuration
+  const serviceLines = [
+    {
+      id: 'orthopedic',
+      name: 'Orthopedic',
+      icon: Bone,
+      color: 'from-blue-600 to-blue-700',
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-200',
+      textColor: 'text-blue-900',
+      accentColor: 'text-blue-600',
+      description: 'Joint replacement, spine, sports medicine, trauma',
+      productLines: ['Hip/Knee', 'Shoulder', 'Spine', 'Sports Medicine', 'Trauma'],
+      activeDecisions: 8,
+      annualVolume: '12,500 cases',
+      opportunityValue: '$45M',
+      status: 'active'
+    },
+    {
+      id: 'cardiovascular',
+      name: 'Cardiovascular',
+      icon: Heart,
+      color: 'from-red-600 to-red-700',
+      bgColor: 'bg-red-50',
+      borderColor: 'border-red-200',
+      textColor: 'text-red-900',
+      accentColor: 'text-red-600',
+      description: 'Cardiac surgery, interventional cardiology, vascular',
+      productLines: ['Cardiac Surgery', 'Interventional Cardiology', 'Vascular', 'Electrophysiology'],
+      activeDecisions: 0,
+      annualVolume: 'TBD',
+      opportunityValue: 'TBD',
+      status: 'coming-soon'
+    },
+    {
+      id: 'neurology',
+      name: 'Neurology & Neurosurgery',
+      icon: Brain,
+      color: 'from-purple-600 to-purple-700',
+      bgColor: 'bg-purple-50',
+      borderColor: 'border-purple-200',
+      textColor: 'text-purple-900',
+      accentColor: 'text-purple-600',
+      description: 'Neurosurgery, stroke, epilepsy, spine',
+      productLines: ['Neurosurgery', 'Stroke', 'Epilepsy', 'Neuro Spine'],
+      activeDecisions: 0,
+      annualVolume: 'TBD',
+      opportunityValue: 'TBD',
+      status: 'coming-soon'
+    },
+    {
+      id: 'general-surgery',
+      name: 'General Surgery',
+      icon: Stethoscope,
+      color: 'from-teal-600 to-teal-700',
+      bgColor: 'bg-teal-50',
+      borderColor: 'border-teal-200',
+      textColor: 'text-teal-900',
+      accentColor: 'text-teal-600',
+      description: 'General, bariatric, colorectal, surgical oncology',
+      productLines: ['General Surgery', 'Bariatric', 'Colorectal', 'Surgical Oncology'],
+      activeDecisions: 0,
+      annualVolume: 'TBD',
+      opportunityValue: 'TBD',
+      status: 'coming-soon'
+    }
+  ];
 
-  const getHealthColor = (health) => {
-    const colors = {
-      excellent: 'bg-green-100 text-green-800 border-green-300',
-      good: 'bg-blue-100 text-blue-800 border-blue-300',
-      caution: 'bg-amber-100 text-amber-800 border-amber-300',
-      concern: 'bg-red-100 text-red-800 border-red-300'
-    };
-    return colors[health] || colors.good;
+  const handleServiceLineClick = (serviceLine) => {
+    if (serviceLine.status === 'active') {
+      navigate(`/service-line/${serviceLine.id}`);
+    }
   };
-
-  const getStatusColor = (status) => {
-    const colors = {
-      analyzing: 'bg-purple-100 text-purple-800',
-      planning: 'bg-blue-100 text-blue-800',
-      implementing: 'bg-green-100 text-green-800',
-      complete: 'bg-gray-100 text-gray-800',
-      onhold: 'bg-amber-100 text-amber-800'
-    };
-    return colors[status] || colors.planning;
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading portfolio overview...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -66,234 +91,183 @@ const PortfolioOverview = () => {
             <div className="flex items-start justify-between mb-6">
               <div>
                 <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                  Strategic Portfolio Overview
+                  Value Analytics Decision Hub
                 </h1>
                 <p className="text-gray-600 text-lg">
-                  Enterprise value transformation guided by the Quintuple Aim
+                  Transparent, data-driven, multidisciplinary decision-making across service lines
                 </p>
               </div>
               <div className="text-right">
-                <div className="text-sm text-gray-600">Portfolio Value</div>
-                <div className="text-3xl font-bold text-purple-600">$45M+</div>
-                <div className="text-sm text-gray-600 mt-1">total opportunity</div>
+                <div className="flex items-center gap-2 justify-end mb-2">
+                  <Target className="w-5 h-5 text-slate-600" />
+                  <div className="text-sm text-gray-600">Tri-Pillar Approach</div>
+                </div>
+                <div className="flex gap-2 text-xs">
+                  <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded font-semibold">Clinical</span>
+                  <span className="px-2 py-1 bg-green-100 text-green-800 rounded font-semibold">Financial</span>
+                  <span className="px-2 py-1 bg-amber-100 text-amber-800 rounded font-semibold">Operational</span>
+                </div>
               </div>
             </div>
 
-            {/* Quintuple Aim North Star */}
-            <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 text-white rounded-xl p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <Star className="w-8 h-8 text-yellow-300" />
-                  <div>
-                    <h2 className="text-2xl font-bold">Quintuple Aim - Our North Star</h2>
-                    <p className="text-purple-100 text-sm mt-1">
-                      All strategic initiatives aligned to CommonSpirit's mission framework
-                    </p>
-                  </div>
+            {/* Tri-Pillar Framework */}
+            <div className="bg-gradient-to-r from-slate-600 to-slate-700 text-white rounded-xl p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Target className="w-8 h-8 text-white" />
+                <div>
+                  <h2 className="text-2xl font-bold">Tri-Pillar Decision Framework</h2>
+                  <p className="text-slate-100 text-sm mt-1">
+                    Clear tradeoffs, shared ownership, measurable outcomes
+                  </p>
                 </div>
               </div>
               <div className="grid grid-cols-5 gap-4">
-                <div className="text-center">
-                  <div className="text-3xl mb-2">👤</div>
-                  <div className="font-bold">Patient Experience</div>
-                  <div className="text-xs text-purple-200 mt-1">Quality care delivery</div>
+                <div className="col-span-3 grid grid-cols-3 gap-4">
+                  <div className="bg-white bg-opacity-10 rounded-lg p-4 backdrop-blur-sm">
+                    <div className="text-3xl mb-2">⚕️</div>
+                    <div className="font-bold mb-1">Clinical Excellence</div>
+                    <div className="text-xs text-slate-200">Patient outcomes, quality, safety</div>
+                  </div>
+                  <div className="bg-white bg-opacity-10 rounded-lg p-4 backdrop-blur-sm">
+                    <div className="text-3xl mb-2">💰</div>
+                    <div className="font-bold mb-1">Financial Stewardship</div>
+                    <div className="text-xs text-slate-200">Cost, value, sustainability</div>
+                  </div>
+                  <div className="bg-white bg-opacity-10 rounded-lg p-4 backdrop-blur-sm">
+                    <div className="text-3xl mb-2">⚙️</div>
+                    <div className="font-bold mb-1">Operational Excellence</div>
+                    <div className="text-xs text-slate-200">Efficiency, workflow, capacity</div>
+                  </div>
                 </div>
-                <div className="text-center">
-                  <div className="text-3xl mb-2">🏥</div>
-                  <div className="font-bold">Population Health</div>
-                  <div className="text-xs text-purple-200 mt-1">Community outcomes</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl mb-2">💰</div>
-                  <div className="font-bold">Cost Reduction</div>
-                  <div className="text-xs text-purple-200 mt-1">Sustainable value</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl mb-2">⚕️</div>
-                  <div className="font-bold">Provider Experience</div>
-                  <div className="text-xs text-purple-200 mt-1">Team well-being</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl mb-2">⚖️</div>
-                  <div className="font-bold">Health Equity</div>
-                  <div className="text-xs text-purple-200 mt-1">Access for all</div>
+                <div className="col-span-2 bg-white bg-opacity-10 rounded-lg p-4 backdrop-blur-sm">
+                  <div className="text-sm font-bold mb-2">Decision Process</div>
+                  <div className="space-y-1 text-xs text-slate-200">
+                    <div>1. Define assumptions & analyze scenarios</div>
+                    <div>2. Make tradeoffs explicit & transparent</div>
+                    <div>3. All three pillars own the decision</div>
+                    <div>4. Track metrics & conduct lookbacks</div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Portfolio Summary Cards */}
-          <div className="grid grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <Target className="w-6 h-6 text-purple-600" />
-                <h3 className="font-bold text-gray-900">Strategic Initiatives</h3>
-              </div>
-              <div className="text-3xl font-bold text-purple-600 mb-1">
-                {strategyData?.strategicInitiatives?.length || 0}
-              </div>
-              <div className="text-sm text-gray-600">active portfolio epics</div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <TrendingUp className="w-6 h-6 text-green-600" />
-                <h3 className="font-bold text-gray-900">In Progress</h3>
-              </div>
-              <div className="text-3xl font-bold text-green-600 mb-1">
-                {strategyData?.strategicInitiatives?.filter(i => i.status === 'implementing').length || 0}
-              </div>
-              <div className="text-sm text-gray-600">implementing now</div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <DollarSign className="w-6 h-6 text-amber-600" />
-                <h3 className="font-bold text-gray-900">Financial Impact</h3>
-              </div>
-              <div className="text-3xl font-bold text-amber-600 mb-1">$45M</div>
-              <div className="text-sm text-gray-600">savings opportunity</div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <Users className="w-6 h-6 text-blue-600" />
-                <h3 className="font-bold text-gray-900">Program Epics</h3>
-              </div>
-              <div className="text-3xl font-bold text-blue-600 mb-1">25+</div>
-              <div className="text-sm text-gray-600">tactical initiatives</div>
-            </div>
-          </div>
-
-          {/* Strategic Initiatives Cards */}
+          {/* Service Lines Section */}
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Strategic Initiatives</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Service Lines</h2>
             <p className="text-gray-600 mb-6">
-              Click on any initiative to explore program epics and decision canvases
+              Select a service line to view product lines and access decision canvases
             </p>
           </div>
 
-          <div className="space-y-4">
-            {strategyData?.strategicInitiatives?.map((initiative) => (
-              <div
-                key={initiative.id}
-                className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all cursor-pointer border-2 border-transparent hover:border-purple-300"
-                onClick={() => navigate(`/initiative/${initiative.id}`)}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-xl font-bold text-gray-900">{initiative.name}</h3>
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(initiative.status)}`}>
-                        {initiative.status}
-                      </span>
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getHealthColor(initiative.health)}`}>
-                        {initiative.health}
-                      </span>
-                    </div>
-                    <p className="text-gray-600 mb-2">{initiative.description}</p>
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        {initiative.timeframe}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Users className="w-4 h-4" />
-                        {initiative.owner}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <DollarSign className="w-4 h-4" />
-                        {initiative.financialImpact}
-                      </div>
-                    </div>
-                  </div>
+          {/* Service Line Cards */}
+          <div className="grid grid-cols-1 gap-6">
+            {serviceLines.map((serviceLine) => {
+              const IconComponent = serviceLine.icon;
+              const isActive = serviceLine.status === 'active';
 
-                  <div className="text-right ml-6">
-                    <div className="text-sm text-gray-600 mb-1">Progress</div>
-                    <div className="text-3xl font-bold text-purple-600 mb-2">{initiative.completion}%</div>
-                    <div className="w-32 bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-purple-600 h-2 rounded-full transition-all"
-                        style={{ width: `${initiative.completion}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
+              return (
+                <div
+                  key={serviceLine.id}
+                  className={`bg-white rounded-xl shadow-lg p-6 transition-all border-2 ${
+                    isActive
+                      ? `${serviceLine.borderColor} hover:shadow-xl cursor-pointer hover:scale-[1.01]`
+                      : 'border-gray-200 opacity-75'
+                  }`}
+                  onClick={() => handleServiceLineClick(serviceLine)}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-4 flex-1">
+                      {/* Icon */}
+                      <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${serviceLine.color} flex items-center justify-center flex-shrink-0`}>
+                        <IconComponent className="w-8 h-8 text-white" />
+                      </div>
 
-                {/* Program Epics Pills */}
-                <div className="flex items-center gap-2 flex-wrap mb-4">
-                  <span className="text-xs font-semibold text-gray-600">Program Epics:</span>
-                  {initiative.programEpics?.map(epic => (
-                    <span
-                      key={epic}
-                      className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs font-semibold"
-                    >
-                      {epic}
-                    </span>
-                  ))}
-                </div>
+                      {/* Content */}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className={`text-2xl font-bold ${serviceLine.textColor}`}>
+                            {serviceLine.name}
+                          </h3>
+                          {!isActive && (
+                            <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-semibold">
+                              Coming Q2 2025
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-gray-600 mb-4">{serviceLine.description}</p>
 
-                {/* Quintuple Aim Alignment */}
-                <div className="border-t pt-4">
-                  <div className="text-xs font-semibold text-gray-600 mb-2">Quintuple Aim Alignment</div>
-                  <div className="grid grid-cols-5 gap-2">
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-purple-900">
-                        {initiative.quintupleAimAlignment?.patientExperience}
+                        {/* Product Lines */}
+                        <div className="mb-4">
+                          <div className="text-xs font-semibold text-gray-600 mb-2">Product Lines:</div>
+                          <div className="flex flex-wrap gap-2">
+                            {serviceLine.productLines.map((pl) => (
+                              <span
+                                key={pl}
+                                className={`px-3 py-1 ${serviceLine.bgColor} ${serviceLine.accentColor} rounded text-sm font-medium`}
+                              >
+                                {pl}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Metrics */}
+                        <div className="grid grid-cols-3 gap-4">
+                          <div>
+                            <div className="text-xs text-gray-600 mb-1">Active Decisions</div>
+                            <div className={`text-2xl font-bold ${serviceLine.accentColor}`}>
+                              {serviceLine.activeDecisions}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-600 mb-1">Annual Volume</div>
+                            <div className="text-lg font-semibold text-gray-900">
+                              {serviceLine.annualVolume}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-600 mb-1">Opportunity Value</div>
+                            <div className="text-lg font-semibold text-gray-900">
+                              {serviceLine.opportunityValue}
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-600">Patient</div>
                     </div>
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-purple-900">
-                        {initiative.quintupleAimAlignment?.populationHealth}
+
+                    {/* Arrow */}
+                    {isActive && (
+                      <div className={`flex items-center ${serviceLine.accentColor} ml-4`}>
+                        <ChevronRight className="w-8 h-8" />
                       </div>
-                      <div className="text-xs text-gray-600">Population</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-purple-900">
-                        {initiative.quintupleAimAlignment?.costReduction}
-                      </div>
-                      <div className="text-xs text-gray-600">Cost</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-purple-900">
-                        {initiative.quintupleAimAlignment?.providerExperience}
-                      </div>
-                      <div className="text-xs text-gray-600">Provider</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-purple-900">
-                        {initiative.quintupleAimAlignment?.healthEquity}
-                      </div>
-                      <div className="text-xs text-gray-600">Equity</div>
-                    </div>
+                    )}
                   </div>
                 </div>
-
-                {/* Click hint */}
-                <div className="flex items-center justify-end gap-2 text-purple-600 font-semibold text-sm mt-4">
-                  <span>View Program Epics & Decision Canvases</span>
-                  <ChevronRight className="w-5 h-5" />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Info Box */}
           <div className="mt-8 bg-blue-50 border-l-4 border-blue-600 p-6 rounded-lg">
             <div className="flex items-start gap-3">
-              <AlertCircle className="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" />
+              <Activity className="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" />
               <div>
-                <h3 className="font-bold text-blue-900 mb-2">How to Use This Portfolio View</h3>
-                <p className="text-blue-800 text-sm mb-2">
-                  This is your strategic command center showing all active initiatives aligned to the Quintuple Aim.
-                </p>
-                <ul className="text-blue-800 text-sm space-y-1">
-                  <li>• <strong>Click any initiative</strong> to drill down into program epics and decision canvases</li>
-                  <li>• <strong>Track progress</strong> across all initiatives with completion % and health status</li>
-                  <li>• <strong>View alignment</strong> to Quintuple Aim dimensions for each initiative</li>
-                  <li>• <strong>Navigate hierarchically</strong> from portfolio → initiative → program epic → decision canvas</li>
-                </ul>
+                <h3 className="font-bold text-blue-900 mb-2">How This Decision Hub Works</h3>
+                <div className="text-blue-800 text-sm space-y-2">
+                  <p className="mb-2">
+                    This platform supports transparent, data-driven decision-making with clear accountability:
+                  </p>
+                  <ul className="space-y-1 ml-4">
+                    <li>• <strong>Service Lines</strong> → High-level clinical service areas</li>
+                    <li>• <strong>Product Lines</strong> → Specific procedure/product categories within each service</li>
+                    <li>• <strong>Decision Canvases</strong> → Tri-pillar analyses with scenario modeling and clear tradeoffs</li>
+                    <li>• <strong>Lookbacks</strong> → Performance tracking against assumptions to drive continuous improvement</li>
+                  </ul>
+                  <p className="mt-3 italic">
+                    Every decision is owned by all three pillars, with metrics to validate assumptions and drive learning.
+                  </p>
+                </div>
               </div>
             </div>
           </div>

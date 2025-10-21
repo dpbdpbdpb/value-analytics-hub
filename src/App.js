@@ -5,6 +5,7 @@ import ExecutiveDashboard from './views/ExecutiveDashboard';
 import SurgeonTool from './views/SurgeonTool';
 import TeamDecisionDashboard from './views/TeamDecisionDashboard';
 import PortfolioOverview from './views/PortfolioOverview';
+import ServiceLineView from './views/ServiceLineView';
 import InitiativeDetail from './views/InitiativeDetail';
 import './App.css';
 
@@ -15,7 +16,10 @@ function App() {
         {/* Portfolio Overview - Default home page */}
         <Route path="/" element={<PortfolioOverview />} />
 
-        {/* Initiative Detail */}
+        {/* New Hierarchy: Service Line → Product Line → Decision Canvas */}
+        <Route path="/service-line/:serviceLineId" element={<ServiceLineView />} />
+
+        {/* Initiative Detail - Legacy */}
         <Route path="/initiative/:initiativeId" element={<InitiativeDetail />} />
 
         {/* Legacy landing page for persona selection */}
