@@ -58,10 +58,10 @@ const TeamDecisionDashboard = () => {
     return (
       <div
         onClick={onClick}
-        className={`rounded-xl border-2 p-6 cursor-pointer transition-all ${
+        className={`rounded-xl border-2 p-5 cursor-pointer transition-all ${
           isSelected
-            ? 'border-purple-600 bg-purple-50 shadow-lg'
-            : 'border-gray-200 bg-white hover:border-purple-300 hover:shadow-md'
+            ? 'border-blue-500 bg-blue-50 shadow-xl'
+            : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-md'
         }`}
       >
         {/* Header */}
@@ -73,25 +73,25 @@ const TeamDecisionDashboard = () => {
             <p className="text-sm text-gray-600 mt-1">{scenario.description}</p>
           </div>
           {isSelected && (
-            <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+            <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
               <div className="w-3 h-3 bg-white rounded-full"></div>
             </div>
           )}
         </div>
 
         {/* Quintuple Aim North Star */}
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg p-4 mb-4">
+        <div className="bg-gradient-to-r from-slate-600 to-slate-700 text-white rounded-lg p-4 mb-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Star className="w-5 h-5 text-yellow-300" />
-              <h4 className="font-bold">Quintuple Aim</h4>
+              <h4 className="font-bold text-base">Quintuple Aim</h4>
             </div>
             <div className="text-right">
               <div className="text-xs opacity-90">Mission Alignment</div>
               <div className="text-2xl font-bold">{(scenario.quintupleMissionScore || 0).toFixed(0)}/100</div>
             </div>
           </div>
-          <div className="grid grid-cols-5 gap-2 text-xs">
+          <div className="grid grid-cols-5 gap-3 text-xs">
             <div className="text-center">
               <div className="mb-1">👤</div>
               <div className="font-semibold">Patient Exp</div>
@@ -121,10 +121,10 @@ const TeamDecisionDashboard = () => {
         </div>
 
         {/* Three Pillar Grid */}
-        <div className="mb-3 text-center text-sm text-gray-600">
+        <div className="mb-4 text-center text-sm text-gray-600">
           <span className="font-semibold">How each pillar serves the Quintuple Aim:</span>
         </div>
-        <div className="grid grid-cols-3 gap-3 mb-4">
+        <div className="grid grid-cols-3 gap-4 mb-5">
           {/* Finance Pillar */}
           <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-2">
@@ -328,7 +328,7 @@ const TeamDecisionDashboard = () => {
               </div>
               <div className="text-right">
                 <div className="text-sm text-gray-600">Total Cases</div>
-                <div className="text-3xl font-bold text-purple-600">
+                <div className="text-3xl font-bold text-slate-700">
                   {realData ? (realData.metadata?.totalCases || 0).toLocaleString() : '0'}
                 </div>
                 <div className="text-sm text-gray-600 mt-1">procedures analyzed</div>
@@ -339,10 +339,10 @@ const TeamDecisionDashboard = () => {
             {strategyData && strategyData.decisions && strategyData.decisions[0] && (
               <div className="mb-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
                 <div className="flex items-center gap-2 text-sm flex-wrap">
-                  <MapPin className="w-4 h-4 text-purple-600" />
+                  <MapPin className="w-4 h-4 text-slate-600" />
                   <span className="text-gray-500">Strategic Context:</span>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-purple-900">
+                    <span className="font-semibold text-slate-900">
                       {strategyData.strategicInitiatives[0]?.name}
                     </span>
                     <ChevronRight className="w-4 h-4 text-gray-400" />
@@ -379,49 +379,49 @@ const TeamDecisionDashboard = () => {
             )}
 
             {/* Quintuple Aim North Star Banner */}
-            <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 text-white rounded-xl p-6">
-              <div className="flex items-center justify-between mb-4">
+            <div className="bg-gradient-to-r from-slate-600 via-slate-700 to-slate-800 text-white rounded-xl p-6 shadow-lg">
+              <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
                   <Star className="w-8 h-8 text-yellow-300" />
                   <div>
                     <h2 className="text-2xl font-bold">Quintuple Aim - Our North Star</h2>
-                    <p className="text-purple-100 text-sm mt-1">
+                    <p className="text-slate-200 text-sm mt-1">
                       All decisions evaluated through CommonSpirit's mission framework
                     </p>
                   </div>
                 </div>
-                <Heart className="w-12 h-12 text-purple-300 opacity-50" />
+                <Heart className="w-12 h-12 text-slate-400 opacity-40" />
               </div>
-              <div className="grid grid-cols-5 gap-4">
+              <div className="grid grid-cols-5 gap-5">
                 <div className="text-center">
                   <div className="text-3xl mb-2">👤</div>
                   <div className="font-bold">Patient</div>
                   <div className="font-bold">Experience</div>
-                  <div className="text-xs text-purple-200 mt-1">Quality care delivery</div>
+                  <div className="text-xs text-slate-300 mt-1">Quality care delivery</div>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl mb-2">🏥</div>
                   <div className="font-bold">Population</div>
                   <div className="font-bold">Health</div>
-                  <div className="text-xs text-purple-200 mt-1">Community outcomes</div>
+                  <div className="text-xs text-slate-300 mt-1">Community outcomes</div>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl mb-2">💰</div>
                   <div className="font-bold">Cost</div>
                   <div className="font-bold">Reduction</div>
-                  <div className="text-xs text-purple-200 mt-1">Sustainable value</div>
+                  <div className="text-xs text-slate-300 mt-1">Sustainable value</div>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl mb-2">⚕️</div>
                   <div className="font-bold">Provider</div>
                   <div className="font-bold">Experience</div>
-                  <div className="text-xs text-purple-200 mt-1">Team well-being</div>
+                  <div className="text-xs text-slate-300 mt-1">Team well-being</div>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl mb-2">⚖️</div>
                   <div className="font-bold">Health</div>
                   <div className="font-bold">Equity</div>
-                  <div className="text-xs text-purple-200 mt-1">Access for all</div>
+                  <div className="text-xs text-slate-300 mt-1">Access for all</div>
                 </div>
               </div>
             </div>
@@ -457,7 +457,7 @@ const TeamDecisionDashboard = () => {
                     onClick={() => setActiveTab(tab.id)}
                     className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold whitespace-nowrap transition-all ${
                       activeTab === tab.id
-                        ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-md'
+                        ? 'bg-gradient-to-r from-slate-600 to-slate-700 text-white shadow-md'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
@@ -487,7 +487,7 @@ const TeamDecisionDashboard = () => {
               </div>
 
               {/* Scenario Cards */}
-              <div className="grid grid-cols-3 gap-6 mt-6">
+              <div className="grid grid-cols-3 gap-8 mt-6">
                 {Object.entries(SCENARIOS).map(([id, scenario]) => (
                   <ThreePillarScenarioCard
                     key={id}
