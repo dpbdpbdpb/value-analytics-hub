@@ -1721,6 +1721,22 @@ const EnhancedOrthopedicDashboard = () => {
       <div className="space-y-6">
         <ExecutiveSummaryCard scenario={selectedScenario} />
 
+        {/* Disclaimer */}
+        <div className="bg-amber-50 border-l-4 border-amber-500 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <h3 className="font-bold text-amber-900 mb-1">Estimated Mission Scores</h3>
+              <p className="text-sm text-amber-800">
+                The Quintuple Aim scores shown below are <strong>estimated based on industry benchmarks and scenario characteristics</strong>.
+                Actual patient experience, population health, and health equity scores would require clinical outcomes data,
+                patient satisfaction surveys, and facility-level performance metrics not currently available in this analysis.
+                Cost reduction scores are derived from actual financial data.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Quintuple Aim Explanations */}
         <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl shadow-lg p-6">
           <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
