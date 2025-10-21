@@ -62,7 +62,7 @@ const TeamDecisionDashboard = () => {
         </div>
 
         {/* Three Pillar Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-3 gap-3 mb-4">
           {/* Finance Pillar */}
           <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-3">
@@ -101,12 +101,12 @@ const TeamDecisionDashboard = () => {
             </div>
             <div className="space-y-2 text-sm">
               <div>
-                <div className="text-xs text-blue-700">Switching Burden</div>
+                <div className="text-xs text-blue-700">Vendor Switching Impact</div>
                 <div className="text-xl font-bold text-blue-900">
                   {(100 - (scenario.adoptionRate || 0) * 100).toFixed(0)}%
                 </div>
                 <div className="text-xs text-blue-600 mt-0.5">
-                  surgeons switching vendors
+                  surgeons affected
                 </div>
               </div>
               <div>
@@ -212,10 +212,10 @@ const TeamDecisionDashboard = () => {
             <div className="flex items-start justify-between">
               <div>
                 <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                  🤝 Team Decision Dashboard
+                  Integrated Decision Dashboard
                 </h1>
                 <p className="text-gray-600 text-lg">
-                  Collaborative view showing Finance, Clinical, and Operations perspectives together
+                  Multi-perspective analysis integrating Finance, Clinical, and Operations viewpoints
                 </p>
                 <div className="flex items-center gap-6 mt-4 text-sm">
                   <div className="flex items-center gap-2 text-amber-700">

@@ -10,7 +10,7 @@ const NavigationHeader = ({ role, specialty, specialtyName, persona }) => {
     clinical: 'Clinical',
     financial: 'Finance',
     operational: 'Operations',
-    team: 'Team Decision Dashboard'
+    team: 'Integrated Decision Dashboard'
   };
 
   // Map personas to icons

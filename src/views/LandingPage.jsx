@@ -133,9 +133,9 @@ const LandingPage = () => {
                     <Users className="w-12 h-12 text-white" />
                   </div>
                   <div className="text-left">
-                    <h3 className="text-3xl font-bold mb-2">🤝 Team Decision Dashboard</h3>
+                    <h3 className="text-3xl font-bold mb-2">Integrated Decision Dashboard</h3>
                     <p className="text-purple-100 text-lg mb-3">
-                      Collaborative view showing Finance, Clinical, and Operations perspectives together
+                      Multi-perspective analysis integrating Finance, Clinical, and Operations viewpoints
                     </p>
                     <div className="flex items-center gap-6 text-sm">
                       <div className="flex items-center gap-2">
