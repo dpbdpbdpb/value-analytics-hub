@@ -6,6 +6,7 @@ import {
   Cell, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Area, AreaChart,
   ScatterChart, Scatter, ComposedChart, Sankey, RadialBarChart, RadialBar
 } from 'recharts';
+import { generateScenarios } from '../config/scenarios';
 import {
   DollarSign, TrendingUp, AlertCircle, Users, Building2,
   Activity, Shield, Target, Calculator, FileText, CheckCircle,
@@ -29,9 +30,9 @@ const EnhancedOrthopedicDashboard = () => {
 
   // State management
   const [activeTab, setActiveTab] = useState('overview');
-  const [selectedScenario, setSelectedScenario] = useState('C');
+  const [selectedScenario, setSelectedScenario] = useState('dual-value'); // Default to Dual-Value scenario
   const [comparisonMode, setComparisonMode] = useState(false);
-  const [comparisonScenario, setComparisonScenario] = useState('D');
+  const [comparisonScenario, setComparisonScenario] = useState('dual-premium'); // Default comparison
   const [sortBy, setSortBy] = useState('savings');
   const [filterRisk, setFilterRisk] = useState('all');
   const [filterProcedureType, setFilterProcedureType] = useState('all'); // all, primary, revision
@@ -136,216 +137,11 @@ const EnhancedOrthopedicDashboard = () => {
     });
   };
 
-  // 7-Scenario Data Structure aligned with Surgeon Tool (hip_knees_surgeon_tool)
+  // 5 Standardized Scenarios with volume-weighted adoption risk
   const SCENARIOS = useMemo(() => {
-    if (!realData) {
-      // Fallback placeholder data
-      return {
-        'A': {
-          id: 'A',
-          name: 'Status Quo (Loading...)',
-          shortName: 'Status Quo',
-          description: 'Loading data...',
-          vendors: ['Loading...'],
-          vendorCount: 20,
-          annualSavings: 0,
-          savingsRange: { conservative: 0, expected: 0, optimistic: 0 },
-          adoptionRate: 100,
-          riskLevel: 'low',
-          riskScore: 1,
-          baselineCost: 0,
-          implementation: { complexity: 'Low', timeline: 0, costMillions: 0 },
-          breakdown: { volumeAggregation: 0, priceOptimization: 0, inventoryOptimization: 0, adminEfficiency: 0 },
-          agentScore: 2.1,
-          quintupleMissionScore: 45,
-          npv5Year: 0
-        }
-      };
-    }
+    return generateScenarios(realData);
+  }, [realData]);
 
-    const totalCases = realData.metadata.totalCases;
-    const baselineSpend = realData.metadata.totalSpend / 1000000; // Convert to millions
-
-    return {
-      'A': {
-        id: 'A',
-        name: 'Status Quo',
-        shortName: 'Status Quo',
-        description: 'Continue with current multi-vendor fragmentation (ZIMMER BIOMET, STRYKER, J&J, SMITH & NEPHEW, CONFORMIS)',
-        vendors: ['ZIMMER BIOMET', 'STRYKER', 'J&J', 'SMITH & NEPHEW', 'CONFORMIS'],
-        vendorCount: 5,
-        savingsPercent: 0,
-        annualSavings: 0,
-        savingsRange: { conservative: 0, expected: 0, optimistic: 0 },
-        adoptionRate: 100,
-        riskLevel: 'low',
-        riskScore: 1,
-        baselineCost: realData.metadata.totalSpend,
-        implementation: {
-          complexity: 'Low',
-          timeline: 0,
-          costMillions: 0
-        },
-        breakdown: {
-          volumeAggregation: 0,
-          priceOptimization: 0,
-          inventoryOptimization: 0,
-          adminEfficiency: 0
-        },
-        agentScore: 2.1,
-        quintupleMissionScore: 45,
-        npv5Year: 0
-      },
-      'B': {
-        id: 'B',
-        name: 'Tri-Source (Zimmer + Stryker + J&J)',
-        shortName: 'Tri-Source',
-        description: 'Consolidate to three primary vendors with proven surgeon acceptance',
-        vendors: ['ZIMMER BIOMET', 'STRYKER', 'J&J'],
-        vendorCount: 3,
-        savingsPercent: 12,
-        annualSavings: baselineSpend * 0.12,
-        savingsRange: {
-          conservative: baselineSpend * 0.12 * 0.85,
-          expected: baselineSpend * 0.12,
-          optimistic: baselineSpend * 0.12 * 1.15
-        },
-        adoptionRate: 92,
-        riskLevel: 'low',
-        riskScore: 2.5,
-        baselineCost: realData.metadata.totalSpend,
-        implementation: {
-          complexity: 'Medium',
-          timeline: 10,
-          costMillions: 2.2
-        },
-        breakdown: {
-          volumeAggregation: baselineSpend * 0.12 * 0.45,
-          priceOptimization: baselineSpend * 0.12 * 0.40,
-          inventoryOptimization: baselineSpend * 0.12 * 0.10,
-          adminEfficiency: baselineSpend * 0.12 * 0.05
-        },
-        agentScore: 3.8,
-        quintupleMissionScore: 82,
-        npv5Year: baselineSpend * 0.12 * 5 - 2.2,
-        vendorSplit: {
-          zimmer_biomet: 40,
-          stryker: 35,
-          j_j: 25
-        }
-      },
-      'C': {
-        id: 'C',
-        name: 'Zimmer + J&J',
-        shortName: 'Zimmer + J&J',
-        description: 'Dual-vendor model with ZIMMER BIOMET and J&J',
-        vendors: ['ZIMMER BIOMET', 'J&J'],
-        vendorCount: 2,
-        savingsPercent: 18,
-        annualSavings: baselineSpend * 0.18,
-        savingsRange: {
-          conservative: baselineSpend * 0.18 * 0.85,
-          expected: baselineSpend * 0.18,
-          optimistic: baselineSpend * 0.18 * 1.15
-        },
-        adoptionRate: 88,
-        riskLevel: 'medium',
-        riskScore: 3.5,
-        baselineCost: realData.metadata.totalSpend,
-        implementation: {
-          complexity: 'Medium',
-          timeline: 12,
-          costMillions: 2.8
-        },
-        breakdown: {
-          volumeAggregation: baselineSpend * 0.18 * 0.48,
-          priceOptimization: baselineSpend * 0.18 * 0.38,
-          inventoryOptimization: baselineSpend * 0.18 * 0.10,
-          adminEfficiency: baselineSpend * 0.18 * 0.04
-        },
-        agentScore: 4.1,
-        quintupleMissionScore: 78,
-        npv5Year: baselineSpend * 0.18 * 5 - 2.8,
-        vendorSplit: {
-          zimmer_biomet: 55,
-          j_j: 45
-        }
-      },
-      'D': {
-        id: 'D',
-        name: 'Stryker + Zimmer',
-        shortName: 'Stryker + Zimmer',
-        description: 'Dual-vendor model with STRYKER and ZIMMER BIOMET',
-        vendors: ['STRYKER', 'ZIMMER BIOMET'],
-        vendorCount: 2,
-        savingsPercent: 16,
-        annualSavings: baselineSpend * 0.16,
-        savingsRange: {
-          conservative: baselineSpend * 0.16 * 0.85,
-          expected: baselineSpend * 0.16,
-          optimistic: baselineSpend * 0.16 * 1.15
-        },
-        adoptionRate: 90,
-        riskLevel: 'medium',
-        riskScore: 3.2,
-        baselineCost: realData.metadata.totalSpend,
-        implementation: {
-          complexity: 'Medium',
-          timeline: 12,
-          costMillions: 2.6
-        },
-        breakdown: {
-          volumeAggregation: baselineSpend * 0.16 * 0.47,
-          priceOptimization: baselineSpend * 0.16 * 0.38,
-          inventoryOptimization: baselineSpend * 0.16 * 0.11,
-          adminEfficiency: baselineSpend * 0.16 * 0.04
-        },
-        agentScore: 4.0,
-        quintupleMissionScore: 80,
-        npv5Year: baselineSpend * 0.16 * 5 - 2.6,
-        vendorSplit: {
-          stryker: 52,
-          zimmer_biomet: 48
-        }
-      },
-      'E': {
-        id: 'E',
-        name: 'Stryker + J&J',
-        shortName: 'Stryker + J&J',
-        description: 'Dual-vendor model with STRYKER and J&J',
-        vendors: ['STRYKER', 'J&J'],
-        vendorCount: 2,
-        savingsPercent: 20,
-        annualSavings: baselineSpend * 0.20,
-        savingsRange: {
-          conservative: baselineSpend * 0.20 * 0.85,
-          expected: baselineSpend * 0.20,
-          optimistic: baselineSpend * 0.20 * 1.15
-        },
-        adoptionRate: 85,
-        riskLevel: 'medium',
-        riskScore: 3.8,
-        baselineCost: realData.metadata.totalSpend,
-        implementation: {
-          complexity: 'Medium-High',
-          timeline: 14,
-          costMillions: 3.0
-        },
-        breakdown: {
-          volumeAggregation: baselineSpend * 0.20 * 0.48,
-          priceOptimization: baselineSpend * 0.20 * 0.38,
-          inventoryOptimization: baselineSpend * 0.20 * 0.10,
-          adminEfficiency: baselineSpend * 0.20 * 0.04
-        },
-        agentScore: 4.3,
-        quintupleMissionScore: 75,
-        npv5Year: baselineSpend * 0.20 * 5 - 3.0,
-        vendorSplit: {
-          stryker: 53,
-          j_j: 47
-        }
-      }
-    };
   }, [realData]);
 
   // Matrix Pricing Component Details from real data

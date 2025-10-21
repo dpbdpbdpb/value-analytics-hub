@@ -398,41 +398,84 @@
     }
   },
   "scenarios": {
-    "scenarioA": {
+    "status-quo": {
       "name": "Status Quo",
+      "shortName": "Status Quo",
       "vendors": [
-        "STRYKER",
         "ZIMMER BIOMET",
-        "J&J"
+        "STRYKER",
+        "J&J",
+        "SMITH & NEPHEW",
+        "CONFORMIS"
       ],
       "annualSavings": 0,
+      "savingsPercent": 0,
       "adoptionRate": 1.0,
       "riskLevel": "Low",
-      "agentScore": 3.0,
-      "description": "Continue with current multi-vendor approach"
+      "riskScore": 1.0,
+      "agentScore": 2.1,
+      "description": "Continue with current multi-vendor fragmentation across all vendors"
     },
-    "scenarioB": {
-      "name": "Dual-Vendor",
+    "tri-vendor": {
+      "name": "Tri-Vendor",
+      "shortName": "Tri-Vendor",
+      "vendors": [
+        "ZIMMER BIOMET",
+        "STRYKER",
+        "J&J"
+      ],
+      "annualSavings": 5049681.235565,
+      "savingsPercent": 12.0,
+      "adoptionRate": 0.92,
+      "riskLevel": "Low",
+      "riskScore": 2.5,
+      "agentScore": 3.8,
+      "description": "Balanced approach with three major vendors (Zimmer + Stryker + J&J)"
+    },
+    "dual-premium": {
+      "name": "Dual-Vendor: Premium",
+      "shortName": "Premium",
       "vendors": [
         "STRYKER",
         "ZIMMER BIOMET"
       ],
-      "annualSavings": 7574521.703346001,
+      "annualSavings": 6312101.419456,
+      "savingsPercent": 15.0,
+      "adoptionRate": 0.88,
+      "riskLevel": "Medium",
+      "riskScore": 4.2,
+      "agentScore": 4.3,
+      "description": "Premium vendors focus (Stryker + Zimmer) - highest quality, moderate savings"
+    },
+    "dual-value": {
+      "name": "Dual-Vendor: Value",
+      "shortName": "Value",
+      "vendors": [
+        "ZIMMER BIOMET",
+        "J&J"
+      ],
+      "annualSavings": 7574521.703346,
+      "savingsPercent": 18.0,
       "adoptionRate": 0.85,
       "riskLevel": "Medium",
+      "riskScore": 5.1,
       "agentScore": 4.5,
-      "description": "Consolidate to two primary vendors"
+      "description": "Value-focused consolidation (Zimmer + J&J) - strong savings, good quality"
     },
-    "scenarioC": {
-      "name": "Single-Vendor",
+    "dual-innovation": {
+      "name": "Dual-Vendor: Innovation",
+      "shortName": "Innovation",
       "vendors": [
-        "STRYKER"
+        "STRYKER",
+        "J&J"
       ],
-      "annualSavings": 9257748.748534001,
-      "adoptionRate": 0.68,
+      "annualSavings": 6731348.102991,
+      "savingsPercent": 16.0,
+      "adoptionRate": 0.82,
       "riskLevel": "High",
-      "agentScore": 5.0,
-      "description": "Single vendor with maximum leverage"
+      "riskScore": 6.3,
+      "agentScore": 4.0,
+      "description": "Innovation-focused (Stryker + J&J) - leading technology, higher adoption risk"
     }
   }
 }
