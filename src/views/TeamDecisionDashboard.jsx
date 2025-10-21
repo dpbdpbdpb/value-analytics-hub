@@ -1,24 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Stethoscope, Shield, DollarSign, Users, Package, AlertCircle, Eye, Heart, Target, Star, Activity } from 'lucide-react';
+import { TrendingUp, Stethoscope, Shield, DollarSign, Users, Package, AlertCircle, Eye, Heart, Target, Star, Activity, ChevronRight, MapPin, Lightbulb, FileCheck } from 'lucide-react';
 import NavigationHeader from '../components/shared/NavigationHeader';
 
 const TeamDecisionDashboard = () => {
   const [realData, setRealData] = useState(null);
+  const [strategyData, setStrategyData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('scenarios');
   const [selectedScenario, setSelectedScenario] = useState('C');
 
   // Load data
   useEffect(() => {
+    // Load orthopedic data
     const jsonPath = `${process.env.PUBLIC_URL}/orthopedic-data.json`;
     fetch(jsonPath)
       .then(response => response.json())
       .then(data => {
         setRealData(data);
+      })
+      .catch(err => {
+        console.error('Error loading orthopedic data:', err);
+      });
+
+    // Load strategic framework data
+    const strategyPath = `${process.env.PUBLIC_URL}/strategic-framework.json`;
+    fetch(strategyPath)
+      .then(response => response.json())
+      .then(data => {
+        setStrategyData(data);
         setLoading(false);
       })
       .catch(err => {
-        console.error('Error loading data:', err);
+        console.error('Error loading strategy data:', err);
         setLoading(false);
       });
   }, []);
@@ -278,6 +291,7 @@ const TeamDecisionDashboard = () => {
   // Render tabs
   const tabs = [
     { id: 'scenarios', label: 'Scenario Comparison', icon: Eye },
+    { id: 'assumptions', label: 'Assumptions & Validation', icon: FileCheck },
     { id: 'finance', label: 'Financial Deep Dive', icon: DollarSign },
     { id: 'clinical', label: 'Clinical Deep Dive', icon: Stethoscope },
     { id: 'operations', label: 'Operations Deep Dive', icon: Shield },
@@ -320,6 +334,49 @@ const TeamDecisionDashboard = () => {
                 <div className="text-sm text-gray-600 mt-1">procedures analyzed</div>
               </div>
             </div>
+
+            {/* Strategic Context Breadcrumb */}
+            {strategyData && strategyData.decisions && strategyData.decisions[0] && (
+              <div className="mb-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
+                <div className="flex items-center gap-2 text-sm flex-wrap">
+                  <MapPin className="w-4 h-4 text-purple-600" />
+                  <span className="text-gray-500">Strategic Context:</span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-purple-900">
+                      {strategyData.strategicInitiatives[0]?.name}
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                    <span className="text-gray-700">
+                      {strategyData.decisionCategories.find(c => c.id === strategyData.decisions[0].categoryId)?.name}
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                    <span className="font-semibold text-gray-900">
+                      {strategyData.decisions[0].name}
+                    </span>
+                    <span className="ml-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
+                      {strategyData.decisions[0].status}
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-2 text-xs text-gray-600 italic">
+                  {strategyData.decisions[0].description}
+                </div>
+                <div className="mt-3 flex items-center gap-4 text-xs">
+                  <div className="flex items-center gap-1">
+                    <Lightbulb className="w-3 h-3 text-amber-600" />
+                    <span className="text-gray-600">
+                      {strategyData.decisions[0].assumptions?.length || 0} key assumptions being validated
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Users className="w-3 h-3 text-blue-600" />
+                    <span className="text-gray-600">
+                      {strategyData.decisions[0].committee.decisionRule}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Quintuple Aim North Star Banner */}
             <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 text-white rounded-xl p-6">
@@ -439,6 +496,129 @@ const TeamDecisionDashboard = () => {
                   onClick={() => setSelectedScenario(id)}
                 />
               ))}
+            </div>
+          )}
+
+          {activeTab === 'assumptions' && strategyData && strategyData.decisions && strategyData.decisions[0] && (
+            <div className="bg-white rounded-xl shadow-lg p-8">
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-purple-900 mb-2 flex items-center gap-2">
+                  <FileCheck className="w-7 h-7" />
+                  Assumptions & Validation Framework
+                </h2>
+                <p className="text-gray-600 italic">Making assumptions transparent and trackable for accountability</p>
+              </div>
+
+              {/* Assumptions Overview */}
+              <div className="grid grid-cols-3 gap-6 mb-8">
+                <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <DollarSign className="w-6 h-6 text-amber-600" />
+                    <h3 className="font-bold text-amber-900">Finance</h3>
+                  </div>
+                  <div className="text-3xl font-bold text-amber-900 mb-1">
+                    {strategyData.decisions[0].assumptions.filter(a => a.pillar === 'finance').length}
+                  </div>
+                  <div className="text-sm text-amber-700">key assumptions</div>
+                </div>
+                <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Stethoscope className="w-6 h-6 text-blue-600" />
+                    <h3 className="font-bold text-blue-900">Clinical</h3>
+                  </div>
+                  <div className="text-3xl font-bold text-blue-900 mb-1">
+                    {strategyData.decisions[0].assumptions.filter(a => a.pillar === 'clinical').length}
+                  </div>
+                  <div className="text-sm text-blue-700">key assumptions</div>
+                </div>
+                <div className="bg-green-50 border-2 border-green-200 rounded-lg p-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Shield className="w-6 h-6 text-green-600" />
+                    <h3 className="font-bold text-green-900">Operations</h3>
+                  </div>
+                  <div className="text-3xl font-bold text-green-900 mb-1">
+                    {strategyData.decisions[0].assumptions.filter(a => a.pillar === 'operations').length}
+                  </div>
+                  <div className="text-sm text-green-700">key assumptions</div>
+                </div>
+              </div>
+
+              {/* Assumptions Table */}
+              <div className="mb-8">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">All Assumptions</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-purple-100 border-b-2 border-purple-300">
+                        <th className="text-left p-4 font-bold text-purple-900">Pillar</th>
+                        <th className="text-left p-4 font-bold text-purple-900">Assumption</th>
+                        <th className="text-center p-4 font-bold text-purple-900">Confidence</th>
+                        <th className="text-left p-4 font-bold text-purple-900">Validation Metrics</th>
+                        <th className="text-center p-4 font-bold text-purple-900">Frequency</th>
+                        <th className="text-left p-4 font-bold text-purple-900">Owner</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {strategyData.decisions[0].assumptions.map((assumption, idx) => {
+                        const pillarColors = {
+                          finance: 'bg-amber-50 text-amber-900 border-amber-200',
+                          clinical: 'bg-blue-50 text-blue-900 border-blue-200',
+                          operations: 'bg-green-50 text-green-900 border-green-200'
+                        };
+                        const confidenceColors = {
+                          high: 'bg-green-100 text-green-800 border-green-300',
+                          medium: 'bg-amber-100 text-amber-800 border-amber-300',
+                          low: 'bg-red-100 text-red-800 border-red-300'
+                        };
+                        return (
+                          <tr key={idx} className="border-b border-gray-200 hover:bg-purple-50">
+                            <td className="p-4">
+                              <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${pillarColors[assumption.pillar]}`}>
+                                {assumption.pillar}
+                              </span>
+                            </td>
+                            <td className="p-4 text-sm text-gray-800">{assumption.assumption}</td>
+                            <td className="p-4 text-center">
+                              <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${confidenceColors[assumption.confidence]}`}>
+                                {assumption.confidence}
+                              </span>
+                            </td>
+                            <td className="p-4 text-xs text-gray-700">
+                              {assumption.validationMetrics.join(', ')}
+                            </td>
+                            <td className="p-4 text-center text-sm text-gray-700">
+                              {assumption.validationFrequency}
+                            </td>
+                            <td className="p-4 text-sm text-gray-700">{assumption.owner}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Why Assumptions Matter */}
+              <div className="grid grid-cols-2 gap-6">
+                <div className="bg-purple-50 border-l-4 border-purple-600 p-6 rounded">
+                  <h3 className="font-bold text-purple-900 mb-3">Why Track Assumptions?</h3>
+                  <ul className="space-y-2 text-sm text-purple-800">
+                    <li>• <strong>Transparency:</strong> Everyone knows what we believe must be true</li>
+                    <li>• <strong>Accountability:</strong> Clear owners for validating each assumption</li>
+                    <li>• <strong>Learning:</strong> Track which assumptions hold vs. fail over time</li>
+                    <li>• <strong>Agility:</strong> Early warning system to pivot when assumptions break</li>
+                  </ul>
+                </div>
+                <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded">
+                  <h3 className="font-bold text-blue-900 mb-3">Validation Process</h3>
+                  <ul className="space-y-2 text-sm text-blue-800">
+                    <li>• Each assumption has defined validation metrics</li>
+                    <li>• Regular review cadence (monthly or quarterly)</li>
+                    <li>• Status updates in lookback/retrospective sessions</li>
+                    <li>• Triggers decision to <strong>Persevere</strong>, <strong>Pivot</strong>, or <strong>Stop</strong></li>
+                  </ul>
+                </div>
+              </div>
             </div>
           )}
 

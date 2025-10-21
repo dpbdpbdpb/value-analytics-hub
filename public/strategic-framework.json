@@ -1,0 +1,352 @@
+{
+  "metadata": {
+    "frameworkVersion": "1.0",
+    "lastUpdated": "2025-01-21",
+    "description": "Strategic Decision Framework for CommonSpirit Health"
+  },
+  "strategicThemes": {
+    "quintupleAim": {
+      "name": "Quintuple Aim",
+      "description": "Our North Star - CommonSpirit's mission framework",
+      "dimensions": [
+        {
+          "id": "patientExperience",
+          "name": "Patient Experience",
+          "description": "Enhanced care quality and satisfaction",
+          "icon": "👤"
+        },
+        {
+          "id": "populationHealth",
+          "name": "Population Health",
+          "description": "Better outcomes across populations",
+          "icon": "🏥"
+        },
+        {
+          "id": "costReduction",
+          "name": "Cost Reduction",
+          "description": "Sustainable healthcare economics",
+          "icon": "💰"
+        },
+        {
+          "id": "providerExperience",
+          "name": "Provider Experience",
+          "description": "Reduced burnout, improved wellbeing",
+          "icon": "⚕️"
+        },
+        {
+          "id": "healthEquity",
+          "name": "Health Equity",
+          "description": "Eliminating disparities in care",
+          "icon": "⚖️"
+        }
+      ]
+    }
+  },
+  "strategicInitiatives": [
+    {
+      "id": "EPIC-001",
+      "name": "Vendor Consolidation & Cost Optimization",
+      "description": "Enterprise vendor ecosystem transformation - $45M savings",
+      "timeframe": "2025-2027",
+      "owner": "Kristy Waters",
+      "status": "implementing",
+      "completion": 96,
+      "health": "caution",
+      "financialImpact": "$45M savings",
+      "programEpics": ["A1", "A2", "A3", "A10", "A11"],
+      "quintupleAimAlignment": {
+        "patientExperience": 80,
+        "populationHealth": 75,
+        "costReduction": 95,
+        "providerExperience": 70,
+        "healthEquity": 75
+      }
+    },
+    {
+      "id": "EPIC-002",
+      "name": "Clinical Leadership & Service Lines",
+      "description": "Physician-led governance framework",
+      "timeframe": "2025-2027",
+      "owner": "Doug Barnaby",
+      "status": "implementing",
+      "completion": 90,
+      "health": "excellent",
+      "financialImpact": "Strategic",
+      "programEpics": ["B1", "B2", "B3", "B4"],
+      "quintupleAimAlignment": {
+        "patientExperience": 90,
+        "populationHealth": 85,
+        "costReduction": 80,
+        "providerExperience": 95,
+        "healthEquity": 85
+      }
+    },
+    {
+      "id": "EPIC-003",
+      "name": "SAFe Transformation",
+      "description": "Portfolio Kanban with WSJF prioritization",
+      "timeframe": "2025-2026",
+      "owner": "Doug Barnaby",
+      "status": "implementing",
+      "completion": 95,
+      "health": "excellent",
+      "financialImpact": "Foundational",
+      "programEpics": ["C1"],
+      "quintupleAimAlignment": {
+        "patientExperience": 75,
+        "populationHealth": 70,
+        "costReduction": 85,
+        "providerExperience": 80,
+        "healthEquity": 70
+      }
+    },
+    {
+      "id": "EPIC-004",
+      "name": "Data Platform & AI Innovation",
+      "description": "Enterprise analytics platform + AI breakthrough",
+      "timeframe": "2025-2026",
+      "owner": "Doug Barnaby",
+      "status": "implementing",
+      "completion": 98,
+      "health": "excellent",
+      "financialImpact": "CTO Pathway",
+      "programEpics": ["D1", "D9", "D10"],
+      "quintupleAimAlignment": {
+        "patientExperience": 85,
+        "populationHealth": 90,
+        "costReduction": 80,
+        "providerExperience": 85,
+        "healthEquity": 85
+      }
+    },
+    {
+      "id": "EPIC-005",
+      "name": "Multi-Disciplinary VAT Transformation",
+      "description": "Converting 30+ SATs/CATs systematically",
+      "timeframe": "2025-2027",
+      "owner": "Doug Barnaby + Jonathan Hovey",
+      "status": "implementing",
+      "completion": 50,
+      "health": "excellent",
+      "financialImpact": "Operational",
+      "programEpics": ["VAT-B1", "VAT-B2", "VAT-B3", "WC1"],
+      "quintupleAimAlignment": {
+        "patientExperience": 85,
+        "populationHealth": 80,
+        "costReduction": 90,
+        "providerExperience": 90,
+        "healthEquity": 80
+      }
+    },
+    {
+      "id": "EPIC-006",
+      "name": "Product Evaluation Excellence",
+      "description": "60% cycle time reduction validated",
+      "timeframe": "2025-2026",
+      "owner": "Doug Barnaby + Dana Ringer",
+      "status": "implementing",
+      "completion": 100,
+      "health": "excellent",
+      "financialImpact": "Strategic",
+      "programEpics": ["A5", "A6", "A7", "A8", "A9", "ROB1", "WC2"],
+      "quintupleAimAlignment": {
+        "patientExperience": 90,
+        "populationHealth": 85,
+        "costReduction": 85,
+        "providerExperience": 95,
+        "healthEquity": 80
+      }
+    },
+    {
+      "id": "EPIC-007",
+      "name": "AI-Powered Sourcing Intelligence",
+      "description": "2-3 day cycle time with interactive dashboards",
+      "timeframe": "2025-2026",
+      "owner": "Doug Barnaby + Jonathan Hovey + John Young (Huron)",
+      "status": "analyzing",
+      "completion": 15,
+      "health": "excellent",
+      "financialImpact": "Strategic",
+      "programEpics": ["D11"],
+      "quintupleAimAlignment": {
+        "patientExperience": 75,
+        "populationHealth": 70,
+        "costReduction": 95,
+        "providerExperience": 80,
+        "healthEquity": 75
+      }
+    }
+  ],
+  "decisionCategories": [
+    {
+      "id": "vendor-selection",
+      "name": "Vendor Selection & Consolidation",
+      "description": "Strategic decisions about which vendors to partner with and contract structures",
+      "applicableTo": ["orthopedics", "cardiovascular", "surgical"]
+    },
+    {
+      "id": "product-evaluation",
+      "name": "New Product Evaluations",
+      "description": "Assessment of new technologies, devices, or products for adoption",
+      "applicableTo": ["all-service-lines"]
+    },
+    {
+      "id": "service-expansion",
+      "name": "Service Line Expansion",
+      "description": "Geographic or capability expansion decisions",
+      "applicableTo": ["all-service-lines"]
+    },
+    {
+      "id": "technology-investment",
+      "name": "Technology Investments",
+      "description": "Capital investments in equipment, software, or infrastructure",
+      "applicableTo": ["all-service-lines"]
+    },
+    {
+      "id": "process-standardization",
+      "name": "Process Standardization",
+      "description": "Clinical pathway or operational process standardization",
+      "applicableTo": ["all-service-lines"]
+    }
+  ],
+  "programEpicMapping": {
+    "EPIC-001": {
+      "programEpics": ["A1", "A2", "A3", "A10", "A11"],
+      "description": "Vendor consolidation across service lines - $45M savings opportunity"
+    },
+    "EPIC-002": {
+      "programEpics": ["B1", "B2", "B3", "B4"],
+      "description": "Physician-led service line governance - orthopedic, cardiovascular, neuroscience, women's & children's"
+    },
+    "EPIC-003": {
+      "programEpics": ["C1"],
+      "description": "SAFe portfolio management transformation"
+    },
+    "EPIC-004": {
+      "programEpics": ["D1", "D9", "D10"],
+      "description": "Data platform and AI capabilities"
+    },
+    "EPIC-005": {
+      "programEpics": ["VAT-B1", "VAT-B2", "VAT-B3", "WC1"],
+      "description": "Value Analysis Team transformation across service lines"
+    },
+    "EPIC-006": {
+      "programEpics": ["A5", "A6", "A7", "A8", "A9", "ROB1", "WC2"],
+      "description": "Product evaluation process excellence - 60% cycle time reduction"
+    },
+    "EPIC-007": {
+      "programEpics": ["D11"],
+      "description": "AI-powered sourcing intelligence with Huron partnership"
+    }
+  },
+  "decisions": [
+    {
+      "id": "A1-orthopedic-consolidation",
+      "name": "Orthopedic Consolidation (A1)",
+      "programEpicId": "A1",
+      "initiativeId": "EPIC-001",
+      "categoryId": "vendor-selection",
+      "description": "73% vendor reduction (38→10), $15M savings, methodology validation",
+      "decisionDate": "2025-10-31",
+      "status": "implementing",
+      "completion": 98,
+      "committee": {
+        "members": ["Doug Barnaby", "Kristy Waters", "Finance Leadership", "Clinical Leadership"],
+        "decisionRule": "Consensus required - no veto power"
+      },
+      "currentScenario": "hip-knee-scenarios",
+      "assumptions": [
+        {
+          "id": "fin-1",
+          "pillar": "finance",
+          "assumption": "Vendor consolidation will yield 18-25% cost savings",
+          "confidence": "high",
+          "validationMetrics": ["actual-spend-reduction", "contract-compliance"],
+          "validationFrequency": "quarterly",
+          "owner": "CFO Office"
+        },
+        {
+          "id": "fin-2",
+          "pillar": "finance",
+          "assumption": "Implementation costs will be recovered within 18 months",
+          "confidence": "medium",
+          "validationMetrics": ["npv-tracking", "actual-implementation-cost"],
+          "validationFrequency": "quarterly",
+          "owner": "CFO Office"
+        },
+        {
+          "id": "clin-1",
+          "pillar": "clinical",
+          "assumption": "85% of surgeons will adopt new vendor landscape with proper engagement",
+          "confidence": "medium",
+          "validationMetrics": ["surgeon-adoption-rate", "surgeon-satisfaction"],
+          "validationFrequency": "monthly",
+          "owner": "CMO Office"
+        },
+        {
+          "id": "clin-2",
+          "pillar": "clinical",
+          "assumption": "Patient outcomes will remain stable or improve with vendor consolidation",
+          "confidence": "high",
+          "validationMetrics": ["revision-rates", "patient-satisfaction", "readmission-rates"],
+          "validationFrequency": "quarterly",
+          "owner": "CMO Office"
+        },
+        {
+          "id": "ops-1",
+          "pillar": "operations",
+          "assumption": "Implementation can be completed within 12 months",
+          "confidence": "medium",
+          "validationMetrics": ["milestone-completion", "timeline-variance"],
+          "validationFrequency": "monthly",
+          "owner": "COO Office"
+        },
+        {
+          "id": "ops-2",
+          "pillar": "operations",
+          "assumption": "Supply chain complexity will decrease with fewer vendors",
+          "confidence": "high",
+          "validationMetrics": ["inventory-turns", "stockout-incidents", "vendor-coordination-time"],
+          "validationFrequency": "quarterly",
+          "owner": "COO Office"
+        }
+      ],
+      "lookbacks": []
+    }
+  ],
+  "lookbackTemplate": {
+    "reviewDate": "",
+    "decisionId": "",
+    "reviewers": [],
+    "assumptionValidation": [
+      {
+        "assumptionId": "",
+        "status": "validated|invalidated|too-early",
+        "actualVsExpected": "",
+        "evidence": "",
+        "notes": ""
+      }
+    ],
+    "progressAssessment": {
+      "overallStatus": "on-track|at-risk|off-track",
+      "financialPillar": {
+        "status": "",
+        "variance": "",
+        "notes": ""
+      },
+      "clinicalPillar": {
+        "status": "",
+        "variance": "",
+        "notes": ""
+      },
+      "operationsPillar": {
+        "status": "",
+        "variance": "",
+        "notes": ""
+      }
+    },
+    "decision": "persevere|pivot|stop",
+    "pivotActions": [],
+    "lessonsLearned": []
+  }
+}
