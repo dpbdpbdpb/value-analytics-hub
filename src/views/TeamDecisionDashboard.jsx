@@ -136,7 +136,7 @@ const TeamDecisionDashboard = () => {
               <div>
                 <div className="text-xs text-amber-700">Projected Annual Savings</div>
                 <div className="text-xl font-bold text-amber-900">
-                  ${(scenario.annualSavings || 0).toFixed(1)}M
+                  ${((scenario.annualSavings || 0) / 1000000).toFixed(1)}M
                 </div>
               </div>
               <div>
@@ -239,10 +239,10 @@ const TeamDecisionDashboard = () => {
                   {scenario.annualSavings === 0
                     ? 'No savings - maintains current spend levels'
                     : scenario.savingsPercent >= 18
-                    ? `Strong ROI: $${(scenario.annualSavings || 0).toFixed(1)}M annually with ${((scenario.npv5Year || 0) / (scenario.implementation?.costMillions || 1)).toFixed(1)}x payback`
+                    ? `Strong ROI: $${((scenario.annualSavings || 0) / 1000000).toFixed(1)}M annually with ${((scenario.npv5Year || 0) / (scenario.implementation?.costMillions || 1)).toFixed(1)}x payback`
                     : scenario.savingsPercent >= 10
-                    ? `Moderate savings of $${(scenario.annualSavings || 0).toFixed(1)}M offset by $${(scenario.implementation?.costMillions || 0).toFixed(1)}M implementation cost`
-                    : `Limited financial benefit ($${(scenario.annualSavings || 0).toFixed(1)}M) may not justify change`}
+                    ? `Moderate savings of $${((scenario.annualSavings || 0) / 1000000).toFixed(1)}M offset by $${(scenario.implementation?.costMillions || 0).toFixed(1)}M implementation cost`
+                    : `Limited financial benefit ($${((scenario.annualSavings || 0) / 1000000).toFixed(1)}M) may not justify change`}
                 </div>
               </div>
             </div>
@@ -652,7 +652,7 @@ const TeamDecisionDashboard = () => {
                       <td className="p-4 font-semibold text-gray-700">Annual Savings</td>
                       {Object.values(SCENARIOS).map((scenario, idx) => (
                         <td key={idx} className="text-center p-4 font-bold text-amber-900">
-                          ${(scenario.annualSavings || 0).toFixed(1)}M
+                          ${((scenario.annualSavings || 0) / 1000000).toFixed(1)}M
                         </td>
                       ))}
                     </tr>
@@ -718,7 +718,7 @@ const TeamDecisionDashboard = () => {
                 <div className="bg-amber-50 border-l-4 border-amber-600 p-6 rounded">
                   <h3 className="font-bold text-amber-900 mb-3">Financial Highlights</h3>
                   <ul className="space-y-2 text-sm text-amber-800">
-                    <li>• Potential savings range from $0 (Status Quo) to ${Math.max(...Object.values(SCENARIOS).map(s => s.annualSavings || 0)).toFixed(1)}M annually</li>
+                    <li>• Potential savings range from $0 (Status Quo) to ${(Math.max(...Object.values(SCENARIOS).map(s => s.annualSavings || 0)) / 1000000).toFixed(1)}M annually</li>
                     <li>• 5-year NPV varies from ${Math.min(...Object.values(SCENARIOS).map(s => s.npv5Year || 0)).toFixed(1)}M to ${Math.max(...Object.values(SCENARIOS).map(s => s.npv5Year || 0)).toFixed(1)}M</li>
                     <li>• Implementation costs range from ${Math.min(...Object.values(SCENARIOS).map(s => s.implementation?.costMillions || 0)).toFixed(1)}M to ${Math.max(...Object.values(SCENARIOS).map(s => s.implementation?.costMillions || 0)).toFixed(1)}M</li>
                   </ul>
@@ -811,7 +811,7 @@ const TeamDecisionDashboard = () => {
                       <td className="p-4 font-semibold text-amber-900">Annual Savings</td>
                       {Object.values(SCENARIOS).map((scenario, idx) => (
                         <td key={idx} className="text-center p-4 text-amber-900 text-sm">
-                          ${(scenario.annualSavings || 0).toFixed(1)}M
+                          ${((scenario.annualSavings || 0) / 1000000).toFixed(1)}M
                         </td>
                       ))}
                     </tr>
