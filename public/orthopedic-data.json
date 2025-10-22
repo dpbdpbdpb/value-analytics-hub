@@ -415,6 +415,11 @@
       "riskLevel": "Low",
       "riskScore": 1.0,
       "agentScore": 2.1,
+      "npv5Year": 0,
+      "implementation": {
+        "costMillions": 0,
+        "timelineMonths": 0
+      },
       "description": "Continue with current multi-vendor fragmentation across all vendors"
     },
     "tri-vendor": {
@@ -431,6 +436,11 @@
       "riskLevel": "Low",
       "riskScore": 2.5,
       "agentScore": 3.8,
+      "npv5Year": 24.7,
+      "implementation": {
+        "costMillions": 0.5,
+        "timelineMonths": 6
+      },
       "description": "Balanced approach with three major vendors (Zimmer + Stryker + J&J)"
     },
     "dual-premium": {
@@ -446,6 +456,11 @@
       "riskLevel": "Medium",
       "riskScore": 4.2,
       "agentScore": 4.3,
+      "npv5Year": 30.9,
+      "implementation": {
+        "costMillions": 0.7,
+        "timelineMonths": 9
+      },
       "description": "Dual-vendor consolidation: Stryker + Zimmer - highest quality, moderate savings"
     },
     "dual-value": {
@@ -461,6 +476,11 @@
       "riskLevel": "Medium",
       "riskScore": 5.1,
       "agentScore": 4.5,
+      "npv5Year": 37.1,
+      "implementation": {
+        "costMillions": 0.8,
+        "timelineMonths": 9
+      },
       "description": "Dual-vendor consolidation: Zimmer + J&J - strong savings, good quality"
     },
     "dual-innovation": {
@@ -476,6 +496,11 @@
       "riskLevel": "High",
       "riskScore": 6.3,
       "agentScore": 4.0,
+      "npv5Year": 32.7,
+      "implementation": {
+        "costMillions": 0.9,
+        "timelineMonths": 12
+      },
       "description": "Dual-vendor consolidation: Stryker + J&J - leading technology, higher adoption risk"
     }
   }

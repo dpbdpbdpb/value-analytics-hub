@@ -334,48 +334,6 @@ const TeamDecisionDashboard = () => {
               </div>
             </div>
 
-            {/* Strategic Context Breadcrumb */}
-            {strategyData && strategyData.decisions && strategyData.decisions[0] && (
-              <div className="mb-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
-                <div className="flex items-center gap-2 text-sm flex-wrap">
-                  <MapPin className="w-4 h-4 text-slate-600" />
-                  <span className="text-gray-500">Strategic Context:</span>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-slate-900">
-                      {strategyData.strategicInitiatives[0]?.name}
-                    </span>
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-700">
-                      {strategyData.decisionCategories.find(c => c.id === strategyData.decisions[0].categoryId)?.name}
-                    </span>
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
-                    <span className="font-semibold text-gray-900">
-                      {strategyData.decisions[0].name}
-                    </span>
-                    <span className="ml-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
-                      {strategyData.decisions[0].status}
-                    </span>
-                  </div>
-                </div>
-                <div className="mt-2 text-xs text-gray-600 italic">
-                  {strategyData.decisions[0].description}
-                </div>
-                <div className="mt-3 flex items-center gap-4 text-xs">
-                  <div className="flex items-center gap-1">
-                    <Lightbulb className="w-3 h-3 text-amber-600" />
-                    <span className="text-gray-600">
-                      {strategyData.decisions[0].assumptions?.length || 0} key assumptions being validated
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Users className="w-3 h-3 text-blue-600" />
-                    <span className="text-gray-600">
-                      {strategyData.decisions[0].committee.decisionRule}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* Quintuple Aim North Star Banner */}
             <div className="bg-gradient-to-r from-slate-600 via-slate-700 to-slate-800 text-white rounded-xl p-6 shadow-lg">
