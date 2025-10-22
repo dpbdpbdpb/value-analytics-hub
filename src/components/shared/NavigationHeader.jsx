@@ -49,19 +49,20 @@ const NavigationHeader = ({ role, specialty, specialtyName, persona }) => {
               <Heart className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-white font-bold text-lg">
-                CommonSpirit Orthopedic Value Analytics
+              <h1 className="text-white font-bold text-xl">
+                CommonSpirit Value Analytics Hub
               </h1>
-              <div className="flex items-center gap-2 text-slate-100 text-sm">
-                <RoleIcon className="w-3 h-3" />
-                <span>{displayName}</span>
-                {(specialtyName || specialty) && (
-                  <>
-                    <span className="text-slate-300">•</span>
-                    <span>{specialtyName || specialty?.toUpperCase()}</span>
-                  </>
-                )}
-              </div>
+              {displayName && (
+                <div className="flex items-center gap-2 text-slate-200 text-xs mt-0.5">
+                  <span>{displayName}</span>
+                  {(specialtyName || specialty) && (
+                    <>
+                      <span className="text-slate-300">•</span>
+                      <span>{specialtyName || specialty?.toUpperCase()}</span>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

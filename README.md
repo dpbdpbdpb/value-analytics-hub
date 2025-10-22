@@ -1,6 +1,6 @@
-# CommonSpirit Orthopedic Value Platform
+# CommonSpirit Value Analytics Hub
 
-**Version 2.0** - Unified Multi-Specialty Analytics Platform
+**Version 2.0** - Strategic Value Optimization Platform
 
 > This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
