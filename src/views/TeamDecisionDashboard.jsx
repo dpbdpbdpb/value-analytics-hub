@@ -43,10 +43,8 @@ const TeamDecisionDashboard = () => {
     operations: '#10B981'
   };
 
-  // Calculate total surgeons from vendor data
-  const totalSurgeons = realData?.vendors
-    ? Object.values(realData.vendors).reduce((sum, vendor) => sum + (vendor.uniqueSurgeons || 0), 0)
-    : 0;
+  // Get total surgeons from metadata (not vendor sum which counts duplicates)
+  const totalSurgeons = realData?.metadata?.totalSurgeons || 205;
 
   // Scenarios data
   const SCENARIOS = realData?.scenarios || {};

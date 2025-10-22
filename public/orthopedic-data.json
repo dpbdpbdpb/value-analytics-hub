@@ -434,8 +434,8 @@
       "description": "Balanced approach with three major vendors (Zimmer + Stryker + J&J)"
     },
     "dual-premium": {
-      "name": "Dual-Vendor: Premium",
-      "shortName": "Premium",
+      "name": "Stryker + Zimmer",
+      "shortName": "Stryker + Zimmer",
       "vendors": [
         "STRYKER",
         "ZIMMER BIOMET"
@@ -446,11 +446,11 @@
       "riskLevel": "Medium",
       "riskScore": 4.2,
       "agentScore": 4.3,
-      "description": "Premium vendors focus (Stryker + Zimmer) - highest quality, moderate savings"
+      "description": "Dual-vendor consolidation: Stryker + Zimmer - highest quality, moderate savings"
     },
     "dual-value": {
-      "name": "Dual-Vendor: Value",
-      "shortName": "Value",
+      "name": "Zimmer + J&J",
+      "shortName": "Zimmer + J&J",
       "vendors": [
         "ZIMMER BIOMET",
         "J&J"
@@ -461,11 +461,11 @@
       "riskLevel": "Medium",
       "riskScore": 5.1,
       "agentScore": 4.5,
-      "description": "Value-focused consolidation (Zimmer + J&J) - strong savings, good quality"
+      "description": "Dual-vendor consolidation: Zimmer + J&J - strong savings, good quality"
     },
     "dual-innovation": {
-      "name": "Dual-Vendor: Innovation",
-      "shortName": "Innovation",
+      "name": "Stryker + J&J",
+      "shortName": "Stryker + J&J",
       "vendors": [
         "STRYKER",
         "J&J"
@@ -476,7 +476,7 @@
       "riskLevel": "High",
       "riskScore": 6.3,
       "agentScore": 4.0,
-      "description": "Innovation-focused (Stryker + J&J) - leading technology, higher adoption risk"
+      "description": "Dual-vendor consolidation: Stryker + J&J - leading technology, higher adoption risk"
     }
   }
 }
