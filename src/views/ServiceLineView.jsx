@@ -7,15 +7,21 @@ const ServiceLineView = () => {
   const navigate = useNavigate();
   const { serviceLineId } = useParams();
   const [orthoData, setOrthoData] = useState(null);
+  const [shoulderData, setShoulderData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Load orthopedic data
   useEffect(() => {
-    const jsonPath = `${process.env.PUBLIC_URL}/orthopedic-data.json`;
-    fetch(jsonPath)
-      .then(response => response.json())
-      .then(data => {
-        setOrthoData(data);
+    const hipKneePath = `${process.env.PUBLIC_URL}/orthopedic-data.json`;
+    const shoulderPath = `${process.env.PUBLIC_URL}/shoulder-data.json`;
+
+    Promise.all([
+      fetch(hipKneePath).then(r => r.json()),
+      fetch(shoulderPath).then(r => r.json())
+    ])
+      .then(([hipKneeData, shoulderData]) => {
+        setOrthoData(hipKneeData);
+        setShoulderData(shoulderData);
         setLoading(false);
       })
       .catch(err => {
@@ -37,7 +43,19 @@ const ServiceLineView = () => {
     completedDecisions: 0
   };
 
-  // Product lines - only Hip/Knee has data currently
+  const shoulderMetrics = shoulderData ? {
+    annualVolume: `${shoulderData.metadata.totalCases.toLocaleString()} cases`,
+    opportunityValue: `$${(shoulderData.metadata.totalSpend / 1000000).toFixed(0)}M`,
+    activeDecisions: Object.keys(shoulderData.scenarios || {}).length - 1,
+    completedDecisions: 0
+  } : {
+    annualVolume: 'Loading...',
+    opportunityValue: 'Loading...',
+    activeDecisions: 0,
+    completedDecisions: 0
+  };
+
+  // Product lines - Hip/Knee and Shoulder have active data
   const productLines = [
     {
       id: 'hip-knee',
@@ -56,12 +74,14 @@ const ServiceLineView = () => {
       id: 'shoulder',
       name: 'Shoulder',
       description: 'Total shoulder, reverse shoulder arthroplasty',
-      activeDecisions: 0,
-      completedDecisions: 0,
-      annualVolume: 'TBD',
-      opportunityValue: 'TBD',
-      status: 'coming-soon',
-      decisions: []
+      activeDecisions: shoulderMetrics.activeDecisions,
+      completedDecisions: shoulderMetrics.completedDecisions,
+      annualVolume: shoulderMetrics.annualVolume,
+      opportunityValue: shoulderMetrics.opportunityValue,
+      status: 'active',
+      decisions: [
+        { id: 'vendor-consolidation', name: 'Vendor Consolidation Strategy', status: 'analyzing' }
+      ]
     },
     {
       id: 'spine',
