@@ -38,9 +38,9 @@ const SurgeonTool = () => {
     );
   };
 
-  // Load surgeon data from JSON file
+  // Load surgeon data from new baseline
   useEffect(() => {
-    const jsonPath = `${process.env.PUBLIC_URL}/surgeon_profiles.json`;
+    const jsonPath = `${process.env.PUBLIC_URL}/orthopedic-data.json`;
     fetch(jsonPath)
       .then(response => {
         if (!response.ok) {
@@ -49,7 +49,8 @@ const SurgeonTool = () => {
         return response.json();
       })
       .then(data => {
-        setSurgeonData(data);
+        // Extract surgeons array from new baseline structure
+        setSurgeonData(data.surgeons || []);
         setLoading(false);
       })
       .catch(err => {
