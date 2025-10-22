@@ -231,52 +231,51 @@ const TeamDecisionDashboard = () => {
           <div className="bg-amber-50 border-l-4 border-amber-600 p-3 rounded">
             <div className="flex items-start gap-2">
               <DollarSign className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <div className="font-bold text-amber-900 text-xs mb-1">Finance Tradeoffs</div>
+              <div className="flex-1">
+                <div className="font-bold text-amber-900 text-xs mb-1">Finance</div>
                 <div className="text-xs text-amber-800">
-                  {scenario.annualSavings === 0
-                    ? 'No savings - maintains current spend levels'
-                    : scenario.savingsPercent >= 18
-                    ? `Strong ROI: $${((scenario.annualSavings || 0) / 1000000).toFixed(1)}M annually with ${((scenario.npv5Year || 0) / (scenario.implementation?.costMillions || 1)).toFixed(1)}x payback`
-                    : scenario.savingsPercent >= 10
-                    ? `Moderate savings of $${((scenario.annualSavings || 0) / 1000000).toFixed(1)}M offset by $${(scenario.implementation?.costMillions || 0).toFixed(1)}M implementation cost`
-                    : `Limited financial benefit ($${((scenario.annualSavings || 0) / 1000000).toFixed(1)}M) may not justify change`}
+                  {scenario.annualSavings === 0 ? (
+                    'No savings'
+                  ) : (
+                    <>
+                      <div className="font-semibold">${((scenario.annualSavings || 0) / 1000000).toFixed(1)}M annual savings</div>
+                      <div className="mt-0.5 text-amber-700">{((scenario.npv5Year || 0) / (scenario.implementation?.costMillions || 1)).toFixed(1)}x ROI over 5 years</div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
           </div>
 
           {/* Clinical Tradeoffs */}
-          <div className="bg-blue-50 border-l-4 border-blue-600 p-3 rounded">
+          <div className="bg-green-50 border-l-4 border-green-600 p-3 rounded">
             <div className="flex items-start gap-2">
-              <Stethoscope className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <div className="font-bold text-blue-900 text-xs mb-1">Clinical Tradeoffs</div>
-                <div className="text-xs text-blue-800">
-                  {(100 - scenario.adoptionRate * 100) === 0
-                    ? 'Zero disruption - all surgeons continue with current vendors'
-                    : (100 - scenario.adoptionRate * 100) <= 15
-                    ? `Minimal impact: ${Math.round(totalSurgeons * (1 - scenario.adoptionRate))} surgeons switch (${(100 - scenario.adoptionRate * 100).toFixed(0)}%)`
-                    : (100 - scenario.adoptionRate * 100) <= 30
-                    ? `Moderate disruption: ${Math.round(totalSurgeons * (1 - scenario.adoptionRate))} surgeons must adopt new vendors (${(100 - scenario.adoptionRate * 100).toFixed(0)}%)`
-                    : `Significant change: ${Math.round(totalSurgeons * (1 - scenario.adoptionRate))} surgeons affected (${(100 - scenario.adoptionRate * 100).toFixed(0)}%) - requires strong engagement`}
+              <Stethoscope className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <div className="font-bold text-green-900 text-xs mb-1">Clinical</div>
+                <div className="text-xs text-green-800">
+                  {(100 - scenario.adoptionRate * 100) === 0 ? (
+                    'Zero disruption'
+                  ) : (
+                    <>
+                      <div className="font-semibold">{Math.round(totalSurgeons * (1 - scenario.adoptionRate))} surgeons switching</div>
+                      <div className="mt-0.5 text-green-700">{(100 - scenario.adoptionRate * 100).toFixed(0)}% of total surgeons</div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
           </div>
 
           {/* Operations Tradeoffs */}
-          <div className="bg-green-50 border-l-4 border-green-600 p-3 rounded">
+          <div className="bg-purple-50 border-l-4 border-purple-600 p-3 rounded">
             <div className="flex items-start gap-2">
-              <Shield className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <div className="font-bold text-green-900 text-xs mb-1">Operations Tradeoffs</div>
-                <div className="text-xs text-green-800">
-                  {scenario.implementation?.complexity === 'Low'
-                    ? `Simple ${scenario.implementation?.timeline || 0}-month rollout with ${scenario.riskLevel} risk`
-                    : scenario.implementation?.complexity === 'Medium'
-                    ? `${scenario.implementation?.timeline || 0}-month implementation requires coordination across ${scenario.vendors?.length || 0} vendors`
-                    : `Complex ${scenario.implementation?.timeline || 0}-month project with ${scenario.riskLevel} risk - needs dedicated resources`}
+              <Shield className="w-4 h-4 text-purple-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <div className="font-bold text-purple-900 text-xs mb-1">Operations</div>
+                <div className="text-xs text-purple-800">
+                  <div className="font-semibold">{scenario.implementation?.timelineMonths || 0} month timeline</div>
+                  <div className="mt-0.5 text-purple-700">{scenario.riskLevel} risk · {scenario.vendors?.length || 0} vendors</div>
                 </div>
               </div>
             </div>
