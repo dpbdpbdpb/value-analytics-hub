@@ -72,7 +72,7 @@ const SurgeonTool = () => {
 
   // Utility function to separate hip vs. knee data
   const separateHipKneeData = (surgeon) => {
-    if (!surgeon || !surgeon.topComponents) {
+    if (!surgeon || !surgeon.topComponents || !Array.isArray(surgeon.topComponents)) {
       return {
         hip: { cases: 0, spend: 0, avgSpendPerCase: 0, components: [], vendors: {} },
         knee: { cases: 0, spend: 0, avgSpendPerCase: 0, components: [], vendors: {} },
@@ -199,9 +199,9 @@ const SurgeonTool = () => {
       avgSpendPerCase: procedureData.avgSpendPerCase,
       primaryVendor: procedureData.primaryVendor || selectedSurgeon.primaryVendor,
       topComponents: procedureData.components,
-      vendorBreakdown: procedureData.vendorBreakdown.length > 0
+      vendorBreakdown: (procedureData.vendorBreakdown || []).length > 0
         ? procedureData.vendorBreakdown
-        : selectedSurgeon.vendorBreakdown,
+        : (selectedSurgeon.vendorBreakdown || []),
       procedureType: procedureView // Add flag for reference
     };
   }, [selectedSurgeon, procedureView]);
@@ -223,7 +223,7 @@ const SurgeonTool = () => {
     const approvedVendors = scenario.vendors;
 
     const mustSwitch = !approvedVendors.includes(selectedSurgeon.primaryVendor);
-    const affectedSpend = selectedSurgeon.vendorBreakdown
+    const affectedSpend = (selectedSurgeon.vendorBreakdown || [])
       .filter(v => !approvedVendors.includes(v.vendor))
       .reduce((sum, v) => sum + v.spend, 0);
 
@@ -277,7 +277,7 @@ const SurgeonTool = () => {
     if ((affectedSpend / selectedSurgeon.totalSpend) > 0.5) riskPoints += 2;
     if (selectedSurgeon.vendorLoyalty && selectedSurgeon.vendorLoyalty.primaryVendorYears < 3) riskPoints += 1;
     if (selectedSurgeon.totalCases > 200) riskPoints += 1;
-    const switchCount = selectedSurgeon.vendorBreakdown.filter(v => !approvedVendors.includes(v.vendor)).length;
+    const switchCount = (selectedSurgeon.vendorBreakdown || []).filter(v => !approvedVendors.includes(v.vendor)).length;
     if (switchCount > 1) riskPoints += 2;
 
     const riskLevel = riskPoints <= 2 ? 'Low' : riskPoints <= 4 ? 'Medium' : 'High';
@@ -711,7 +711,7 @@ const SurgeonTool = () => {
       if ((affectedSpend / surgeon.totalSpend) > 0.5) riskPoints += 2;
       if (surgeon.vendorLoyalty && surgeon.vendorLoyalty.primaryVendorYears < 3) riskPoints += 1;
       if (surgeon.totalCases > 200) riskPoints += 1;
-      if (surgeon.vendorBreakdown.filter(v => !approvedVendors.includes(v.vendor)).length > 1) riskPoints += 2;
+      if ((surgeon.vendorBreakdown || []).filter(v => !approvedVendors.includes(v.vendor)).length > 1) riskPoints += 2;
 
       const riskLevel = riskPoints <= 2 ? 'Low' : riskPoints <= 4 ? 'Medium' : 'High';
       const trainingDays = mustSwitch ? 2.5 : 0;
@@ -764,14 +764,14 @@ const SurgeonTool = () => {
       )
       .map(s => {
         // Calculate vendor loyalty percentage
-        const vendorBreakdown = s.vendorBreakdown.find(v => v.vendor === targetVendor);
+        const vendorBreakdown = (s.vendorBreakdown || []).find(v => v.vendor === targetVendor);
         const loyalty = vendorBreakdown ? vendorBreakdown.percentage : 0;
 
         // Calculate years of experience (estimate based on volume)
         const estimatedYearsExperience = Math.min(Math.floor(s.totalCases / 100), 10);
 
         // Check if they use same components
-        const componentMatch = s.topComponents.filter(comp =>
+        const componentMatch = (s.topComponents || []).filter(comp =>
           comp.vendor === targetVendor
         ).length;
 
@@ -794,13 +794,13 @@ const SurgeonTool = () => {
     return qualityExperts
       .filter(s =>
         s.id !== excludeSurgeonId &&
-        s.topComponents.some(comp =>
+        (s.topComponents || []).some(comp =>
           comp.vendor === targetVendor &&
           comp.category === componentCategory
         )
       )
       .map(s => {
-        const relevantComponent = s.topComponents.find(comp =>
+        const relevantComponent = (s.topComponents || []).find(comp =>
           comp.vendor === targetVendor &&
           comp.category === componentCategory
         );
@@ -977,6 +977,47 @@ const SurgeonTool = () => {
             )}
           </div>
         </div>
+        )}
+
+        {/* Empty State - Show when individual view is active but no surgeon selected */}
+        {activeView === 'individual' && !selectedSurgeon && (
+          <div className="bg-white rounded-xl shadow-lg p-8 mb-3 text-center">
+            <div className="max-w-2xl mx-auto">
+              <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-blue-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <Users className="text-purple-600" size={40} />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                Find Your Surgeon Profile
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Search for a surgeon above to view their individual analytics, peer benchmarking, component usage, and scenario impact calculations.
+              </p>
+              <div className="bg-purple-50 border-2 border-purple-200 rounded-lg p-4 text-left">
+                <h4 className="font-semibold text-purple-900 mb-2">What you'll see:</h4>
+                <ul className="space-y-2 text-sm text-purple-800">
+                  <li className="flex items-start">
+                    <CheckCircle className="mr-2 mt-0.5 flex-shrink-0" size={16} />
+                    <span><strong>Overview:</strong> Current vendor status, cost efficiency, and annual volume</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="mr-2 mt-0.5 flex-shrink-0" size={16} />
+                    <span><strong>Peer Benchmarking:</strong> See how this surgeon compares to similar colleagues</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="mr-2 mt-0.5 flex-shrink-0" size={16} />
+                    <span><strong>Components:</strong> Detailed breakdown of implant components used</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="mr-2 mt-0.5 flex-shrink-0" size={16} />
+                    <span><strong>Scenario Calculator:</strong> Personalized financial impact of vendor consolidation scenarios</span>
+                  </li>
+                </ul>
+              </div>
+              <p className="text-sm text-gray-500 mt-4">
+                We have data for {surgeonData.length} surgeons performing Hip & Knee procedures.
+              </p>
+            </div>
+          </div>
         )}
 
         {/* System View Content - The Story Starts Here */}
