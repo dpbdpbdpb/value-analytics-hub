@@ -989,7 +989,7 @@ const TeamDecisionDashboard = () => {
             </div>
           )}
 
-          {activeTab === 'hospitals' && (
+          {activeTab === 'hospitals' && realData?.hospitals && (
             <div className="bg-white rounded-xl shadow-lg p-8">
               <div className="mb-6">
                 <h2 className="text-2xl font-bold text-slate-900 mb-2 flex items-center gap-2">
@@ -1011,47 +1011,152 @@ const TeamDecisionDashboard = () => {
                     </p>
                     <ul className="text-blue-800 text-sm space-y-1 ml-4">
                       <li>• <strong>Vendor cohorts</strong>: Hospitals where most surgeons already use the target vendor</li>
-                      <li>• <strong>Sherpas</strong>: High-volume, cost-efficient surgeons who can mentor peers</li>
-                      <li>• <strong>Peer influence opportunities</strong>: Pairing surgeons with hospital-based mentors</li>
-                      <li>• <strong>Change management priorities</strong>: Hospitals needing more support vs. easier transitions</li>
+                      <li>• <strong>High concentration sites</strong>: Hospitals with strong vendor loyalty (easier transitions)</li>
+                      <li>• <strong>Fragmented sites</strong>: Hospitals with diverse vendors (need more support)</li>
+                      <li>• <strong>Change management priorities</strong>: Resource allocation based on vendor concentration</li>
                     </ul>
                   </div>
                 </div>
               </div>
 
-              {/* Coming Soon Message */}
-              <div className="bg-gradient-to-r from-slate-50 to-gray-50 border-2 border-slate-200 rounded-xl p-12 text-center">
-                <Building2 className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-                <h3 className="text-2xl font-bold text-slate-700 mb-3">Hospital Data Coming Soon</h3>
-                <p className="text-gray-600 mb-4">
-                  Hospital-level aggregation and sherpa identification will be available once your data includes hospital assignments for each surgeon.
-                </p>
-                <div className="bg-white rounded-lg p-6 max-w-2xl mx-auto text-left">
-                  <h4 className="font-bold text-slate-900 mb-3">What We'll Show Here:</h4>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <div className="font-semibold text-blue-900 mb-2">By Hospital:</div>
-                      <ul className="text-gray-700 space-y-1">
-                        <li>• Vendor concentration patterns</li>
-                        <li>• Surgeon cohorts by vendor</li>
-                        <li>• Change management readiness</li>
-                        <li>• Multi-hospital surgeon tracking</li>
-                      </ul>
-                    </div>
-                    <div>
-                      <div className="font-semibold text-green-900 mb-2">Sherpa Analysis:</div>
-                      <ul className="text-gray-700 space-y-1">
-                        <li>• High-volume + efficient surgeons</li>
-                        <li>• Peer mentoring opportunities</li>
-                        <li>• Hospital-based training leads</li>
-                        <li>• Vendor adoption champions</li>
-                      </ul>
-                    </div>
+              {/* Hospital Summary Stats */}
+              <div className="grid grid-cols-4 gap-4 mb-8">
+                <div className="bg-slate-50 border-2 border-slate-200 rounded-lg p-4">
+                  <div className="text-sm text-slate-600 mb-1">Total Hospitals</div>
+                  <div className="text-3xl font-bold text-slate-900">
+                    {Object.keys(realData.hospitals || {}).length}
                   </div>
                 </div>
-                <p className="text-sm text-gray-500 mt-4">
-                  Use the <strong>ORTHOPEDIC_DATA_STANDARDIZATION_PROMPT.md</strong> file to prepare your data with hospital assignments and sherpa flags.
+                <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
+                  <div className="text-sm text-green-700 mb-1">High Concentration</div>
+                  <div className="text-3xl font-bold text-green-900">
+                    {Object.values(realData.hospitals || {}).filter(h => h.vendorConcentration >= 0.75).length}
+                  </div>
+                  <div className="text-xs text-green-600 mt-1">&ge;75% single vendor</div>
+                </div>
+                <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-4">
+                  <div className="text-sm text-amber-700 mb-1">Medium Concentration</div>
+                  <div className="text-3xl font-bold text-amber-900">
+                    {Object.values(realData.hospitals || {}).filter(h => h.vendorConcentration >= 0.50 && h.vendorConcentration < 0.75).length}
+                  </div>
+                  <div className="text-xs text-amber-600 mt-1">50-74% single vendor</div>
+                </div>
+                <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4">
+                  <div className="text-sm text-red-700 mb-1">Low Concentration</div>
+                  <div className="text-3xl font-bold text-red-900">
+                    {Object.values(realData.hospitals || {}).filter(h => h.vendorConcentration < 0.50).length}
+                  </div>
+                  <div className="text-xs text-red-600 mt-1">&lt;50% single vendor</div>
+                </div>
+              </div>
+
+              {/* Vendor Loyalty Heat Map */}
+              <div className="mb-8">
+                <h3 className="text-xl font-bold text-slate-900 mb-4">Hospital Vendor Concentration Heat Map</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Higher concentration = easier transitions. Each row shows a hospital's primary vendor and loyalty strength.
                 </p>
+                <div className="overflow-x-auto max-h-[600px] overflow-y-auto border border-gray-200 rounded-lg">
+                  <table className="w-full border-collapse">
+                    <thead className="sticky top-0 bg-slate-100 border-b-2 border-slate-300">
+                      <tr>
+                        <th className="text-left p-3 font-bold text-slate-900">Hospital</th>
+                        <th className="text-left p-3 font-bold text-slate-900">Region</th>
+                        <th className="text-center p-3 font-bold text-slate-900">Cases</th>
+                        <th className="text-center p-3 font-bold text-slate-900">Surgeons</th>
+                        <th className="text-left p-3 font-bold text-slate-900">Primary Vendor</th>
+                        <th className="text-center p-3 font-bold text-slate-900">Concentration</th>
+                        <th className="text-left p-3 font-bold text-slate-900">Vendor Mix</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(realData.hospitals || {})
+                        .sort((a, b) => b[1].vendorConcentration - a[1].vendorConcentration)
+                        .map(([hospitalName, hospital], idx) => {
+                          const concentration = hospital.vendorConcentration || 0;
+                          const bgColor = concentration >= 0.75
+                            ? 'bg-green-50'
+                            : concentration >= 0.50
+                            ? 'bg-amber-50'
+                            : 'bg-red-50';
+                          const concentrationColor = concentration >= 0.75
+                            ? 'text-green-900 bg-green-100 border-green-300'
+                            : concentration >= 0.50
+                            ? 'text-amber-900 bg-amber-100 border-amber-300'
+                            : 'text-red-900 bg-red-100 border-red-300';
+
+                          const vendorCount = Object.keys(hospital.vendors || {}).length;
+                          const topVendors = Object.entries(hospital.vendors || {})
+                            .sort((a, b) => b[1].cases - a[1].cases)
+                            .slice(0, 3);
+
+                          return (
+                            <tr key={idx} className={`border-b border-gray-200 hover:bg-slate-100 ${bgColor}`}>
+                              <td className="p-3 text-sm font-medium text-gray-900">{hospitalName}</td>
+                              <td className="p-3 text-sm text-gray-700">
+                                <span className="px-2 py-1 bg-slate-100 rounded text-xs font-semibold">
+                                  {hospital.region}
+                                </span>
+                              </td>
+                              <td className="p-3 text-center text-sm text-gray-900">{hospital.totalCases}</td>
+                              <td className="p-3 text-center text-sm text-gray-900">{hospital.surgeonCount}</td>
+                              <td className="p-3 text-sm font-semibold text-purple-900">{hospital.primaryVendor}</td>
+                              <td className="p-3 text-center">
+                                <span className={`px-3 py-1 rounded-full text-xs font-bold border ${concentrationColor}`}>
+                                  {(concentration * 100).toFixed(0)}%
+                                </span>
+                              </td>
+                              <td className="p-3 text-xs text-gray-600">
+                                <div className="flex flex-wrap gap-1">
+                                  {topVendors.map(([vendor, data], i) => (
+                                    <span
+                                      key={i}
+                                      className={`px-2 py-1 rounded ${i === 0 ? 'bg-purple-100 text-purple-900 font-semibold' : 'bg-gray-100 text-gray-700'}`}
+                                    >
+                                      {vendor}: {data.cases}
+                                    </span>
+                                  ))}
+                                  {vendorCount > 3 && (
+                                    <span className="px-2 py-1 bg-gray-50 text-gray-500 italic">
+                                      +{vendorCount - 3} more
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Insights */}
+              <div className="grid grid-cols-2 gap-6">
+                <div className="bg-green-50 border-l-4 border-green-600 p-6 rounded">
+                  <h3 className="font-bold text-green-900 mb-3">High Concentration Sites (Quick Wins)</h3>
+                  <p className="text-sm text-green-800 mb-3">
+                    Hospitals with &ge;75% concentration already have strong vendor loyalty. These sites are easier to transition
+                    when their primary vendor aligns with your target scenario.
+                  </p>
+                  <ul className="text-sm text-green-800 space-y-1">
+                    <li>• Minimal training required for majority of surgeons</li>
+                    <li>• Existing peer support structures in place</li>
+                    <li>• Lower change management investment needed</li>
+                  </ul>
+                </div>
+                <div className="bg-red-50 border-l-4 border-red-600 p-6 rounded">
+                  <h3 className="font-bold text-red-900 mb-3">Low Concentration Sites (Need Support)</h3>
+                  <p className="text-sm text-red-800 mb-3">
+                    Hospitals with &lt;50% concentration have fragmented vendor usage. These sites need more intensive
+                    change management support and clear peer champions.
+                  </p>
+                  <ul className="text-sm text-red-800 space-y-1">
+                    <li>• Allocate dedicated implementation resources</li>
+                    <li>• Identify local clinical champions early</li>
+                    <li>• Plan phased rollout with strong communication</li>
+                  </ul>
+                </div>
               </div>
             </div>
           )}
