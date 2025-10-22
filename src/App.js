@@ -28,7 +28,7 @@ function App() {
         <Route path="/select-view" element={<LandingPage />} />
 
         {/* Team Decision Dashboard with specialty */}
-        <Route path="/team-decision/hipknee" element={<TeamDecisionDashboard />} />
+        <Route path="/team-decision/:specialty" element={<TeamDecisionDashboard />} />
 
         {/* Executive Dashboard Routes */}
         <Route path="/executive/hipknee" element={<ExecutiveDashboard />} />

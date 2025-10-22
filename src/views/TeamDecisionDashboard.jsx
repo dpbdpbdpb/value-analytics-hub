@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { TrendingUp, Stethoscope, Shield, DollarSign, Users, Package, AlertCircle, Eye, Heart, Target, Star, Activity, ChevronRight, MapPin, Lightbulb, FileCheck, Building2 } from 'lucide-react';
 import NavigationHeader from '../components/shared/NavigationHeader';
 
 const TeamDecisionDashboard = () => {
+  const { specialty } = useParams();
+  const navigate = useNavigate();
   const [realData, setRealData] = useState(null);
   const [strategyData, setStrategyData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('scenarios');
   const [selectedScenario, setSelectedScenario] = useState('C');
   const [hospitalScenarioFilter, setHospitalScenarioFilter] = useState('C');
-  const [productLine, setProductLine] = useState('hipknee');
+  const [productLine, setProductLine] = useState(specialty || 'hipknee');
 
   // Load data
   useEffect(() => {
@@ -324,7 +327,7 @@ const TeamDecisionDashboard = () => {
             {/* Product Line Selector */}
             <div className="flex gap-3 mb-6">
               <button
-                onClick={() => setProductLine('hipknee')}
+                onClick={() => navigate('/team-decision/hipknee')}
                 className={`px-6 py-3 rounded-lg font-semibold transition-all ${
                   productLine === 'hipknee'
                     ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg'
@@ -337,7 +340,7 @@ const TeamDecisionDashboard = () => {
                 </div>
               </button>
               <button
-                onClick={() => setProductLine('shoulder')}
+                onClick={() => navigate('/team-decision/shoulder')}
                 className={`px-6 py-3 rounded-lg font-semibold transition-all ${
                   productLine === 'shoulder'
                     ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg'
