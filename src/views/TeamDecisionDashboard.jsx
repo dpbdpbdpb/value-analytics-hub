@@ -132,7 +132,7 @@ const TeamDecisionDashboard = () => {
         <div className="mb-4 text-center text-sm text-gray-600">
           <span className="font-semibold">How each pillar serves the Quintuple Aim:</span>
         </div>
-        <div className="grid grid-cols-3 gap-4 mb-5">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-5">
           {/* Finance Pillar */}
           <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-5">
             <div className="flex items-center gap-2 mb-3 pb-3 border-b border-amber-200">
@@ -229,7 +229,7 @@ const TeamDecisionDashboard = () => {
         </div>
 
         {/* Tradeoffs by Pillar */}
-        <div className="grid grid-cols-3 gap-3 mt-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
           {/* Finance Tradeoffs */}
           <div className="bg-amber-50 border-l-4 border-amber-600 p-3 rounded">
             <div className="flex items-start gap-2">
