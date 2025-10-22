@@ -17,10 +17,10 @@ export const SCENARIO_IDS = {
 
 export const SCENARIO_NAMES = {
   [SCENARIO_IDS.STATUS_QUO]: 'Status Quo',
-  [SCENARIO_IDS.TRI_VENDOR]: 'Tri-Vendor',
-  [SCENARIO_IDS.DUAL_PREMIUM]: 'Dual-Vendor: Premium',
-  [SCENARIO_IDS.DUAL_VALUE]: 'Dual-Vendor: Value',
-  [SCENARIO_IDS.DUAL_INNOVATION]: 'Dual-Vendor: Innovation'
+  [SCENARIO_IDS.TRI_VENDOR]: 'Tri-Source (Zimmer + Stryker + J&J)',
+  [SCENARIO_IDS.DUAL_PREMIUM]: 'Stryker + Zimmer',
+  [SCENARIO_IDS.DUAL_VALUE]: 'Zimmer + J&J',
+  [SCENARIO_IDS.DUAL_INNOVATION]: 'Stryker + J&J'
 };
 
 const DEFAULT_AGENT_SCORES = {
@@ -182,7 +182,7 @@ export const generateScenarios = (realData) => {
     [SCENARIO_IDS.TRI_VENDOR]: {
       id: SCENARIO_IDS.TRI_VENDOR,
       name: SCENARIO_NAMES[SCENARIO_IDS.TRI_VENDOR],
-      shortName: 'Tri-Vendor',
+      shortName: 'Tri-Source',
       description: 'Balanced approach with three major vendors (Zimmer + Stryker + J&J)',
       vendors: ['ZIMMER BIOMET', 'STRYKER', 'J&J'],
       vendorCount: 3,
@@ -215,7 +215,7 @@ export const generateScenarios = (realData) => {
     [SCENARIO_IDS.DUAL_PREMIUM]: {
       id: SCENARIO_IDS.DUAL_PREMIUM,
       name: SCENARIO_NAMES[SCENARIO_IDS.DUAL_PREMIUM],
-      shortName: 'Premium',
+      shortName: 'Stryker + Zimmer',
       description: 'Premium vendors focus (Stryker + Zimmer) - highest quality, moderate savings',
       vendors: ['STRYKER', 'ZIMMER BIOMET'],
       vendorCount: 2,
@@ -248,7 +248,7 @@ export const generateScenarios = (realData) => {
     [SCENARIO_IDS.DUAL_VALUE]: {
       id: SCENARIO_IDS.DUAL_VALUE,
       name: SCENARIO_NAMES[SCENARIO_IDS.DUAL_VALUE],
-      shortName: 'Value',
+      shortName: 'Zimmer + J&J',
       description: 'Value-focused consolidation (Zimmer + J&J) - strong savings, good quality',
       vendors: ['ZIMMER BIOMET', 'J&J'],
       vendorCount: 2,
@@ -281,7 +281,7 @@ export const generateScenarios = (realData) => {
     [SCENARIO_IDS.DUAL_INNOVATION]: {
       id: SCENARIO_IDS.DUAL_INNOVATION,
       name: SCENARIO_NAMES[SCENARIO_IDS.DUAL_INNOVATION],
-      shortName: 'Innovation',
+      shortName: 'Stryker + J&J',
       description: 'Innovation-focused (Stryker + J&J) - leading technology, higher adoption risk',
       vendors: ['STRYKER', 'J&J'],
       vendorCount: 2,

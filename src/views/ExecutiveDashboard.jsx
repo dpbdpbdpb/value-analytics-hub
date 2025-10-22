@@ -601,7 +601,7 @@ const EnhancedOrthopedicDashboard = () => {
                     onClick={() => setSelectedScenario(scenario.id)}
                   >
                     <td className="px-4 py-4">
-                      <div className="font-medium text-gray-900">{scenario.id}: {scenario.shortName}</div>
+                      <div className="font-medium text-gray-900">{scenario.shortName}</div>
                       <div className="text-xs text-gray-500">{scenario.vendorCount} vendors</div>
                     </td>
                     <td className="px-4 py-4">
@@ -2467,7 +2467,7 @@ const EnhancedOrthopedicDashboard = () => {
             >
               {Object.values(SCENARIOS).map(scenario => (
                 <option key={scenario.id} value={scenario.id}>
-                  {scenario.id}: {scenario.shortName} - ${scenario.annualSavings.toFixed(2)}M ({scenario.savingsPercent}%)
+                  {scenario.shortName} - ${scenario.annualSavings.toFixed(2)}M ({scenario.savingsPercent}%)
                 </option>
               ))}
             </select>
