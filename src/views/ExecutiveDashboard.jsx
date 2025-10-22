@@ -358,11 +358,12 @@ const EnhancedOrthopedicDashboard = () => {
   const renderTabs = () => {
     // Define all tabs with persona visibility
     const allTabs = [
-      { id: 'overview', label: 'Overview', icon: Eye, personas: ['financial', 'operational'] },
+      { id: 'overview', label: 'Overview', icon: Eye, personas: ['financial', 'operational', 'clinical'] },
       { id: 'financial', label: 'Financial Analysis', icon: DollarSign, personas: ['financial', 'operational'] },
+      { id: 'clinical', label: 'Clinical Analysis', icon: Stethoscope, personas: ['clinical'] },
       { id: 'components', label: 'Component Analysis', icon: Package, personas: ['financial', 'operational'] },
       { id: 'risk', label: 'Risk Assessment', icon: Shield, personas: ['financial', 'operational'] },
-      { id: 'mission', label: 'Mission Impact', icon: Heart, personas: ['financial'] },
+      { id: 'mission', label: 'Mission Impact', icon: Heart, personas: ['financial', 'clinical'] },
       { id: 'industry', label: 'Industry Intelligence', icon: AlertCircle, personas: ['financial', 'operational'] }
     ];
 
@@ -801,6 +802,107 @@ const EnhancedOrthopedicDashboard = () => {
   // Note: The rest of the render functions (Financial, Matrix, Risk, Mission, Decision tabs)
   // remain the same as before, but now use the dynamically loaded SCENARIOS data
   // For brevity, I'm including just the key parts that demonstrate real data usage
+
+  // CLINICAL ANALYSIS TAB - For clinical persona
+  const renderClinicalTab = () => {
+    const surgeonsByVendor = {};
+    const totalSurgeons = realData?.metadata?.totalSurgeons || 0;
+
+    // Aggregate surgeons by vendor
+    if (realData?.vendors) {
+      Object.entries(realData.vendors).forEach(([vendorName, vendorData]) => {
+        surgeonsByVendor[vendorName] = vendorData.uniqueSurgeons || 0;
+      });
+    }
+
+    // Sort vendors by surgeon count
+    const topVendorsBySurgeons = Object.entries(surgeonsByVendor)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
+
+    return (
+      <div className="space-y-6">
+        {/* Clinical Overview */}
+        <div className="grid grid-cols-3 gap-6">
+          <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-green-200">
+            <div className="text-sm text-green-700 mb-1">Total Surgeons</div>
+            <div className="text-4xl font-bold text-green-900">{totalSurgeons}</div>
+            <div className="text-xs text-green-600 mt-1">Active orthopedic surgeons</div>
+          </div>
+          <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-blue-200">
+            <div className="text-sm text-blue-700 mb-1">Total Cases</div>
+            <div className="text-4xl font-bold text-blue-900">
+              {(realData?.metadata?.totalCases || 0).toLocaleString()}
+            </div>
+            <div className="text-xs text-blue-600 mt-1">Surgical procedures analyzed</div>
+          </div>
+          <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-purple-200">
+            <div className="text-sm text-purple-700 mb-1">Vendor Options</div>
+            <div className="text-4xl font-bold text-purple-900">
+              {Object.keys(realData?.vendors || {}).length}
+            </div>
+            <div className="text-xs text-purple-600 mt-1">Different vendors used</div>
+          </div>
+        </div>
+
+        {/* Surgeon Distribution by Vendor */}
+        <div className="bg-white p-6 rounded-xl shadow-lg">
+          <h3 className="text-xl font-bold text-gray-900 mb-4">Surgeon Distribution by Vendor</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Understanding surgeon preference patterns helps identify consolidation opportunities
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-green-100 border-b-2 border-green-300">
+                  <th className="text-left p-4 font-bold text-green-900">Vendor</th>
+                  <th className="text-center p-4 font-bold text-green-900">Surgeons</th>
+                  <th className="text-center p-4 font-bold text-green-900">% of Total</th>
+                  <th className="text-left p-4 font-bold text-green-900">Adoption Level</th>
+                </tr>
+              </thead>
+              <tbody>
+                {topVendorsBySurgeons.map(([vendor, count], idx) => {
+                  const percentage = ((count / totalSurgeons) * 100).toFixed(1);
+                  const isHighAdoption = percentage >= 30;
+                  const isMediumAdoption = percentage >= 10 && percentage < 30;
+                  return (
+                    <tr key={idx} className="border-b border-gray-200 hover:bg-green-50">
+                      <td className="p-4 font-semibold text-gray-900">{vendor}</td>
+                      <td className="p-4 text-center text-gray-900">{count}</td>
+                      <td className="p-4 text-center font-bold text-green-900">{percentage}%</td>
+                      <td className="p-4 text-sm">
+                        <span className={`px-3 py-1 rounded-full font-semibold ${
+                          isHighAdoption
+                            ? 'bg-green-100 text-green-800'
+                            : isMediumAdoption
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-gray-100 text-gray-700'
+                        }`}>
+                          {isHighAdoption ? 'High' : isMediumAdoption ? 'Medium' : 'Low'}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Clinical Insights */}
+        <div className="bg-green-50 border-l-4 border-green-600 p-6 rounded-lg">
+          <h3 className="font-bold text-green-900 mb-3">Clinical Perspective Insights</h3>
+          <ul className="space-y-2 text-sm text-green-800">
+            <li>• Vendor consolidation should prioritize surgeon preference and clinical outcomes</li>
+            <li>• High-volume surgeons switching vendors require extensive training and support</li>
+            <li>• Successful implementation depends on identifying clinical champions at each hospital</li>
+            <li>• Patient safety and outcomes must remain the top priority during transitions</li>
+          </ul>
+        </div>
+      </div>
+    );
+  };
 
   // COMPONENT ANALYSIS TAB - Simplified version
   const renderComponentTab = () => {
@@ -2367,6 +2469,7 @@ const EnhancedOrthopedicDashboard = () => {
         <div className="transition-all">
           {activeTab === 'overview' && renderOverviewTab()}
           {activeTab === 'financial' && renderFinancialTab()}
+          {activeTab === 'clinical' && renderClinicalTab()}
           {activeTab === 'components' && renderComponentTab()}
           {activeTab === 'risk' && renderRiskTab()}
           {activeTab === 'mission' && renderMissionTab()}
