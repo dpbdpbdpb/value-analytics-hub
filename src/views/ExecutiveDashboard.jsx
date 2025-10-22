@@ -2523,12 +2523,12 @@ const EnhancedOrthopedicDashboard = () => {
                 <ul className="list-disc ml-5 space-y-1">
                   <li>
                     <span className="font-medium">Hip Procedures:</span> {realData?.procedureTypes?.hip?.cases.toLocaleString() || '11,063'} cases
-                    (${realData ? (realData.procedureTypes.hip.totalSpend / 1000000).toFixed(2) : '15.85'}M spend,
+                    (${realData?.procedureTypes?.hip ? (realData.procedureTypes.hip.totalSpend / 1000000).toFixed(2) : '15.85'}M spend,
                     avg ${realData?.procedureTypes?.hip?.avgCostPerCase.toLocaleString() || '1,433'} per case)
                   </li>
                   <li>
                     <span className="font-medium">Knee Procedures:</span> {realData?.procedureTypes?.knee?.cases.toLocaleString() || '16,366'} cases
-                    (${realData ? (realData.procedureTypes.knee.totalSpend / 1000000).toFixed(2) : '25.96'}M spend,
+                    (${realData?.procedureTypes?.knee ? (realData.procedureTypes.knee.totalSpend / 1000000).toFixed(2) : '25.96'}M spend,
                     avg ${realData?.procedureTypes?.knee?.avgCostPerCase.toLocaleString() || '1,586'} per case)
                   </li>
                   <li>
@@ -2542,7 +2542,7 @@ const EnhancedOrthopedicDashboard = () => {
                 <p>
                   Multiple SKU line items (femoral component, tibial tray, insert, etc.) map to a single surgical case.
                   Regional case counts are validated against component utilization patterns to ensure accuracy.
-                  For example, {realData ? (
+                  For example, {realData?.componentCategories?.['FEMORAL KNEE COMPONENTS']?.totalQuantity && realData?.procedureTypes?.knee?.cases ? (
                     <>
                       {Math.round(realData.componentCategories['FEMORAL KNEE COMPONENTS'].totalQuantity).toLocaleString()} femoral knee components
                       correlates with {realData.procedureTypes.knee.cases.toLocaleString()} knee cases (ratio ~

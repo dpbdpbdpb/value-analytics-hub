@@ -49,8 +49,20 @@ const SurgeonTool = () => {
         return response.json();
       })
       .then(data => {
-        // Extract surgeons array from new baseline structure
-        setSurgeonData(data.surgeons || []);
+        // Extract surgeons array and transform to add vendorBreakdown
+        const surgeons = (data.surgeons || []).map(surgeon => {
+          // Transform vendors object to vendorBreakdown array if not already present
+          if (!surgeon.vendorBreakdown && surgeon.vendors) {
+            surgeon.vendorBreakdown = Object.entries(surgeon.vendors).map(([vendor, data]) => ({
+              vendor,
+              spend: data.spend || 0,
+              cases: data.cases || 0,
+              percentage: surgeon.totalSpend > 0 ? ((data.spend || 0) / surgeon.totalSpend * 100) : 0
+            })).sort((a, b) => b.spend - a.spend);
+          }
+          return surgeon;
+        });
+        setSurgeonData(surgeons);
         setLoading(false);
       })
       .catch(err => {
@@ -72,11 +84,35 @@ const SurgeonTool = () => {
 
   // Utility function to separate hip vs. knee data
   const separateHipKneeData = (surgeon) => {
-    if (!surgeon || !surgeon.topComponents || !Array.isArray(surgeon.topComponents)) {
+    // If no topComponents data, we cannot separate hip/knee, so return empty estimates
+    if (!surgeon || !surgeon.topComponents || !Array.isArray(surgeon.topComponents) || surgeon.topComponents.length === 0) {
+      // Since we don't have component-level data, we can't split hip vs knee
+      // Return empty data for hip/knee splits
       return {
-        hip: { cases: 0, spend: 0, avgSpendPerCase: 0, components: [], vendors: {} },
-        knee: { cases: 0, spend: 0, avgSpendPerCase: 0, components: [], vendors: {} },
-        other: { cases: 0, spend: 0, avgSpendPerCase: 0, components: [] }
+        hip: {
+          cases: 0,
+          spend: 0,
+          avgSpendPerCase: 0,
+          components: [],
+          vendors: {},
+          primaryVendor: 'N/A',
+          vendorBreakdown: []
+        },
+        knee: {
+          cases: 0,
+          spend: 0,
+          avgSpendPerCase: 0,
+          components: [],
+          vendors: {},
+          primaryVendor: 'N/A',
+          vendorBreakdown: []
+        },
+        other: {
+          cases: 0,
+          spend: 0,
+          avgSpendPerCase: 0,
+          components: []
+        }
       };
     }
 
@@ -139,9 +175,10 @@ const SurgeonTool = () => {
     };
 
     // Estimate case distribution based on spend proportion
-    const totalSpend = surgeon.totalSpend;
-    const hipCaseEstimate = totalSpend > 0 ? Math.round(surgeon.totalCases * (hipSpend / totalSpend)) : 0;
-    const kneeCaseEstimate = totalSpend > 0 ? Math.round(surgeon.totalCases * (kneeSpend / totalSpend)) : 0;
+    const totalSpend = surgeon.totalSpend || 0;
+    const totalCases = surgeon.totalCases || 0;
+    const hipCaseEstimate = totalSpend > 0 && totalCases > 0 ? Math.round(totalCases * (hipSpend / totalSpend)) : 0;
+    const kneeCaseEstimate = totalSpend > 0 && totalCases > 0 ? Math.round(totalCases * (kneeSpend / totalSpend)) : 0;
 
     return {
       hip: {
@@ -489,9 +526,9 @@ const SurgeonTool = () => {
 
   // Helper Functions for Peer Comparison
   const calculatePercentiles = (surgeon, allSurgeons) => {
-    const sortedByCases = [...allSurgeons].sort((a, b) => a.totalCases - b.totalCases);
-    const sortedByCost = [...allSurgeons].sort((a, b) => a.avgSpendPerCase - b.avgSpendPerCase);
-    const sortedBySpend = [...allSurgeons].sort((a, b) => a.totalSpend - b.totalSpend);
+    const sortedByCases = [...allSurgeons].sort((a, b) => (a.totalCases || 0) - (b.totalCases || 0));
+    const sortedByCost = [...allSurgeons].sort((a, b) => (a.avgSpendPerCase || 0) - (b.avgSpendPerCase || 0));
+    const sortedBySpend = [...allSurgeons].sort((a, b) => (a.totalSpend || 0) - (b.totalSpend || 0));
 
     const caseRank = sortedByCases.findIndex(s => s.id === surgeon.id) + 1;
     const costRank = sortedByCost.findIndex(s => s.id === surgeon.id) + 1;
@@ -528,11 +565,15 @@ const SurgeonTool = () => {
 
     const scored = others.map(other => {
       // Volume similarity (±20%, weight 40%)
-      const volumeDiff = Math.abs(other.totalCases - surgeon.totalCases) / surgeon.totalCases;
+      const surgeonCases = surgeon.totalCases || 0;
+      const otherCases = other.totalCases || 0;
+      const volumeDiff = surgeonCases > 0 ? Math.abs(otherCases - surgeonCases) / surgeonCases : 0;
       const volumeScore = volumeDiff <= 0.2 ? (1 - volumeDiff / 0.2) * 0.4 : 0;
 
       // Cost similarity (±15%, weight 30%)
-      const costDiff = Math.abs(other.avgSpendPerCase - surgeon.avgSpendPerCase) / surgeon.avgSpendPerCase;
+      const surgeonCost = surgeon.avgSpendPerCase || 0;
+      const otherCost = other.avgSpendPerCase || 0;
+      const costDiff = surgeonCost > 0 ? Math.abs(otherCost - surgeonCost) / surgeonCost : 0;
       const costScore = costDiff <= 0.15 ? (1 - costDiff / 0.15) * 0.3 : 0;
 
       // Vendor match (weight 20%)
@@ -546,8 +587,8 @@ const SurgeonTool = () => {
       return {
         ...other,
         similarityScore: totalScore * 100,
-        caseDiff: other.totalCases - surgeon.totalCases,
-        costDiff: other.avgSpendPerCase - surgeon.avgSpendPerCase
+        caseDiff: otherCases - surgeonCases,
+        costDiff: otherCost - surgeonCost
       };
     });
 
@@ -556,10 +597,10 @@ const SurgeonTool = () => {
 
   const generatePeerInsights = (surgeon, allSurgeons, percentiles, quadrant) => {
     const insights = [];
-    const medianCases = allSurgeons.map(s => s.totalCases).sort((a, b) => a - b)[Math.floor(allSurgeons.length / 2)];
-    const avgCost = allSurgeons.reduce((sum, s) => sum + s.avgSpendPerCase, 0) / allSurgeons.length;
-    const costDiff = surgeon.avgSpendPerCase - avgCost;
-    const costPct = (costDiff / avgCost) * 100;
+    const medianCases = allSurgeons.map(s => s.totalCases || 0).sort((a, b) => a - b)[Math.floor(allSurgeons.length / 2)] || 0;
+    const avgCost = allSurgeons.reduce((sum, s) => sum + (s.avgSpendPerCase || 0), 0) / allSurgeons.length;
+    const costDiff = (surgeon.avgSpendPerCase || 0) - avgCost;
+    const costPct = avgCost > 0 ? (costDiff / avgCost) * 100 : 0;
 
     if (quadrant === 'High Performer') {
       insights.push({
@@ -572,7 +613,7 @@ const SurgeonTool = () => {
       const potentialMentees = allSurgeons.filter(s =>
         s.id !== surgeon.id &&
         s.primaryVendor === surgeon.primaryVendor &&
-        s.avgSpendPerCase > surgeon.avgSpendPerCase * 1.15
+        (s.avgSpendPerCase || 0) > (surgeon.avgSpendPerCase || 0) * 1.15
       ).slice(0, 2);
 
       if (potentialMentees.length > 0) {
@@ -587,21 +628,21 @@ const SurgeonTool = () => {
       insights.push({
         icon: '💰',
         title: 'Great Cost Control',
-        description: `Your per-case cost of $${surgeon.avgSpendPerCase.toFixed(0)} is ${Math.abs(costPct).toFixed(0)}% below average.`,
+        description: `Your per-case cost of $${(surgeon.avgSpendPerCase || 0).toFixed(0)} is ${Math.abs(costPct).toFixed(0)}% below average.`,
         type: 'positive'
       });
 
       const highVolume = allSurgeons.filter(s =>
         s.id !== surgeon.id &&
-        s.avgSpendPerCase <= surgeon.avgSpendPerCase * 1.1 &&
-        s.totalCases > surgeon.totalCases * 1.3
+        (s.avgSpendPerCase || 0) <= (surgeon.avgSpendPerCase || 0) * 1.1 &&
+        (s.totalCases || 0) > (surgeon.totalCases || 0) * 1.3
       ).slice(0, 1);
 
       if (highVolume.length > 0) {
         insights.push({
           icon: '📈',
           title: 'Volume Opportunity',
-          description: `${highVolume[0].name.split(',')[0]} has similar efficiency with ${((highVolume[0].totalCases - surgeon.totalCases) / surgeon.totalCases * 100).toFixed(0)}% more cases.`,
+          description: `${highVolume[0].name.split(',')[0]} has similar efficiency with ${(((highVolume[0].totalCases || 0) - (surgeon.totalCases || 0)) / (surgeon.totalCases || 1) * 100).toFixed(0)}% more cases.`,
           type: 'neutral'
         });
       }
@@ -615,15 +656,15 @@ const SurgeonTool = () => {
 
       const betterCost = allSurgeons.filter(s =>
         s.id !== surgeon.id &&
-        Math.abs(s.totalCases - surgeon.totalCases) / surgeon.totalCases < 0.2 &&
-        s.avgSpendPerCase < surgeon.avgSpendPerCase
-      ).sort((a, b) => a.avgSpendPerCase - b.avgSpendPerCase).slice(0, 2);
+        Math.abs((s.totalCases || 0) - (surgeon.totalCases || 0)) / (surgeon.totalCases || 1) < 0.2 &&
+        (s.avgSpendPerCase || 0) < (surgeon.avgSpendPerCase || 0)
+      ).sort((a, b) => (a.avgSpendPerCase || 0) - (b.avgSpendPerCase || 0)).slice(0, 2);
 
       if (betterCost.length > 0) {
         insights.push({
           icon: '💡',
           title: 'Cost Optimization Peers',
-          description: `Top performers with similar volume: ${betterCost.map(s => `${s.name.split(',')[0]} ($${(surgeon.avgSpendPerCase - s.avgSpendPerCase).toFixed(0)} lower cost)`).join(', ')}.`,
+          description: `Top performers with similar volume: ${betterCost.map(s => `${s.name.split(',')[0]} ($${((surgeon.avgSpendPerCase || 0) - (s.avgSpendPerCase || 0)).toFixed(0)} lower cost)`).join(', ')}.`,
           type: 'neutral'
         });
       }
@@ -1178,13 +1219,14 @@ const SurgeonTool = () => {
               const currentScenario = scenarios[selectedScenario];
               const mustSwitch = !currentScenario.vendors.includes(selectedSurgeon.primaryVendor);
               const qualitySurgeons = surgeonData.filter(s =>
-                s.totalCases >= 100 &&
-                s.avgSpendPerCase >= 800 &&
-                s.avgSpendPerCase <= 2500
+                (s.totalCases || 0) >= 100 &&
+                (s.avgSpendPerCase || 0) >= 800 &&
+                (s.avgSpendPerCase || 0) <= 2500
               );
-              const avgCosts = qualitySurgeons.map(s => s.avgSpendPerCase);
-              const systemAvg = avgCosts.reduce((a, b) => a + b, 0) / avgCosts.length;
-              const costEfficiency = ((systemAvg - selectedSurgeon.avgSpendPerCase) / systemAvg) * 100;
+              const avgCosts = qualitySurgeons.map(s => s.avgSpendPerCase || 0).filter(cost => cost > 0);
+              const systemAvg = avgCosts.length > 0 ? avgCosts.reduce((a, b) => a + b, 0) / avgCosts.length : 0;
+              const surgeonCost = selectedSurgeon.avgSpendPerCase || 0;
+              const costEfficiency = systemAvg > 0 && surgeonCost > 0 ? ((systemAvg - surgeonCost) / systemAvg) * 100 : 0;
 
               return (
               <>
@@ -1273,8 +1315,20 @@ const SurgeonTool = () => {
                       </div>
                     </div>
 
+                    {/* Data Limitation Notice */}
+                    {(separated.hip.cases === 0 && separated.knee.cases === 0 && procedureView === 'combined') && (
+                      <div className="mt-2 pt-4 border-t border-gray-200">
+                        <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 text-sm text-gray-700">
+                          <Info className="inline-block mr-2 text-blue-600" size={16} />
+                          <strong>Note:</strong> Hip vs. Knee procedure separation requires component-level data.
+                          The current baseline dataset contains aggregated vendor spend data only.
+                          Use "Combined" view to see all {selectedSurgeon.totalCases} cases and ${(selectedSurgeon.totalSpend / 1000).toFixed(0)}K total spend.
+                        </div>
+                      </div>
+                    )}
+
                     {/* Quick Stats Summary */}
-                    {procedureView === 'combined' && (
+                    {procedureView === 'combined' && separated.hip.cases > 0 && separated.knee.cases > 0 && (
                       <div className="mt-2 pt-4 border-t border-gray-200">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                           <div className="bg-blue-50 rounded-lg p-4">
@@ -1400,8 +1454,8 @@ const SurgeonTool = () => {
                 {/* Peer Comparison & Benchmarking Section */}
             {(() => {
               const percentiles = calculatePercentiles(selectedSurgeon, surgeonData);
-              const medianCases = surgeonData.map(s => s.totalCases).sort((a, b) => a - b)[Math.floor(surgeonData.length / 2)];
-              const medianCost = surgeonData.map(s => s.avgSpendPerCase).sort((a, b) => a - b)[Math.floor(surgeonData.length / 2)];
+              const medianCases = surgeonData.map(s => s.totalCases || 0).sort((a, b) => a - b)[Math.floor(surgeonData.length / 2)] || 0;
+              const medianCost = surgeonData.map(s => s.avgSpendPerCase || 0).sort((a, b) => a - b)[Math.floor(surgeonData.length / 2)] || 0;
               const quadrant = getQuadrant(selectedSurgeon, medianCases, medianCost);
               const similarSurgeons = findSimilarSurgeons(selectedSurgeon, surgeonData);
               const peerInsights = generatePeerInsights(selectedSurgeon, surgeonData, percentiles, quadrant);
@@ -1678,7 +1732,7 @@ const SurgeonTool = () => {
                                     <td className="px-3 py-2 text-green-600 hover:text-green-800">
                                       {s.name.split(',')[0]}
                                     </td>
-                                    <td className="px-3 py-2 text-right">${s.avgSpendPerCase.toFixed(0)}</td>
+                                    <td className="px-3 py-2 text-right">${(s.avgSpendPerCase || 0).toFixed(0)}</td>
                                   </tr>
                                 ))}
                               </tbody>
@@ -1711,7 +1765,7 @@ const SurgeonTool = () => {
                                     <td className="px-3 py-2 text-blue-600 hover:text-blue-800">
                                       {s.name.split(',')[0]}
                                     </td>
-                                    <td className="px-3 py-2 text-right">${(s.totalSpend / 1000).toFixed(0)}k</td>
+                                    <td className="px-3 py-2 text-right">${((s.totalSpend || 0) / 1000).toFixed(0)}k</td>
                                   </tr>
                                 ))}
                               </tbody>
@@ -1737,17 +1791,17 @@ const SurgeonTool = () => {
                               <div className="flex items-center justify-between mb-2">
                                 <div className="font-bold text-lg text-gray-900">{sim.name.split(',')[0]}</div>
                                 <div className="text-xs bg-purple-600 text-white px-2 py-1 rounded-full">
-                                  {sim.similarityScore.toFixed(0)}% match
+                                  {(sim.similarityScore || 0).toFixed(0)}% match
                                 </div>
                               </div>
                               <div className="space-y-1 text-sm text-gray-700 mb-3">
-                                <div>Cases/year: {sim.totalCases}</div>
-                                <div>Avg cost: ${sim.avgSpendPerCase.toFixed(0)}</div>
-                                <div>Vendor: {sim.primaryVendor.split(' ')[0]}</div>
+                                <div>Cases/year: {sim.totalCases || 0}</div>
+                                <div>Avg cost: ${(sim.avgSpendPerCase || 0).toFixed(0)}</div>
+                                <div>Vendor: {sim.primaryVendor ? sim.primaryVendor.split(' ')[0] : 'N/A'}</div>
                               </div>
                               <div className="text-xs text-gray-600 mb-3">
                                 {sim.caseDiff > 0 ? `+${sim.caseDiff}` : sim.caseDiff} cases/year,
-                                {sim.costDiff > 0 ? ` +$${sim.costDiff.toFixed(0)}` : ` -$${Math.abs(sim.costDiff).toFixed(0)}`} per case
+                                {sim.costDiff > 0 ? ` +$${(sim.costDiff || 0).toFixed(0)}` : ` -$${Math.abs(sim.costDiff || 0).toFixed(0)}`} per case
                               </div>
                               <button
                                 onClick={() => handleSurgeonClick(sim)}
@@ -1777,8 +1831,8 @@ const SurgeonTool = () => {
                                 <div className="flex-1">
                                   <div className="font-bold text-gray-900">{sherpa.name}</div>
                                   <div className="text-sm text-gray-600 mt-1">
-                                    {sherpa.totalCases} cases • ${sherpa.avgSpendPerCase.toFixed(0)}/case
-                                    • ${(selectedSurgeon.avgSpendPerCase - sherpa.avgSpendPerCase).toFixed(0)} lower cost
+                                    {sherpa.totalCases || 0} cases • ${(sherpa.avgSpendPerCase || 0).toFixed(0)}/case
+                                    • ${((selectedSurgeon.avgSpendPerCase || 0) - (sherpa.avgSpendPerCase || 0)).toFixed(0)} lower cost
                                   </div>
                                   <div className="text-sm font-semibold text-purple-600 mt-1">
                                     Primary Vendor: {sherpa.primaryVendor}
