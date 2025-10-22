@@ -242,7 +242,7 @@ const TeamDecisionDashboard = () => {
                   ) : (
                     <>
                       <div className="font-semibold">{formatCurrency(scenario.annualSavings || 0, { millions: true })} annual savings</div>
-                      <div className="mt-0.5 text-amber-700">{((scenario.npv5Year || 0) / (scenario.implementation?.costMillions || 1)).toFixed(1)}x ROI over 5 years</div>
+                      <div className="mt-0.5 text-amber-700">{(((scenario.npv5Year || 0) / 1000000) / (scenario.implementation?.costMillions || 1)).toFixed(1)}x ROI over 5 years</div>
                     </>
                   )}
                 </div>
@@ -642,8 +642,9 @@ const TeamDecisionDashboard = () => {
                     <tr className="border-b border-gray-200 hover:bg-amber-50">
                       <td className="p-4 font-semibold text-gray-700">Payback Multiple</td>
                       {Object.values(SCENARIOS).map((scenario, idx) => {
+                        const npvInMillions = (scenario.npv5Year || 0) / 1000000;
                         const payback = scenario.implementation?.costMillions > 0
-                          ? (scenario.npv5Year / scenario.implementation.costMillions).toFixed(1)
+                          ? (npvInMillions / scenario.implementation.costMillions).toFixed(1)
                           : 'N/A';
                         return (
                           <td key={idx} className="text-center p-4 text-amber-900">
@@ -909,8 +910,9 @@ const TeamDecisionDashboard = () => {
                     <tr className="bg-amber-50">
                       <td className="p-4 font-semibold text-amber-900">ROI (5-Year NPV / Cost)</td>
                       {Object.values(SCENARIOS).map((scenario, idx) => {
+                        const npvInMillions = (scenario.npv5Year || 0) / 1000000;
                         const roi = scenario.implementation?.costMillions > 0
-                          ? (scenario.npv5Year / scenario.implementation.costMillions).toFixed(1)
+                          ? (npvInMillions / scenario.implementation.costMillions).toFixed(1)
                           : 'N/A';
                         return (
                           <td key={idx} className="text-center p-4 text-amber-900 text-sm font-bold">
