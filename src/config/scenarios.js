@@ -23,6 +23,14 @@ export const SCENARIO_NAMES = {
   [SCENARIO_IDS.DUAL_INNOVATION]: 'Dual-Vendor: Innovation'
 };
 
+const DEFAULT_AGENT_SCORES = {
+  [SCENARIO_IDS.STATUS_QUO]: 2.1,
+  [SCENARIO_IDS.TRI_VENDOR]: 3.8,
+  [SCENARIO_IDS.DUAL_PREMIUM]: 4.3,
+  [SCENARIO_IDS.DUAL_VALUE]: 4.5,
+  [SCENARIO_IDS.DUAL_INNOVATION]: 4.0
+};
+
 /**
  * Calculate volume-weighted adoption risk for a scenario
  *
@@ -130,6 +138,14 @@ export const generateScenarios = (realData) => {
     return generatePlaceholderScenarios();
   }
 
+  const getAgentScore = (scenarioId) => {
+    const dataScore = realData?.scenarios?.[scenarioId]?.agentScore;
+    if (typeof dataScore === 'number' && !Number.isNaN(dataScore)) {
+      return dataScore;
+    }
+    return DEFAULT_AGENT_SCORES[scenarioId] ?? 3.5;
+  };
+
   const totalCases = realData.metadata?.totalCases || 0;
   const baselineSpend = (realData.metadata?.totalSpend || 0) / 1000000; // Convert to millions
   const surgeons = realData.surgeons || [];
@@ -160,7 +176,8 @@ export const generateScenarios = (realData) => {
         adminEfficiency: 0
       },
       quintupleMissionScore: 45,
-      npv5Year: 0
+      npv5Year: 0,
+      agentScore: getAgentScore(SCENARIO_IDS.STATUS_QUO)
     },
     [SCENARIO_IDS.TRI_VENDOR]: {
       id: SCENARIO_IDS.TRI_VENDOR,
@@ -192,7 +209,8 @@ export const generateScenarios = (realData) => {
       },
       quintupleMissionScore: 82,
       npv5Year: baselineSpend * 0.12 * 5 - 2.2,
-      vendorSplit: { zimmer_biomet: 40, stryker: 35, j_j: 25 }
+      vendorSplit: { zimmer_biomet: 40, stryker: 35, j_j: 25 },
+      agentScore: getAgentScore(SCENARIO_IDS.TRI_VENDOR)
     },
     [SCENARIO_IDS.DUAL_PREMIUM]: {
       id: SCENARIO_IDS.DUAL_PREMIUM,
@@ -224,7 +242,8 @@ export const generateScenarios = (realData) => {
       },
       quintupleMissionScore: 85,
       npv5Year: baselineSpend * 0.15 * 5 - 2.8,
-      vendorSplit: { stryker: 55, zimmer_biomet: 45 }
+      vendorSplit: { stryker: 55, zimmer_biomet: 45 },
+      agentScore: getAgentScore(SCENARIO_IDS.DUAL_PREMIUM)
     },
     [SCENARIO_IDS.DUAL_VALUE]: {
       id: SCENARIO_IDS.DUAL_VALUE,
@@ -256,7 +275,8 @@ export const generateScenarios = (realData) => {
       },
       quintupleMissionScore: 78,
       npv5Year: baselineSpend * 0.18 * 5 - 3.0,
-      vendorSplit: { zimmer_biomet: 60, j_j: 40 }
+      vendorSplit: { zimmer_biomet: 60, j_j: 40 },
+      agentScore: getAgentScore(SCENARIO_IDS.DUAL_VALUE)
     },
     [SCENARIO_IDS.DUAL_INNOVATION]: {
       id: SCENARIO_IDS.DUAL_INNOVATION,
@@ -288,7 +308,8 @@ export const generateScenarios = (realData) => {
       },
       quintupleMissionScore: 80,
       npv5Year: baselineSpend * 0.16 * 5 - 3.2,
-      vendorSplit: { stryker: 50, j_j: 50 }
+      vendorSplit: { stryker: 50, j_j: 50 },
+      agentScore: getAgentScore(SCENARIO_IDS.DUAL_INNOVATION)
     }
   };
 
@@ -311,28 +332,42 @@ export const generateScenarios = (realData) => {
  * Generate placeholder scenarios for loading state
  */
 const generatePlaceholderScenarios = () => {
+  const createPlaceholderScenario = (scenarioId) => ({
+    id: scenarioId,
+    name: `${SCENARIO_NAMES[scenarioId] || 'Scenario'} (Loading...)`,
+    shortName: 'Loading...',
+    description: 'Loading data...',
+    vendors: [],
+    vendorCount: 0,
+    savingsPercent: 0,
+    annualSavings: 0,
+    savingsRange: { conservative: 0, expected: 0, optimistic: 0 },
+    adoptionRate: 0,
+    riskLevel: 'loading',
+    riskScore: 0,
+    agentScore: DEFAULT_AGENT_SCORES[scenarioId] ?? 3.5,
+    quintupleMissionScore: 0,
+    npv5Year: 0,
+    implementation: {
+      complexity: 'Unknown',
+      timeline: 0,
+      costMillions: 0
+    },
+    breakdown: {
+      volumeAggregation: 0,
+      priceOptimization: 0,
+      inventoryOptimization: 0,
+      adminEfficiency: 0
+    },
+    vendorSplit: {}
+  });
+
   return {
-    [SCENARIO_IDS.STATUS_QUO]: {
-      id: SCENARIO_IDS.STATUS_QUO,
-      name: 'Status Quo (Loading...)',
-      shortName: 'Loading...',
-      description: 'Loading data...',
-      vendors: ['Loading...'],
-      vendorCount: 5,
-      savingsPercent: 0,
-      annualSavings: 0,
-      volumeWeightedRisk: {
-        highVolumeSurgeonsAffected: 0,
-        mediumVolumeSurgeonsAffected: 0,
-        lowVolumeSurgeonsAffected: 0,
-        totalSurgeonsAffected: 0,
-        casesAtRisk: 0,
-        casesAtRiskPercent: 0,
-        revenueAtRisk: 0,
-        loyalistsAffected: 0,
-        riskScore: 0
-      }
-    }
+    [SCENARIO_IDS.STATUS_QUO]: createPlaceholderScenario(SCENARIO_IDS.STATUS_QUO),
+    [SCENARIO_IDS.TRI_VENDOR]: createPlaceholderScenario(SCENARIO_IDS.TRI_VENDOR),
+    [SCENARIO_IDS.DUAL_PREMIUM]: createPlaceholderScenario(SCENARIO_IDS.DUAL_PREMIUM),
+    [SCENARIO_IDS.DUAL_VALUE]: createPlaceholderScenario(SCENARIO_IDS.DUAL_VALUE),
+    [SCENARIO_IDS.DUAL_INNOVATION]: createPlaceholderScenario(SCENARIO_IDS.DUAL_INNOVATION)
   };
 };
 

@@ -248,11 +248,15 @@ const EnhancedOrthopedicDashboard = () => {
 
     const adjustedAdoption = Math.max(0, Math.min(100, base.adoptionRate + whatIfParams.adoptionModifier));
     const adjustedSavings = base.annualSavings * (1 + priceAdjustment) * (adjustedAdoption / base.adoptionRate);
+    const safeAgentScore = typeof base.agentScore === 'number' && !Number.isNaN(base.agentScore)
+      ? base.agentScore
+      : 3.5;
 
     return {
       ...base,
       adoptionRate: adjustedAdoption,
       annualSavings: adjustedSavings,
+      agentScore: safeAgentScore,
       implementation: {
         ...base.implementation,
         timeline: whatIfParams.implementationMonths
@@ -407,7 +411,10 @@ const EnhancedOrthopedicDashboard = () => {
       return { text: 'NOT RECOMMENDED', color: 'bg-red-500', textColor: 'text-white' };
     };
 
-    const recommendation = getRecommendationBadge(s.agentScore);
+    const agentScore = typeof s.agentScore === 'number' && !Number.isNaN(s.agentScore)
+      ? s.agentScore
+      : 3.5;
+    const recommendation = getRecommendationBadge(agentScore);
 
     return (
       <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-6 mb-6 border-2 border-purple-200">
@@ -419,7 +426,7 @@ const EnhancedOrthopedicDashboard = () => {
           <div className="text-right">
             <div className="text-sm text-purple-600">8-Agent Validation Score</div>
             <div className="text-2xl font-bold" style={{ color: COLORS.primary }}>
-              {s.agentScore.toFixed(1)}/5.0
+              {agentScore.toFixed(1)}/5.0
             </div>
             <div className={`mt-2 px-3 py-1 rounded-full text-xs font-bold ${recommendation.color} ${recommendation.textColor}`}>
               {recommendation.text}
@@ -581,68 +588,73 @@ const EnhancedOrthopedicDashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredScenarios.map(scenario => (
-                <tr
-                  key={scenario.id}
-                  className={`border-b hover:bg-gray-50 cursor-pointer ${
-                    selectedScenario === scenario.id ? 'bg-purple-50' : ''
-                  }`}
-                  onClick={() => setSelectedScenario(scenario.id)}
-                >
-                  <td className="px-4 py-4">
-                    <div className="font-medium text-gray-900">{scenario.id}: {scenario.shortName}</div>
-                    <div className="text-xs text-gray-500">{scenario.vendorCount} vendors</div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="font-bold text-green-600 text-lg">${scenario.annualSavings.toFixed(2)}M</div>
-                    <div className="text-xs text-gray-500">
-                      ${scenario.savingsRange.conservative.toFixed(2)}M - ${scenario.savingsRange.optimistic.toFixed(2)}M
-                    </div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-16 bg-gray-200 rounded-full h-2">
-                        <div
-                          className="h-2 rounded-full"
-                          style={{
-                            width: `${scenario.adoptionRate}%`,
-                            backgroundColor: scenario.adoptionRate >= 85 ? COLORS.success :
-                                           scenario.adoptionRate >= 70 ? COLORS.warning : COLORS.danger
-                          }}
-                        />
+              {filteredScenarios.map(scenario => {
+                const agentScore = typeof scenario.agentScore === 'number' && !Number.isNaN(scenario.agentScore)
+                  ? scenario.agentScore
+                  : 3.5;
+                return (
+                  <tr
+                    key={scenario.id}
+                    className={`border-b hover:bg-gray-50 cursor-pointer ${
+                      selectedScenario === scenario.id ? 'bg-purple-50' : ''
+                    }`}
+                    onClick={() => setSelectedScenario(scenario.id)}
+                  >
+                    <td className="px-4 py-4">
+                      <div className="font-medium text-gray-900">{scenario.id}: {scenario.shortName}</div>
+                      <div className="text-xs text-gray-500">{scenario.vendorCount} vendors</div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="font-bold text-green-600 text-lg">${scenario.annualSavings.toFixed(2)}M</div>
+                      <div className="text-xs text-gray-500">
+                        ${scenario.savingsRange.conservative.toFixed(2)}M - ${scenario.savingsRange.optimistic.toFixed(2)}M
                       </div>
-                      <span className="font-medium">{scenario.adoptionRate.toFixed(0)}%</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      scenario.riskLevel === 'low' ? 'bg-green-100 text-green-700' :
-                      scenario.riskLevel === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                      'bg-red-100 text-red-700'
-                    }`}>
-                      {scenario.riskLevel.charAt(0).toUpperCase() + scenario.riskLevel.slice(1)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="font-bold text-purple-600">{scenario.agentScore.toFixed(1)}/5.0</div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="font-medium text-blue-600">${getProbabilityWeighted(scenario.id).toFixed(2)}M</div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedScenario(scenario.id);
-                        setActiveTab('financial');
-                      }}
-                      className="px-3 py-1 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700"
-                    >
-                      Analyze
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-16 bg-gray-200 rounded-full h-2">
+                          <div
+                            className="h-2 rounded-full"
+                            style={{
+                              width: `${scenario.adoptionRate}%`,
+                              backgroundColor: scenario.adoptionRate >= 85 ? COLORS.success :
+                                             scenario.adoptionRate >= 70 ? COLORS.warning : COLORS.danger
+                            }}
+                          />
+                        </div>
+                        <span className="font-medium">{scenario.adoptionRate.toFixed(0)}%</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        scenario.riskLevel === 'low' ? 'bg-green-100 text-green-700' :
+                        scenario.riskLevel === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-red-100 text-red-700'
+                      }`}>
+                        {scenario.riskLevel.charAt(0).toUpperCase() + scenario.riskLevel.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="font-bold text-purple-600">{agentScore.toFixed(1)}/5.0</div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="font-medium text-blue-600">${getProbabilityWeighted(scenario.id).toFixed(2)}M</div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedScenario(scenario.id);
+                          setActiveTab('financial');
+                        }}
+                        className="px-3 py-1 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700"
+                      >
+                        Analyze
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
