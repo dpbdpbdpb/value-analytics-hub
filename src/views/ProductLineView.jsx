@@ -9,9 +9,13 @@ const ProductLineView = () => {
   const [orthoData, setOrthoData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Load orthopedic data
+  // Determine specialty name based on productLineId
+  const specialtyName = productLineId === 'shoulder' ? 'shoulder' : 'hipknee';
+
+  // Load orthopedic data based on product line
   useEffect(() => {
-    const jsonPath = `${process.env.PUBLIC_URL}/orthopedic-data.json`;
+    const dataFile = productLineId === 'shoulder' ? 'shoulder-data.json' : 'orthopedic-data.json';
+    const jsonPath = `${process.env.PUBLIC_URL}/${dataFile}`;
     fetch(jsonPath)
       .then(response => response.json())
       .then(data => {
@@ -22,9 +26,9 @@ const ProductLineView = () => {
         console.error('Error loading orthopedic data:', err);
         setLoading(false);
       });
-  }, []);
+  }, [productLineId]);
 
-  // Decision Canvas configuration for Hip/Knee
+  // Decision Canvas configuration - dynamic based on product line
   const decisionCanvases = [
     {
       id: 'team-decision',
@@ -37,7 +41,7 @@ const ProductLineView = () => {
       textColor: 'text-blue-900',
       accentColor: 'text-blue-600',
       status: 'active',
-      route: '/team-decision/hipknee',
+      route: `/team-decision/${specialtyName}`,
       features: [
         'Unified tri-pillar view',
         '5-scenario value framework',
@@ -61,7 +65,7 @@ const ProductLineView = () => {
       textColor: 'text-green-900',
       accentColor: 'text-green-600',
       status: 'active',
-      route: '/executive/hipknee?persona=clinical',
+      route: `/executive/${specialtyName}?persona=clinical`,
       features: [
         'Clinical outcomes analysis',
         'Quality metrics',
@@ -85,7 +89,7 @@ const ProductLineView = () => {
       textColor: 'text-amber-900',
       accentColor: 'text-amber-600',
       status: 'active',
-      route: '/executive/hipknee?persona=financial',
+      route: `/executive/${specialtyName}?persona=financial`,
       features: [
         'Cost per case analysis',
         'Value opportunity modeling',
@@ -109,7 +113,7 @@ const ProductLineView = () => {
       textColor: 'text-purple-900',
       accentColor: 'text-purple-600',
       status: 'active',
-      route: '/executive/hipknee?persona=operational',
+      route: `/executive/${specialtyName}?persona=operational`,
       features: [
         'OR efficiency analysis',
         'Capacity planning',
@@ -133,7 +137,7 @@ const ProductLineView = () => {
       textColor: 'text-teal-900',
       accentColor: 'text-teal-600',
       status: 'active',
-      route: '/surgeon/hipknee',
+      route: `/surgeon/${specialtyName}`,
       features: [
         'Surgeon scorecards',
         'Preference card analysis',
@@ -185,10 +189,12 @@ const ProductLineView = () => {
             <div className="flex items-start justify-between mb-6">
               <div>
                 <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                  Hip & Knee Replacement
+                  {productLineId === 'shoulder' ? 'Shoulder Replacement' : 'Hip & Knee Replacement'}
                 </h1>
                 <p className="text-gray-600 text-lg">
-                  Decision canvases for total joint replacement value analytics
+                  {productLineId === 'shoulder'
+                    ? 'Decision canvases for total shoulder and reverse shoulder value analytics'
+                    : 'Decision canvases for total joint replacement value analytics'}
                 </p>
               </div>
               <div className="text-right">

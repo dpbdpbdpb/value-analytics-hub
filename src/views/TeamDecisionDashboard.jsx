@@ -318,36 +318,6 @@ const TeamDecisionDashboard = () => {
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
-            {/* Product Line Selector */}
-            <div className="flex gap-3 mb-6">
-              <button
-                onClick={() => navigate('/team-decision/hipknee')}
-                className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-                  productLine === 'hipknee'
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                <div className="font-bold">Hip & Knee</div>
-                <div className="text-xs opacity-90">
-                  {realData?.metadata?.productLine === 'hip-knee' ? `${(realData?.metadata?.totalCases || 0).toLocaleString()} cases` : '27,782 cases'}
-                </div>
-              </button>
-              <button
-                onClick={() => navigate('/team-decision/shoulder')}
-                className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-                  productLine === 'shoulder'
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                <div className="font-bold">Shoulder</div>
-                <div className="text-xs opacity-90">
-                  {realData?.metadata?.productLine === 'shoulder' ? `${(realData?.metadata?.totalCases || 0).toLocaleString()} cases` : '4,668 cases'}
-                </div>
-              </button>
-            </div>
-
             <div className="flex items-start justify-between mb-6">
               <div>
                 <h1 className="text-4xl font-bold text-gray-900 mb-2">

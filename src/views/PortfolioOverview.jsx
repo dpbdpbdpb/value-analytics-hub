@@ -27,7 +27,7 @@ const PortfolioOverview = () => {
   const orthopedicMetrics = orthoData ? {
     annualVolume: `${orthoData.metadata.totalCases.toLocaleString()} cases`,
     opportunityValue: `$${(orthoData.metadata.totalSpend / 1000000).toFixed(0)}M`,
-    activeDecisions: Object.keys(orthoData.scenarios || {}).length - 1 // Exclude status-quo
+    activeDecisions: 2 // Hip/Knee strategy + Shoulder strategy
   } : {
     annualVolume: 'Loading...',
     opportunityValue: 'Loading...',
