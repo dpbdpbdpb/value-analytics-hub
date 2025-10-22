@@ -8,6 +8,7 @@ const TeamDecisionDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('scenarios');
   const [selectedScenario, setSelectedScenario] = useState('C');
+  const [hospitalScenarioFilter, setHospitalScenarioFilter] = useState('C');
 
   // Load data
   useEffect(() => {
@@ -999,6 +1000,36 @@ const TeamDecisionDashboard = () => {
                 <p className="text-gray-600 italic">Leverage peer influence and local expertise for successful vendor transitions</p>
               </div>
 
+              {/* Scenario Selector */}
+              <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200 rounded-xl p-6 mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="font-bold text-purple-900 mb-1">Select Target Scenario</h3>
+                    <p className="text-sm text-purple-700">
+                      See which hospitals align with your target vendor strategy
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-3 flex-wrap">
+                  {Object.entries(SCENARIOS).map(([id, scenario]) => (
+                    <button
+                      key={id}
+                      onClick={() => setHospitalScenarioFilter(id)}
+                      className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+                        hospitalScenarioFilter === id
+                          ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg scale-105'
+                          : 'bg-white text-purple-900 border-2 border-purple-300 hover:border-purple-500'
+                      }`}
+                    >
+                      <div className="font-bold">{scenario.name}</div>
+                      <div className="text-xs opacity-90 mt-1">
+                        {scenario.vendors?.join(' + ') || 'N/A'}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Info Banner */}
               <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-lg mb-8">
                 <div className="flex items-start gap-3">
@@ -1010,10 +1041,10 @@ const TeamDecisionDashboard = () => {
                       This view helps identify:
                     </p>
                     <ul className="text-blue-800 text-sm space-y-1 ml-4">
-                      <li>• <strong>Vendor cohorts</strong>: Hospitals where most surgeons already use the target vendor</li>
-                      <li>• <strong>High concentration sites</strong>: Hospitals with strong vendor loyalty (easier transitions)</li>
-                      <li>• <strong>Fragmented sites</strong>: Hospitals with diverse vendors (need more support)</li>
-                      <li>• <strong>Change management priorities</strong>: Resource allocation based on vendor concentration</li>
+                      <li>• <strong>Already aligned</strong>: Hospitals where surgeons primarily use target vendors (green)</li>
+                      <li>• <strong>Sherpa candidates</strong>: High-volume surgeons on target vendors who can mentor peers</li>
+                      <li>• <strong>Need support</strong>: Hospitals requiring significant vendor transitions (red)</li>
+                      <li>• <strong>Change management priorities</strong>: Resource allocation based on alignment</li>
                     </ul>
                   </div>
                 </div>
@@ -1021,40 +1052,75 @@ const TeamDecisionDashboard = () => {
 
               {/* Hospital Summary Stats */}
               <div className="grid grid-cols-4 gap-4 mb-8">
-                <div className="bg-slate-50 border-2 border-slate-200 rounded-lg p-4">
-                  <div className="text-sm text-slate-600 mb-1">Total Hospitals</div>
-                  <div className="text-3xl font-bold text-slate-900">
-                    {Object.keys(realData.hospitals || {}).length}
-                  </div>
-                </div>
-                <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
-                  <div className="text-sm text-green-700 mb-1">High Concentration</div>
-                  <div className="text-3xl font-bold text-green-900">
-                    {Object.values(realData.hospitals || {}).filter(h => h.vendorConcentration >= 0.75).length}
-                  </div>
-                  <div className="text-xs text-green-600 mt-1">&ge;75% single vendor</div>
-                </div>
-                <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-4">
-                  <div className="text-sm text-amber-700 mb-1">Medium Concentration</div>
-                  <div className="text-3xl font-bold text-amber-900">
-                    {Object.values(realData.hospitals || {}).filter(h => h.vendorConcentration >= 0.50 && h.vendorConcentration < 0.75).length}
-                  </div>
-                  <div className="text-xs text-amber-600 mt-1">50-74% single vendor</div>
-                </div>
-                <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4">
-                  <div className="text-sm text-red-700 mb-1">Low Concentration</div>
-                  <div className="text-3xl font-bold text-red-900">
-                    {Object.values(realData.hospitals || {}).filter(h => h.vendorConcentration < 0.50).length}
-                  </div>
-                  <div className="text-xs text-red-600 mt-1">&lt;50% single vendor</div>
-                </div>
+                {(() => {
+                  const targetVendors = SCENARIOS[hospitalScenarioFilter]?.vendors || [];
+                  const hospitals = Object.values(realData.hospitals || {});
+
+                  // Calculate alignment: % of cases using target vendors
+                  const alignedHospitals = hospitals.filter(h => {
+                    const targetCases = targetVendors.reduce((sum, vendor) => {
+                      return sum + (h.vendors?.[vendor]?.cases || 0);
+                    }, 0);
+                    const alignmentPct = h.totalCases > 0 ? targetCases / h.totalCases : 0;
+                    return alignmentPct >= 0.50;
+                  });
+
+                  const partiallyAligned = hospitals.filter(h => {
+                    const targetCases = targetVendors.reduce((sum, vendor) => {
+                      return sum + (h.vendors?.[vendor]?.cases || 0);
+                    }, 0);
+                    const alignmentPct = h.totalCases > 0 ? targetCases / h.totalCases : 0;
+                    return alignmentPct >= 0.25 && alignmentPct < 0.50;
+                  });
+
+                  const needSupport = hospitals.filter(h => {
+                    const targetCases = targetVendors.reduce((sum, vendor) => {
+                      return sum + (h.vendors?.[vendor]?.cases || 0);
+                    }, 0);
+                    const alignmentPct = h.totalCases > 0 ? targetCases / h.totalCases : 0;
+                    return alignmentPct < 0.25;
+                  });
+
+                  return (
+                    <>
+                      <div className="bg-slate-50 border-2 border-slate-200 rounded-lg p-4">
+                        <div className="text-sm text-slate-600 mb-1">Total Hospitals</div>
+                        <div className="text-3xl font-bold text-slate-900">
+                          {hospitals.length}
+                        </div>
+                      </div>
+                      <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
+                        <div className="text-sm text-green-700 mb-1">Already Aligned</div>
+                        <div className="text-3xl font-bold text-green-900">
+                          {alignedHospitals.length}
+                        </div>
+                        <div className="text-xs text-green-600 mt-1">&ge;50% target vendors</div>
+                      </div>
+                      <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-4">
+                        <div className="text-sm text-amber-700 mb-1">Partially Aligned</div>
+                        <div className="text-3xl font-bold text-amber-900">
+                          {partiallyAligned.length}
+                        </div>
+                        <div className="text-xs text-amber-600 mt-1">25-49% target vendors</div>
+                      </div>
+                      <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4">
+                        <div className="text-sm text-red-700 mb-1">Need Support</div>
+                        <div className="text-3xl font-bold text-red-900">
+                          {needSupport.length}
+                        </div>
+                        <div className="text-xs text-red-600 mt-1">&lt;25% target vendors</div>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
 
               {/* Vendor Loyalty Heat Map */}
               <div className="mb-8">
-                <h3 className="text-xl font-bold text-slate-900 mb-4">Hospital Vendor Concentration Heat Map</h3>
+                <h3 className="text-xl font-bold text-slate-900 mb-4">Hospital Alignment with {SCENARIOS[hospitalScenarioFilter]?.name}</h3>
                 <p className="text-sm text-gray-600 mb-4">
-                  Higher concentration = easier transitions. Each row shows a hospital's primary vendor and loyalty strength.
+                  Sorted by alignment with target vendors: {SCENARIOS[hospitalScenarioFilter]?.vendors?.join(' + ')}.
+                  Green rows = already aligned, Red rows = need support.
                 </p>
                 <div className="overflow-x-auto max-h-[600px] overflow-y-auto border border-gray-200 rounded-lg">
                   <table className="w-full border-collapse">
@@ -1064,24 +1130,36 @@ const TeamDecisionDashboard = () => {
                         <th className="text-left p-3 font-bold text-slate-900">Region</th>
                         <th className="text-center p-3 font-bold text-slate-900">Cases</th>
                         <th className="text-center p-3 font-bold text-slate-900">Surgeons</th>
+                        <th className="text-center p-3 font-bold text-slate-900">Scenario Alignment</th>
                         <th className="text-left p-3 font-bold text-slate-900">Primary Vendor</th>
-                        <th className="text-center p-3 font-bold text-slate-900">Concentration</th>
                         <th className="text-left p-3 font-bold text-slate-900">Vendor Mix</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {Object.entries(realData.hospitals || {})
-                        .sort((a, b) => b[1].vendorConcentration - a[1].vendorConcentration)
-                        .map(([hospitalName, hospital], idx) => {
-                          const concentration = hospital.vendorConcentration || 0;
-                          const bgColor = concentration >= 0.75
+                      {(() => {
+                        const targetVendors = SCENARIOS[hospitalScenarioFilter]?.vendors || [];
+
+                        return Object.entries(realData.hospitals || {})
+                          .map(([hospitalName, hospital]) => {
+                            // Calculate alignment percentage
+                            const targetCases = targetVendors.reduce((sum, vendor) => {
+                              return sum + (hospital.vendors?.[vendor]?.cases || 0);
+                            }, 0);
+                            const alignmentPct = hospital.totalCases > 0 ? (targetCases / hospital.totalCases) * 100 : 0;
+
+                            return { hospitalName, hospital, alignmentPct };
+                          })
+                          .sort((a, b) => b.alignmentPct - a.alignmentPct)
+                          .map(({ hospitalName, hospital, alignmentPct }, idx) => {
+                          // Color-code by alignment with scenario
+                          const bgColor = alignmentPct >= 50
                             ? 'bg-green-50'
-                            : concentration >= 0.50
+                            : alignmentPct >= 25
                             ? 'bg-amber-50'
                             : 'bg-red-50';
-                          const concentrationColor = concentration >= 0.75
+                          const alignmentColor = alignmentPct >= 50
                             ? 'text-green-900 bg-green-100 border-green-300'
-                            : concentration >= 0.50
+                            : alignmentPct >= 25
                             ? 'text-amber-900 bg-amber-100 border-amber-300'
                             : 'text-red-900 bg-red-100 border-red-300';
 
@@ -1089,6 +1167,9 @@ const TeamDecisionDashboard = () => {
                           const topVendors = Object.entries(hospital.vendors || {})
                             .sort((a, b) => b[1].cases - a[1].cases)
                             .slice(0, 3);
+
+                          // Highlight target vendors
+                          const targetVendors = SCENARIOS[hospitalScenarioFilter]?.vendors || [];
 
                           return (
                             <tr key={idx} className={`border-b border-gray-200 hover:bg-slate-100 ${bgColor}`}>
@@ -1100,22 +1181,31 @@ const TeamDecisionDashboard = () => {
                               </td>
                               <td className="p-3 text-center text-sm text-gray-900">{hospital.totalCases}</td>
                               <td className="p-3 text-center text-sm text-gray-900">{hospital.surgeonCount}</td>
-                              <td className="p-3 text-sm font-semibold text-purple-900">{hospital.primaryVendor}</td>
                               <td className="p-3 text-center">
-                                <span className={`px-3 py-1 rounded-full text-xs font-bold border ${concentrationColor}`}>
-                                  {(concentration * 100).toFixed(0)}%
+                                <span className={`px-3 py-1 rounded-full text-xs font-bold border ${alignmentColor}`}>
+                                  {alignmentPct.toFixed(0)}%
                                 </span>
                               </td>
+                              <td className="p-3 text-sm font-semibold text-purple-900">{hospital.primaryVendor}</td>
                               <td className="p-3 text-xs text-gray-600">
                                 <div className="flex flex-wrap gap-1">
-                                  {topVendors.map(([vendor, data], i) => (
-                                    <span
-                                      key={i}
-                                      className={`px-2 py-1 rounded ${i === 0 ? 'bg-purple-100 text-purple-900 font-semibold' : 'bg-gray-100 text-gray-700'}`}
-                                    >
-                                      {vendor}: {data.cases}
-                                    </span>
-                                  ))}
+                                  {topVendors.map(([vendor, data], i) => {
+                                    const isTargetVendor = targetVendors.includes(vendor);
+                                    return (
+                                      <span
+                                        key={i}
+                                        className={`px-2 py-1 rounded ${
+                                          isTargetVendor
+                                            ? 'bg-blue-100 text-blue-900 font-semibold border border-blue-300'
+                                            : i === 0
+                                            ? 'bg-purple-100 text-purple-900 font-semibold'
+                                            : 'bg-gray-100 text-gray-700'
+                                        }`}
+                                      >
+                                        {vendor}: {data.cases}
+                                      </span>
+                                    );
+                                  })}
                                   {vendorCount > 3 && (
                                     <span className="px-2 py-1 bg-gray-50 text-gray-500 italic">
                                       +{vendorCount - 3} more
@@ -1125,7 +1215,8 @@ const TeamDecisionDashboard = () => {
                               </td>
                             </tr>
                           );
-                        })}
+                        });
+                      })()}
                     </tbody>
                   </table>
                 </div>
