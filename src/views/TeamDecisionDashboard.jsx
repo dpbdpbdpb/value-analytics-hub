@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { TrendingUp, Stethoscope, Shield, DollarSign, Users, Package, AlertCircle, Eye, Heart, Target, Star, Activity, ChevronRight, MapPin, Lightbulb, FileCheck, Building2 } from 'lucide-react';
 import NavigationHeader from '../components/shared/NavigationHeader';
+import { formatCurrency } from '../utils/formatters';
 
 const TeamDecisionDashboard = () => {
   const { specialty } = useParams();
@@ -143,7 +144,7 @@ const TeamDecisionDashboard = () => {
               <div>
                 <div className="text-xs text-amber-700">Projected Annual Savings</div>
                 <div className="text-xl font-bold text-amber-900">
-                  ${((scenario.annualSavings || 0) / 1000000).toFixed(1)}M
+                  {formatCurrency(scenario.annualSavings || 0, { millions: true })}
                 </div>
               </div>
               <div>
@@ -152,12 +153,12 @@ const TeamDecisionDashboard = () => {
               </div>
               <div>
                 <div className="text-xs text-amber-700">Projected 5-Year NPV</div>
-                <div className="font-semibold text-amber-900">${(scenario.npv5Year || 0).toFixed(1)}M</div>
+                <div className="font-semibold text-amber-900">{formatCurrency(scenario.npv5Year || 0, { millions: true })}</div>
               </div>
               <div>
                 <div className="text-xs text-amber-700">Projected Implementation Cost</div>
                 <div className="font-semibold text-amber-900">
-                  ${(scenario.implementation?.costMillions || 0).toFixed(1)}M
+                  {formatCurrency(scenario.implementation?.costMillions || 0, { millions: true })}
                 </div>
               </div>
             </div>
@@ -247,7 +248,7 @@ const TeamDecisionDashboard = () => {
                     'No savings'
                   ) : (
                     <>
-                      <div className="font-semibold">${((scenario.annualSavings || 0) / 1000000).toFixed(1)}M annual savings</div>
+                      <div className="font-semibold">{formatCurrency(scenario.annualSavings || 0, { millions: true })} annual savings</div>
                       <div className="mt-0.5 text-amber-700">{((scenario.npv5Year || 0) / (scenario.implementation?.costMillions || 1)).toFixed(1)}x ROI over 5 years</div>
                     </>
                   )}
@@ -647,7 +648,7 @@ const TeamDecisionDashboard = () => {
                       <td className="p-4 font-semibold text-gray-700">Annual Savings</td>
                       {Object.values(SCENARIOS).map((scenario, idx) => (
                         <td key={idx} className="text-center p-4 font-bold text-amber-900">
-                          ${((scenario.annualSavings || 0) / 1000000).toFixed(1)}M
+                          {formatCurrency(scenario.annualSavings || 0, { millions: true })}
                         </td>
                       ))}
                     </tr>
@@ -663,7 +664,7 @@ const TeamDecisionDashboard = () => {
                       <td className="p-4 font-semibold text-gray-700">5-Year NPV</td>
                       {Object.values(SCENARIOS).map((scenario, idx) => (
                         <td key={idx} className="text-center p-4 font-bold text-amber-900">
-                          ${(scenario.npv5Year || 0).toFixed(1)}M
+                          {formatCurrency(scenario.npv5Year || 0, { millions: true })}
                         </td>
                       ))}
                     </tr>
@@ -671,7 +672,7 @@ const TeamDecisionDashboard = () => {
                       <td className="p-4 font-semibold text-gray-700">Implementation Cost</td>
                       {Object.values(SCENARIOS).map((scenario, idx) => (
                         <td key={idx} className="text-center p-4 text-amber-900">
-                          ${(scenario.implementation?.costMillions || 0).toFixed(1)}M
+                          {formatCurrency(scenario.implementation?.costMillions || 0, { millions: true })}
                         </td>
                       ))}
                     </tr>
@@ -713,9 +714,9 @@ const TeamDecisionDashboard = () => {
                 <div className="bg-amber-50 border-l-4 border-amber-600 p-6 rounded">
                   <h3 className="font-bold text-amber-900 mb-3">Financial Highlights</h3>
                   <ul className="space-y-2 text-sm text-amber-800">
-                    <li>• Potential savings range from $0 (Status Quo) to ${(Math.max(...Object.values(SCENARIOS).map(s => s.annualSavings || 0)) / 1000000).toFixed(1)}M annually</li>
-                    <li>• 5-year NPV varies from ${Math.min(...Object.values(SCENARIOS).map(s => s.npv5Year || 0)).toFixed(1)}M to ${Math.max(...Object.values(SCENARIOS).map(s => s.npv5Year || 0)).toFixed(1)}M</li>
-                    <li>• Implementation costs range from ${Math.min(...Object.values(SCENARIOS).map(s => s.implementation?.costMillions || 0)).toFixed(1)}M to ${Math.max(...Object.values(SCENARIOS).map(s => s.implementation?.costMillions || 0)).toFixed(1)}M</li>
+                    <li>• Potential savings range from $0 (Status Quo) to {formatCurrency(Math.max(...Object.values(SCENARIOS).map(s => s.annualSavings || 0)), { millions: true })} annually</li>
+                    <li>• 5-year NPV varies from {formatCurrency(Math.min(...Object.values(SCENARIOS).map(s => s.npv5Year || 0)), { millions: true })} to {formatCurrency(Math.max(...Object.values(SCENARIOS).map(s => s.npv5Year || 0)), { millions: true })}</li>
+                    <li>• Implementation costs range from {formatCurrency(Math.min(...Object.values(SCENARIOS).map(s => s.implementation?.costMillions || 0)), { millions: true })} to {formatCurrency(Math.max(...Object.values(SCENARIOS).map(s => s.implementation?.costMillions || 0)), { millions: true })}</li>
                   </ul>
                 </div>
                 <div className="bg-purple-50 border-l-4 border-purple-600 p-6 rounded">
@@ -806,7 +807,7 @@ const TeamDecisionDashboard = () => {
                       <td className="p-4 font-semibold text-amber-900">Annual Savings</td>
                       {Object.values(SCENARIOS).map((scenario, idx) => (
                         <td key={idx} className="text-center p-4 text-amber-900 text-sm">
-                          ${((scenario.annualSavings || 0) / 1000000).toFixed(1)}M
+                          {formatCurrency(scenario.annualSavings || 0, { millions: true })}
                         </td>
                       ))}
                     </tr>
@@ -922,7 +923,7 @@ const TeamDecisionDashboard = () => {
                       <td className="p-4 font-semibold text-gray-700">Implementation Cost</td>
                       {Object.values(SCENARIOS).map((scenario, idx) => (
                         <td key={idx} className="text-center p-4 text-green-900">
-                          ${(scenario.implementation?.costMillions || 0).toFixed(1)}M
+                          {formatCurrency(scenario.implementation?.costMillions || 0, { millions: true })}
                         </td>
                       ))}
                     </tr>
