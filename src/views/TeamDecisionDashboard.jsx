@@ -1154,8 +1154,8 @@ const TeamDecisionDashboard = () => {
               <div className="mb-8">
                 <h3 className="text-xl font-bold text-slate-900 mb-4">Hospital Alignment with {SCENARIOS[hospitalScenarioFilter]?.name}</h3>
                 <p className="text-sm text-gray-600 mb-4">
-                  Sorted by alignment with target vendors: {SCENARIOS[hospitalScenarioFilter]?.vendors?.join(' + ')}.
-                  Green rows = already aligned, Red rows = need support.
+                  Sorted by alignment (low to high) with target vendors: {SCENARIOS[hospitalScenarioFilter]?.vendors?.join(' + ')}.
+                  Red rows (top) = need most support, Green rows (bottom) = already aligned.
                 </p>
                 <div className="overflow-x-auto max-h-[600px] overflow-y-auto border border-gray-200 rounded-lg">
                   <table className="w-full border-collapse">
@@ -1184,7 +1184,7 @@ const TeamDecisionDashboard = () => {
 
                             return { hospitalName, hospital, alignmentPct };
                           })
-                          .sort((a, b) => b.alignmentPct - a.alignmentPct)
+                          .sort((a, b) => a.alignmentPct - b.alignmentPct)
                           .map(({ hospitalName, hospital, alignmentPct }, idx) => {
                           // Color-code by alignment with scenario
                           const bgColor = alignmentPct >= 50
