@@ -9,18 +9,23 @@ const TeamDecisionDashboard = () => {
   const [activeTab, setActiveTab] = useState('scenarios');
   const [selectedScenario, setSelectedScenario] = useState('C');
   const [hospitalScenarioFilter, setHospitalScenarioFilter] = useState('C');
+  const [productLine, setProductLine] = useState('hipknee');
 
   // Load data
   useEffect(() => {
-    // Load orthopedic data
-    const jsonPath = `${process.env.PUBLIC_URL}/orthopedic-data.json`;
+    setLoading(true);
+
+    // Load orthopedic data based on product line
+    const dataFileName = productLine === 'hipknee' ? 'orthopedic-data.json' : 'shoulder-data.json';
+    const jsonPath = `${process.env.PUBLIC_URL}/${dataFileName}`;
+
     fetch(jsonPath)
       .then(response => response.json())
       .then(data => {
         setRealData(data);
       })
       .catch(err => {
-        console.error('Error loading orthopedic data:', err);
+        console.error(`Error loading ${productLine} data:`, err);
       });
 
     // Load strategic framework data
@@ -35,7 +40,7 @@ const TeamDecisionDashboard = () => {
         console.error('Error loading strategy data:', err);
         setLoading(false);
       });
-  }, []);
+  }, [productLine]);
 
   const COLORS = {
     primary: '#BA4896',
@@ -316,13 +321,43 @@ const TeamDecisionDashboard = () => {
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
+            {/* Product Line Selector */}
+            <div className="flex gap-3 mb-6">
+              <button
+                onClick={() => setProductLine('hipknee')}
+                className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+                  productLine === 'hipknee'
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <div className="font-bold">Hip & Knee</div>
+                <div className="text-xs opacity-90">
+                  {realData?.metadata?.productLine === 'hip-knee' ? `${(realData?.metadata?.totalCases || 0).toLocaleString()} cases` : '27,782 cases'}
+                </div>
+              </button>
+              <button
+                onClick={() => setProductLine('shoulder')}
+                className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+                  productLine === 'shoulder'
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <div className="font-bold">Shoulder</div>
+                <div className="text-xs opacity-90">
+                  {realData?.metadata?.productLine === 'shoulder' ? `${(realData?.metadata?.totalCases || 0).toLocaleString()} cases` : '4,668 cases'}
+                </div>
+              </button>
+            </div>
+
             <div className="flex items-start justify-between mb-6">
               <div>
                 <h1 className="text-4xl font-bold text-gray-900 mb-2">
                   Integrated Decision Dashboard
                 </h1>
                 <p className="text-gray-600 text-lg">
-                  Multi-perspective analysis guided by the Quintuple Aim
+                  {productLine === 'hipknee' ? 'Hip & Knee Replacement' : 'Shoulder Replacement'} - Multi-perspective analysis guided by the Quintuple Aim
                 </p>
               </div>
               <div className="text-right">
