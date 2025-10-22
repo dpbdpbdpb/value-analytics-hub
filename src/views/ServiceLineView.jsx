@@ -34,7 +34,7 @@ const ServiceLineView = () => {
   const hipKneeMetrics = orthoData ? {
     annualVolume: `${orthoData.metadata.totalCases.toLocaleString()} cases`,
     opportunityValue: `$${(orthoData.metadata.totalSpend / 1000000).toFixed(0)}M`,
-    activeDecisions: Object.keys(orthoData.scenarios || {}).length - 1, // Exclude status-quo
+    activeDecisions: 1, // One vendor consolidation strategy decision for hip/knee
     completedDecisions: 0 // Will track this in future
   } : {
     annualVolume: 'Loading...',
@@ -46,7 +46,7 @@ const ServiceLineView = () => {
   const shoulderMetrics = shoulderData ? {
     annualVolume: `${shoulderData.metadata.totalCases.toLocaleString()} cases`,
     opportunityValue: `$${(shoulderData.metadata.totalSpend / 1000000).toFixed(0)}M`,
-    activeDecisions: Object.keys(shoulderData.scenarios || {}).length - 1,
+    activeDecisions: 1, // One vendor consolidation strategy decision for shoulder
     completedDecisions: 0
   } : {
     annualVolume: 'Loading...',
@@ -192,14 +192,14 @@ const ServiceLineView = () => {
                   <TrendingUp className="w-5 h-5 text-green-600" />
                   <div className="text-sm text-gray-600">Active Decisions</div>
                 </div>
-                <div className="text-2xl font-bold text-green-900">{hipKneeMetrics.activeDecisions}</div>
+                <div className="text-2xl font-bold text-green-900">{hipKneeMetrics.activeDecisions + shoulderMetrics.activeDecisions}</div>
               </div>
               <div className="bg-purple-50 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <CheckCircle className="w-5 h-5 text-purple-600" />
                   <div className="text-sm text-gray-600">Completed</div>
                 </div>
-                <div className="text-2xl font-bold text-purple-900">{hipKneeMetrics.completedDecisions}</div>
+                <div className="text-2xl font-bold text-purple-900">0</div>
               </div>
               <div className="bg-amber-50 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-2">
@@ -207,7 +207,7 @@ const ServiceLineView = () => {
                   <div className="text-sm text-gray-600">Annual Volume</div>
                 </div>
                 <div className="text-2xl font-bold text-amber-900">
-                  {orthoData ? `${(orthoData.metadata.totalCases / 1000).toFixed(1)}K` : 'Loading...'}
+                  {orthoData && shoulderData ? `${((orthoData.metadata.totalCases + shoulderData.metadata.totalCases) / 1000).toFixed(1)}K` : 'Loading...'}
                 </div>
               </div>
             </div>
