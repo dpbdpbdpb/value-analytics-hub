@@ -304,6 +304,20 @@ const AdminDataUpload = () => {
       });
     });
 
+    // Build surgeons array
+    const surgeons = Object.entries(surgeonMap).map(([name, data]) => ({
+      name,
+      totalCases: Math.round(data.totalCases),
+      totalSpend: Math.round(data.totalSpend),
+      vendors: Object.entries(data.vendors).reduce((acc, [vendor, stats]) => {
+        acc[vendor] = {
+          cases: Math.round(stats.cases),
+          spend: Math.round(stats.spend)
+        };
+        return acc;
+      }, {})
+    })).sort((a, b) => b.totalSpend - a.totalSpend);
+
     // Build final JSON structure
     return {
       metadata: {
@@ -318,6 +332,7 @@ const AdminDataUpload = () => {
         totalSurgeons: Object.keys(surgeonMap).length
       },
       vendors,
+      surgeons,
       matrixPricing,
       matrixPricingDetailed,
       components,

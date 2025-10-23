@@ -104,9 +104,15 @@ const SurgeonTool = () => {
               .slice(0, 20); // Top 20 components
           }
 
+          // Determine primary vendor (top by spend)
+          const primaryVendor = surgeon.vendorBreakdown && surgeon.vendorBreakdown.length > 0
+            ? surgeon.vendorBreakdown[0].vendor
+            : 'N/A';
+
           return {
             ...surgeon,
-            avgSpendPerCase
+            avgSpendPerCase,
+            primaryVendor
           };
         });
         setSurgeonData(surgeons);
@@ -1297,7 +1303,7 @@ const SurgeonTool = () => {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div className="bg-white/20 rounded-lg p-4">
                       <div className="text-sm opacity-80 mb-2">Current Vendor</div>
-                      <div className="text-2xl font-bold">{selectedSurgeon.primaryVendor.split(' ')[0]}</div>
+                      <div className="text-2xl font-bold">{selectedSurgeon.primaryVendor ? selectedSurgeon.primaryVendor.split(' ')[0] : 'N/A'}</div>
                       <div className="text-sm opacity-80 mt-2">
                         {mustSwitch ? '⚠️ Switch Required for Scenario ' + selectedScenario : '✅ No Switch Needed for Scenario ' + selectedScenario}
                       </div>
