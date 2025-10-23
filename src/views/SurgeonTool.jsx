@@ -49,6 +49,8 @@ const SurgeonTool = () => {
         return response.json();
       })
       .then(data => {
+        const globalComponents = data.components || [];
+
         // Extract surgeons array and transform to add vendorBreakdown and calculated fields
         const surgeons = (data.surgeons || []).map(surgeon => {
           // Calculate avgSpendPerCase if not already present
@@ -58,12 +60,48 @@ const SurgeonTool = () => {
 
           // Transform vendors object to vendorBreakdown array if not already present
           if (!surgeon.vendorBreakdown && surgeon.vendors) {
-            surgeon.vendorBreakdown = Object.entries(surgeon.vendors).map(([vendor, data]) => ({
+            surgeon.vendorBreakdown = Object.entries(surgeon.vendors).map(([vendor, vendorData]) => ({
               vendor,
-              spend: data.spend || 0,
-              cases: data.cases || 0,
-              percentage: surgeon.totalSpend > 0 ? ((data.spend || 0) / surgeon.totalSpend * 100) : 0
+              spend: vendorData.spend || 0,
+              cases: vendorData.cases || 0,
+              percentage: surgeon.totalSpend > 0 ? ((vendorData.spend || 0) / surgeon.totalSpend * 100) : 0
             })).sort((a, b) => b.spend - a.spend);
+          }
+
+          // Generate topComponents from global components if missing
+          if (!surgeon.topComponents && surgeon.vendors && globalComponents.length > 0) {
+            const surgeonVendors = Object.keys(surgeon.vendors);
+
+            // Aggregate components by category for this surgeon's vendors
+            const componentsByCategory = {};
+
+            globalComponents.forEach(comp => {
+              if (surgeonVendors.includes(comp.vendor)) {
+                const category = comp.name || 'Unknown';
+                if (!componentsByCategory[category]) {
+                  componentsByCategory[category] = {
+                    category,
+                    vendor: comp.vendor,
+                    bodyPart: comp.bodyPart,
+                    quantity: 0,
+                    spend: 0
+                  };
+                }
+                // Proportionally allocate based on surgeon's vendor usage
+                const vendorData = surgeon.vendors[comp.vendor];
+                const vendorProportion = vendorData.spend / surgeon.totalSpend;
+                const allocatedQty = comp.quantity * vendorProportion * (surgeon.totalCases / 27623); // Scale by surgeon volume
+                const allocatedSpend = comp.totalSpend * vendorProportion * (surgeon.totalSpend / 42080676);
+
+                componentsByCategory[category].quantity += allocatedQty;
+                componentsByCategory[category].spend += allocatedSpend;
+              }
+            });
+
+            // Convert to array and sort by spend
+            surgeon.topComponents = Object.values(componentsByCategory)
+              .sort((a, b) => b.spend - a.spend)
+              .slice(0, 20); // Top 20 components
           }
 
           return {
@@ -135,18 +173,32 @@ const SurgeonTool = () => {
       'KNEE', 'TIBIAL', 'PATELLAR', 'FEMORAL KNEE'
     ];
 
-    const isHipComponent = (category) =>
-      hipKeywords.some(keyword => category.toUpperCase().includes(keyword)) &&
-      !category.toUpperCase().includes('KNEE');
+    const isHipComponent = (component) => {
+      // First check if component has bodyPart field (from new data structure)
+      if (component.bodyPart) {
+        return component.bodyPart.toUpperCase() === 'HIP';
+      }
+      // Fallback to category keyword matching
+      const category = component.category || '';
+      return hipKeywords.some(keyword => category.toUpperCase().includes(keyword)) &&
+        !category.toUpperCase().includes('KNEE');
+    };
 
-    const isKneeComponent = (category) =>
-      kneeKeywords.some(keyword => category.toUpperCase().includes(keyword));
+    const isKneeComponent = (component) => {
+      // First check if component has bodyPart field (from new data structure)
+      if (component.bodyPart) {
+        return component.bodyPart.toUpperCase() === 'KNEE';
+      }
+      // Fallback to category keyword matching
+      const category = component.category || '';
+      return kneeKeywords.some(keyword => category.toUpperCase().includes(keyword));
+    };
 
     // Separate components
-    const hipComponents = surgeon.topComponents.filter(c => isHipComponent(c.category));
-    const kneeComponents = surgeon.topComponents.filter(c => isKneeComponent(c.category));
+    const hipComponents = surgeon.topComponents.filter(c => isHipComponent(c));
+    const kneeComponents = surgeon.topComponents.filter(c => isKneeComponent(c));
     const otherComponents = surgeon.topComponents.filter(c =>
-      !isHipComponent(c.category) && !isKneeComponent(c.category)
+      !isHipComponent(c) && !isKneeComponent(c)
     );
 
     // Calculate hip metrics

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, Download, CheckCircle, AlertCircle, FileText, Eye, Save, ArrowLeft, Lock, Unlock } from 'lucide-react';
+import { Upload, Download, CheckCircle, AlertCircle, FileText, Eye, Save, ArrowLeft, Lock, Unlock, Info } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import NavigationHeader from '../components/shared/NavigationHeader';
@@ -18,6 +18,8 @@ const AdminDataUpload = () => {
   const [processing, setProcessing] = useState(false);
   const [validationResults, setValidationResults] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [detectedColumns, setDetectedColumns] = useState(null);
+  const [columnMapping, setColumnMapping] = useState(null);
 
   // Authentication
   const handleLogin = (e) => {
@@ -31,6 +33,47 @@ const AdminDataUpload = () => {
     }
   };
 
+  // Detect columns from first row and create smart mapping
+  const detectAndMapColumns = (data) => {
+    if (!data || data.length === 0) return null;
+
+    const columns = Object.keys(data[0]);
+    const mapping = {
+      vendor: findBestMatch(columns, ['vendor', 'vendor name', 'manufacturer', 'supplier', 'mfr']),
+      component: findBestMatch(columns, ['component', 'item', 'description', 'product', 'component description', 'item description']),
+      quantity: findBestMatch(columns, ['quantity', 'qty', 'count', 'units', 'volume']),
+      price: findBestMatch(columns, ['price', 'unit price', 'cost', 'unit cost', 'avg price', 'average price']),
+      surgeon: findBestMatch(columns, ['surgeon', 'doctor', 'physician', 'provider', 'surgeon name']),
+      procedureType: findBestMatch(columns, ['procedure type', 'type', 'procedure', 'surgery type']),
+      bodyPart: findBestMatch(columns, ['body part', 'bodypart', 'anatomy', 'site'])
+    };
+
+    return { columns, mapping };
+  };
+
+  // Find best matching column name (case-insensitive, fuzzy)
+  const findBestMatch = (columns, targets) => {
+    const lowerColumns = columns.map(c => c.toLowerCase().trim());
+
+    // Try exact matches first
+    for (const target of targets) {
+      const idx = lowerColumns.indexOf(target.toLowerCase());
+      if (idx !== -1) return columns[idx];
+    }
+
+    // Try partial matches
+    for (const target of targets) {
+      const targetLower = target.toLowerCase();
+      for (let i = 0; i < lowerColumns.length; i++) {
+        if (lowerColumns[i].includes(targetLower) || targetLower.includes(lowerColumns[i])) {
+          return columns[i];
+        }
+      }
+    }
+
+    return null;
+  };
+
   // File handling
   const handleFileUpload = (e) => {
     const uploadedFile = e.target.files[0];
@@ -40,6 +83,8 @@ const AdminDataUpload = () => {
     setRawData(null);
     setProcessedData(null);
     setValidationResults(null);
+    setDetectedColumns(null);
+    setColumnMapping(null);
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -52,22 +97,28 @@ const AdminDataUpload = () => {
           skipEmptyLines: true,
           complete: (results) => {
             setRawData(results.data);
+            const detected = detectAndMapColumns(results.data);
+            setDetectedColumns(detected?.columns || []);
+            setColumnMapping(detected?.mapping || {});
           }
         });
       } else {
         // Parse Excel
-        const workbook = XLSX.read(data, { type: 'binary' });
+        const workbook = XLSX.read(data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
         setRawData(jsonData);
+        const detected = detectAndMapColumns(jsonData);
+        setDetectedColumns(detected?.columns || []);
+        setColumnMapping(detected?.mapping || {});
       }
     };
 
     if (uploadedFile.name.endsWith('.csv')) {
       reader.readAsText(uploadedFile);
     } else {
-      reader.readAsBinaryString(uploadedFile);
+      reader.readAsArrayBuffer(uploadedFile);
     }
   };
 
@@ -108,12 +159,26 @@ const AdminDataUpload = () => {
     let totalCases = 0;
     let totalSpend = 0;
 
+    // Use columnMapping if available, otherwise fallback to common names
+    const getFieldValue = (row, mappedField, fallbacks) => {
+      if (columnMapping && columnMapping[mappedField]) {
+        return row[columnMapping[mappedField]];
+      }
+      // Fallback to common variations
+      for (const fallback of fallbacks) {
+        if (row[fallback] !== undefined) return row[fallback];
+      }
+      return null;
+    };
+
     data.forEach(row => {
-      const vendor = normalizeVendorName(row.Vendor || row.vendor || row.VENDOR);
-      const surgeon = row.Surgeon || row.surgeon || row.SURGEON || 'Unknown';
-      const component = row.Component || row.component || row.COMPONENT || 'Unknown';
-      const quantity = parseFloat(row.Quantity || row.quantity || row.QTY || 1);
-      const price = parseFloat(row.Price || row.price || row.PRICE || 0);
+      const vendor = normalizeVendorName(
+        getFieldValue(row, 'vendor', ['Vendor', 'vendor', 'VENDOR', 'Vendor Name', 'Manufacturer']) || 'UNKNOWN'
+      );
+      const surgeon = getFieldValue(row, 'surgeon', ['Surgeon', 'surgeon', 'SURGEON', 'Doctor', 'Physician']) || 'Unknown';
+      const component = getFieldValue(row, 'component', ['Component', 'component', 'COMPONENT', 'Item', 'Description', 'Product']) || 'Unknown';
+      const quantity = parseFloat(getFieldValue(row, 'quantity', ['Quantity', 'quantity', 'QTY', 'Qty', 'Count', 'Units']) || 1);
+      const price = parseFloat(getFieldValue(row, 'price', ['Price', 'price', 'PRICE', 'Unit Price', 'Cost', 'Unit Cost']) || 0);
       const spend = quantity * price;
 
       totalCases += quantity;
@@ -305,6 +370,24 @@ const AdminDataUpload = () => {
     if (!data.matrixPricingDetailed) errors.push('Missing matrixPricingDetailed section');
     if (!data.components) errors.push('Missing components section');
 
+    // Check for column mapping issues
+    if (columnMapping) {
+      if (!columnMapping.vendor) warnings.push('Vendor column was not detected - data may be incomplete');
+      if (!columnMapping.component) warnings.push('Component column was not detected - data may be incomplete');
+      if (!columnMapping.quantity) warnings.push('Quantity column was not detected - defaulted to 1');
+      if (!columnMapping.price) warnings.push('Price column was not detected - defaulted to $0');
+    }
+
+    // Check for suspicious data values
+    if (data.metadata) {
+      if (data.metadata.totalSpend === 0 || data.metadata.totalSpend < 1000) {
+        warnings.push(`Total spend is suspiciously low ($${data.metadata.totalSpend.toFixed(2)}). Check that Price column was correctly mapped.`);
+      }
+      if (data.metadata.totalCases === 0) {
+        warnings.push('Total cases is 0. Check that Quantity column was correctly mapped.');
+      }
+    }
+
     // Validate matrixPricing is an array
     if (data.matrixPricing && !Array.isArray(data.matrixPricing)) {
       errors.push('matrixPricing must be an array');
@@ -463,11 +546,100 @@ const AdminDataUpload = () => {
           </div>
 
           {rawData && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <p className="text-green-800 flex items-center gap-2">
-                <CheckCircle className="w-5 h-5" />
-                File loaded: {rawData.length} rows
-              </p>
+            <div className="space-y-4">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <p className="text-green-800 flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5" />
+                  File loaded: {rawData.length} rows
+                </p>
+              </div>
+
+              {/* Column Detection Results */}
+              {detectedColumns && columnMapping && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <Info className="w-5 h-5 text-blue-600" />
+                    Column Detection
+                  </h3>
+
+                  <div className="grid md:grid-cols-2 gap-3 text-sm">
+                    {Object.entries({
+                      vendor: 'Vendor',
+                      component: 'Component',
+                      quantity: 'Quantity',
+                      price: 'Price',
+                      surgeon: 'Surgeon (Optional)',
+                    }).map(([field, label]) => {
+                      const mapped = columnMapping[field];
+                      const isMissing = !mapped && !['surgeon', 'procedureType', 'bodyPart'].includes(field);
+
+                      return (
+                        <div key={field} className={`flex items-center justify-between p-2 rounded ${
+                          isMissing ? 'bg-red-100' : 'bg-white'
+                        }`}>
+                          <span className="font-medium text-gray-700">{label}:</span>
+                          <span className={`${isMissing ? 'text-red-700' : 'text-green-700'} font-mono text-xs`}>
+                            {mapped || '❌ Not Found'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Show unmapped required fields warning */}
+                  {(!columnMapping.vendor || !columnMapping.component || !columnMapping.quantity || !columnMapping.price) && (
+                    <div className="mt-3 p-3 bg-red-100 border border-red-300 rounded text-sm text-red-800">
+                      <AlertCircle className="inline w-4 h-4 mr-1" />
+                      <strong>Warning:</strong> Some required columns were not detected.
+                      Please ensure your file has columns for: Vendor, Component, Quantity, and Price.
+                      The tool will use default values (0 or "Unknown") for missing data.
+                    </div>
+                  )}
+
+                  {/* Show detected columns list */}
+                  <details className="mt-3">
+                    <summary className="text-xs text-gray-600 cursor-pointer hover:text-gray-900">
+                      All detected columns ({detectedColumns.length})
+                    </summary>
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {detectedColumns.map(col => (
+                        <span key={col} className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">
+                          {col}
+                        </span>
+                      ))}
+                    </div>
+                  </details>
+
+                  {/* Sample Data Preview */}
+                  {rawData.length > 0 && (
+                    <details className="mt-3">
+                      <summary className="text-xs text-gray-600 cursor-pointer hover:text-gray-900">
+                        Sample data (first 3 rows)
+                      </summary>
+                      <div className="mt-2 overflow-x-auto">
+                        <table className="min-w-full text-xs border border-gray-300">
+                          <thead className="bg-gray-100">
+                            <tr>
+                              {detectedColumns.slice(0, 10).map(col => (
+                                <th key={col} className="px-2 py-1 border text-left">{col}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {rawData.slice(0, 3).map((row, idx) => (
+                              <tr key={idx} className="border-t">
+                                {detectedColumns.slice(0, 10).map(col => (
+                                  <td key={col} className="px-2 py-1 border">{String(row[col] || '').substring(0, 30)}</td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </details>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

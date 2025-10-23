@@ -734,7 +734,7 @@ const EnhancedOrthopedicDashboard = () => {
                                     {s.shortName}
                                   </div>
                                   <div className="text-xs text-gray-700 font-medium">
-                                    {(s.savingsPercent * 100).toFixed(0)}% / {s.riskScore.toFixed(1)}
+                                    {s.savingsPercent.toFixed(0)}% / {s.riskScore.toFixed(1)}
                                   </div>
                                 </div>
                               ))}
