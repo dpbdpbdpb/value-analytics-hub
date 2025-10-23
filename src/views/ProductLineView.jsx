@@ -140,8 +140,8 @@ const ProductLineView = () => {
       ],
       metrics: {
         surgeons: orthoData?.metadata?.totalSurgeons || 443,
-        procedures: orthoData?.metadata?.totalCases ? `${orthoData.metadata.totalCases.toLocaleString()}/yr` : '27,623/yr',
-        lastUpdated: orthoData?.metadata?.lastUpdated?.split('T')[0] || '2025-10-21'
+        procedures: (orthoData?.metadata?.totalCases) ? `${(orthoData.metadata.totalCases).toLocaleString()}/yr` : '27,623/yr',
+        lastUpdated: (orthoData?.metadata?.lastUpdated) ? orthoData.metadata.lastUpdated.split('T')[0] : '2025-10-21'
       }
     },
     {
@@ -212,10 +212,10 @@ const ProductLineView = () => {
       ],
       metrics: {
         surgeons: orthoData?.metadata?.totalSurgeons || 443,
-        avgCost: orthoData?.metadata?.totalCases && orthoData?.metadata?.totalSpend ?
-          `$${Math.round(orthoData.metadata.totalSpend / orthoData.metadata.totalCases).toLocaleString()}` :
+        avgCost: (orthoData?.metadata?.totalCases && orthoData?.metadata?.totalSpend) ?
+          `$${(Math.round(orthoData.metadata.totalSpend / orthoData.metadata.totalCases)).toLocaleString()}` :
           '$1,523',
-        lastUpdated: orthoData?.metadata?.lastUpdated?.split('T')[0] || '2025-10-21'
+        lastUpdated: (orthoData?.metadata?.lastUpdated) ? orthoData.metadata.lastUpdated.split('T')[0] : '2025-10-21'
       }
     }
   ];
