@@ -8,6 +8,7 @@ import PortfolioOverview from './views/PortfolioOverview';
 import ServiceLineView from './views/ServiceLineView';
 import ProductLineView from './views/ProductLineView';
 import InitiativeDetail from './views/InitiativeDetail';
+import AdminDataUpload from './views/AdminDataUpload';
 import './App.css';
 
 function App() {
@@ -47,8 +48,8 @@ function App() {
         <Route path="/surgeon/shoulder" element={<ComingSoon specialty="Shoulder" />} />
         <Route path="/surgeon/spine" element={<ComingSoon specialty="Spine" />} />
 
-        {/* Admin routes (coming soon) */}
-        <Route path="/admin/*" element={<ComingSoon specialty="Administrator Tools" />} />
+        {/* Admin routes */}
+        <Route path="/admin/data-upload" element={<AdminDataUpload />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

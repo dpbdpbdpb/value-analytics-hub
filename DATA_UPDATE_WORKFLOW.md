@@ -19,7 +19,47 @@ This document describes the sustainable workflow for updating spend data in the 
 
 ## Recommended Workflow
 
-### Option A: Use Updated Prompt (Preferred)
+### Option A: Use Admin Upload Interface (NEW - Easiest!)
+
+**Best for:** Quick, error-free updates without any manual JSON editing
+
+1. **Access the Admin Interface**
+   - Navigate to: `https://yourdomain.com/value-analytics-hub/admin/data-upload`
+   - Or locally: `http://localhost:3000/value-analytics-hub/admin/data-upload`
+   - Password: `notlzt`
+
+2. **Upload Your Data**
+   - Select product line (Hip & Knee or Shoulder)
+   - Choose your Excel (.xlsx, .xls) or CSV file
+   - Expected columns: Surgeon, Vendor, Component, Quantity, Price, Hospital (optional)
+
+3. **Process & Validate**
+   - Click "Transform to JSON"
+   - Review validation results
+   - Check metrics: vendors, components, total spend
+   - Preview the JSON if needed
+
+4. **Save & Deploy**
+   - Click "Save & Deploy"
+   - File will download to your computer
+   - Move file to `public/orthopedic-data.json` or `public/shoulder-data.json`
+   - Follow git instructions:
+     ```bash
+     git add public/orthopedic-data.json
+     git commit -m "Update spend data via admin interface"
+     git push
+     ```
+
+**Advantages:**
+- ✅ No Claude prompts needed
+- ✅ Automatic transformation to correct format
+- ✅ Built-in validation
+- ✅ Immediate visual feedback
+- ✅ Guarantees both `matrixPricing` (array) and `matrixPricingDetailed` (object)
+
+---
+
+### Option B: Use Updated Prompt (Alternative)
 
 **Best for:** Regular updates using Claude to process Excel data
 
@@ -67,7 +107,7 @@ This document describes the sustainable workflow for updating spend data in the 
 
 ---
 
-### Option B: Use Transformation Script (Backup)
+### Option C: Use Transformation Script (Backup)
 
 **Best for:** When you already have data in the old format
 
@@ -167,6 +207,26 @@ After generating/updating data, verify:
 
 ## Quick Reference: Data Update Steps
 
+### Method 1: Admin Interface (Recommended)
+```bash
+# 1. Start your local server
+npm start
+
+# 2. Navigate to admin interface
+# Open: http://localhost:3000/value-analytics-hub/admin/data-upload
+# Password: notlzt
+
+# 3. Upload Excel/CSV file and click "Transform to JSON"
+
+# 4. Click "Save & Deploy" and move downloaded file to public/
+
+# 5. Commit changes
+git add public/orthopedic-data.json
+git commit -m "Update spend data via admin interface"
+git push
+```
+
+### Method 2: Claude Prompt (Alternative)
 ```bash
 # 1. Prepare Excel data
 # 2. Use updated Claude prompt from ORTHOPEDIC_DATA_STANDARDIZATION_PROMPT.md
