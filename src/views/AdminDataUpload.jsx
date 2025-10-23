@@ -20,6 +20,8 @@ const AdminDataUpload = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [detectedColumns, setDetectedColumns] = useState(null);
   const [columnMapping, setColumnMapping] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Authentication
   const handleLogin = (e) => {
@@ -563,17 +565,40 @@ const AdminDataUpload = () => {
     a.click();
   };
 
-  // Save to file (this will download - user must commit via git)
-  const saveData = () => {
-    const json = JSON.stringify(processedData, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = productLine === 'shoulder' ? 'shoulder-data.json' : 'orthopedic-data.json';
-    a.click();
+  // Save data directly to public/ folder via API
+  const saveData = async () => {
+    setSaving(true);
+    setSaveSuccess(false);
 
-    alert(`Data saved! Next steps:\n\n1. Save the downloaded file to public/\n2. Run: git add public/${productLine === 'shoulder' ? 'shoulder-data.json' : 'orthopedic-data.json'}\n3. Run: git commit -m "Update ${productLine} data"\n4. Run: git push`);
+    try {
+      const response = await fetch('/api/save-data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          data: processedData,
+          productLine: productLine
+        })
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setSaveSuccess(true);
+        const filename = productLine === 'shoulder' ? 'shoulder-data.json' : 'orthopedic-data.json';
+        alert(`✓ Data saved successfully!\n\nFile: public/${filename}\n\nNext steps:\n1. Run: git add public/${filename}\n2. Run: git commit -m "Update ${productLine} data"\n3. Run: git push`);
+      } else {
+        throw new Error(result.error || 'Failed to save data');
+      }
+    } catch (error) {
+      console.error('Save error:', error);
+      alert(`✗ Error saving data: ${error.message}\n\nFalling back to manual download...`);
+      // Fallback to download
+      downloadJSON();
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Login UI
@@ -918,10 +943,31 @@ const AdminDataUpload = () => {
                   </button>
                   <button
                     onClick={saveData}
-                    className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center gap-2"
+                    disabled={saving}
+                    className={`px-6 py-3 rounded-lg font-semibold transition-colors flex items-center gap-2 ${
+                      saveSuccess
+                        ? 'bg-green-700 text-white'
+                        : saving
+                        ? 'bg-gray-400 text-white cursor-not-allowed'
+                        : 'bg-green-600 text-white hover:bg-green-700'
+                    }`}
                   >
-                    <Save className="w-5 h-5" />
-                    Save & Deploy
+                    {saving ? (
+                      <>
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                        Saving...
+                      </>
+                    ) : saveSuccess ? (
+                      <>
+                        <CheckCircle className="w-5 h-5" />
+                        Saved to public/
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-5 h-5" />
+                        Save to public/
+                      </>
+                    )}
                   </button>
                 </div>
 
