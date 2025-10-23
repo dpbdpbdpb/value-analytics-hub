@@ -66,90 +66,88 @@ const TeamDecisionDashboard = () => {
     return (
       <div
         onClick={onClick}
-        className={`rounded-xl border-2 p-6 cursor-pointer transition-all ${
+        className={`rounded-xl border-2 p-4 cursor-pointer transition-all h-full flex flex-col ${
           isSelected
             ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-white shadow-xl'
             : 'border-gray-300 bg-white hover:border-blue-400 hover:shadow-lg'
         }`}
       >
-        {/* Header */}
-        <div className="flex items-start justify-between mb-6">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <h3 className="text-2xl font-bold text-gray-900">
+        {/* Header - Compact */}
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="text-lg font-bold text-gray-900 truncate">
                 {scenario.name}
               </h3>
               {isSelected && (
-                <div className="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full">
+                <div className="px-2 py-0.5 bg-blue-600 text-white text-xs font-bold rounded-full flex-shrink-0">
                   SELECTED
                 </div>
               )}
             </div>
-            <p className="text-base text-gray-600">{scenario.description}</p>
+            <p className="text-sm text-gray-600 line-clamp-2">{scenario.description}</p>
           </div>
 
-          {/* Mission Alignment Score */}
-          <div className="ml-6 flex-shrink-0 text-center bg-gradient-to-br from-slate-600 to-slate-700 text-white rounded-lg p-4 min-w-[120px]">
-            <div className="flex items-center justify-center gap-1 mb-1">
-              <Star className="w-4 h-4 text-yellow-300" />
-              <div className="text-xs font-semibold">Mission Score</div>
+          {/* Mission Alignment Score - Compact */}
+          <div className="ml-3 flex-shrink-0 text-center bg-gradient-to-br from-slate-600 to-slate-700 text-white rounded-lg p-2 min-w-[80px] group relative">
+            <div className="flex items-center justify-center gap-1 mb-0.5">
+              <Star className="w-3 h-3 text-yellow-300" />
+              <div className="text-xs font-semibold">Mission</div>
             </div>
-            <div className="text-3xl font-bold">{(scenario.quintupleMissionScore || 0).toFixed(0)}</div>
-            <div className="text-xs opacity-75">out of 100</div>
+            <div className="text-2xl font-bold">{(scenario.quintupleMissionScore || 0).toFixed(0)}</div>
+            <div className="text-xs opacity-75">/100</div>
+
+            {/* Tooltip on hover */}
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+              Mission Score: Alignment with<br/>CommonSpirit's Quintuple Aim<br/>(Patient, Population, Provider,<br/>Financial, Equity)
+            </div>
           </div>
         </div>
 
-        {/* Three Pillar Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Three Pillar Grid - Stack on smaller screens */}
+        <div className="grid grid-cols-1 gap-4 flex-1">
           {/* Finance Pillar */}
-          <div className="bg-gradient-to-br from-amber-50 to-white border-2 border-amber-300 rounded-xl p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="w-10 h-10 bg-amber-600 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-white" />
+          <div className="bg-gradient-to-br from-amber-50 to-white border-2 border-amber-300 rounded-xl p-3 shadow-sm">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 bg-amber-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <DollarSign className="w-5 h-5 text-white" />
               </div>
-              <div>
-                <h4 className="text-lg font-bold text-amber-900">Finance</h4>
-                <div className="text-sm text-amber-700">Funding the mission</div>
+              <div className="min-w-0">
+                <h4 className="text-base font-bold text-amber-900">Finance</h4>
+                <div className="text-xs text-amber-700">Funding the mission</div>
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {scenario.annualSavings === 0 ? (
-                <div className="text-center py-8 bg-white rounded-lg border-2 border-amber-200">
-                  <div className="text-amber-700 font-semibold">No cost savings</div>
-                  <div className="text-sm text-amber-600 mt-1">Baseline scenario</div>
+                <div className="text-center py-4 bg-white rounded-lg border-2 border-amber-200">
+                  <div className="text-amber-700 font-semibold text-sm">No cost savings</div>
+                  <div className="text-xs text-amber-600 mt-1">Baseline scenario</div>
                 </div>
               ) : (
                 <>
-                  <div className="bg-white rounded-lg border-2 border-amber-200 p-4">
-                    <div className="text-sm text-amber-700 mb-2">Annual Savings</div>
-                    <div className="text-3xl font-bold text-amber-900">
+                  <div className="bg-white rounded-lg border-2 border-amber-200 p-3">
+                    <div className="text-xs text-amber-700 mb-1">Annual Savings</div>
+                    <div className="text-2xl font-bold text-amber-900">
                       {formatCurrency(scenario.annualSavings || 0, { millions: true })}
                     </div>
-                    <div className="text-sm text-amber-600 mt-2">
-                      {(scenario.savingsPercent * 100 || 0).toFixed(1)}% reduction in spend
+                    <div className="text-xs text-amber-600 mt-1">
+                      {(scenario.savingsPercent * 100 || 0).toFixed(1)}% reduction
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-white rounded-lg border border-amber-200 p-3">
-                      <div className="text-xs text-amber-700 mb-1">5-Year NPV</div>
-                      <div className="text-lg font-bold text-amber-900">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-white rounded-lg border border-amber-200 p-2">
+                      <div className="text-xs text-amber-700 mb-0.5">5-Year NPV</div>
+                      <div className="text-base font-bold text-amber-900">
                         {formatCurrency(scenario.npv5Year || 0, { millions: true })}
                       </div>
                     </div>
-                    <div className="bg-white rounded-lg border border-amber-200 p-3">
-                      <div className="text-xs text-amber-700 mb-1">ROI Multiple</div>
-                      <div className="text-lg font-bold text-amber-900">
+                    <div className="bg-white rounded-lg border border-amber-200 p-2">
+                      <div className="text-xs text-amber-700 mb-0.5">ROI</div>
+                      <div className="text-base font-bold text-amber-900">
                         {(((scenario.npv5Year || 0) / 1000000) / (scenario.implementation?.costMillions || 1)).toFixed(1)}x
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-amber-100 rounded-lg p-3">
-                    <div className="text-xs text-amber-700 mb-1">Implementation Cost</div>
-                    <div className="text-base font-bold text-amber-900">
-                      {formatCurrency(scenario.implementation?.costMillions || 0, { millions: true })}
                     </div>
                   </div>
                 </>
@@ -158,94 +156,80 @@ const TeamDecisionDashboard = () => {
           </div>
 
           {/* Clinical Pillar */}
-          <div className="bg-gradient-to-br from-blue-50 to-white border-2 border-blue-300 rounded-xl p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                <Stethoscope className="w-6 h-6 text-white" />
+          <div className="bg-gradient-to-br from-blue-50 to-white border-2 border-blue-300 rounded-xl p-3 shadow-sm">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Stethoscope className="w-5 h-5 text-white" />
               </div>
-              <div>
-                <h4 className="text-lg font-bold text-blue-900">Clinical</h4>
-                <div className="text-sm text-blue-700">Delivering excellent care</div>
+              <div className="min-w-0">
+                <h4 className="text-base font-bold text-blue-900">Clinical</h4>
+                <div className="text-xs text-blue-700">Delivering excellent care</div>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="bg-white rounded-lg border-2 border-blue-200 p-4">
-                <div className="text-sm text-blue-700 mb-2">Adoption Rate</div>
-                <div className="text-3xl font-bold text-blue-900">
+            <div className="space-y-3">
+              <div className="bg-white rounded-lg border-2 border-blue-200 p-3">
+                <div className="text-xs text-blue-700 mb-1">Already Aligned</div>
+                <div className="text-2xl font-bold text-blue-900">
                   {(scenario.adoptionRate * 100 || 0).toFixed(0)}%
                 </div>
-                <div className="text-sm text-blue-600 mt-2">
-                  {Math.round(totalSurgeons * (scenario.adoptionRate || 0))} of {totalSurgeons} surgeons
+                <div className="text-xs text-blue-600 mt-1">
+                  {Math.round(totalSurgeons * (scenario.adoptionRate || 0))} of {totalSurgeons} surgeons don't need to change
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white rounded-lg border border-blue-200 p-3">
-                  <div className="text-xs text-blue-700 mb-1">Vendors</div>
-                  <div className="text-lg font-bold text-blue-900">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-white rounded-lg border border-blue-200 p-2">
+                  <div className="text-xs text-blue-700 mb-0.5">Vendors</div>
+                  <div className="text-base font-bold text-blue-900">
                     {scenario.vendors?.length || 0}
                   </div>
                 </div>
-                <div className="bg-white rounded-lg border border-blue-200 p-3">
-                  <div className="text-xs text-blue-700 mb-1">Disruption</div>
-                  <div className="text-lg font-bold text-blue-900">
-                    {(100 - scenario.adoptionRate * 100) <= 15 ? 'Minimal' : (100 - scenario.adoptionRate * 100) <= 30 ? 'Moderate' : 'High'}
+                <div className="bg-white rounded-lg border border-blue-200 p-2">
+                  <div className="text-xs text-blue-700 mb-0.5">Need Training</div>
+                  <div className="text-base font-bold text-blue-900">
+                    {Math.round(totalSurgeons * (1 - (scenario.adoptionRate || 0)))} surgeons
                   </div>
-                </div>
-              </div>
-
-              <div className="bg-blue-100 rounded-lg p-3">
-                <div className="text-xs text-blue-700 mb-1">Non-Adopting Surgeons</div>
-                <div className="text-base font-bold text-blue-900">
-                  {Math.round(totalSurgeons * (1 - (scenario.adoptionRate || 0)))} surgeons
                 </div>
               </div>
             </div>
           </div>
 
           {/* Operations Pillar */}
-          <div className="bg-gradient-to-br from-green-50 to-white border-2 border-green-300 rounded-xl p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
-                <Shield className="w-6 h-6 text-white" />
+          <div className="bg-gradient-to-br from-green-50 to-white border-2 border-green-300 rounded-xl p-3 shadow-sm">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Shield className="w-5 h-5 text-white" />
               </div>
-              <div>
-                <h4 className="text-lg font-bold text-green-900">Operations</h4>
-                <div className="text-sm text-green-700">Executing efficiently</div>
+              <div className="min-w-0">
+                <h4 className="text-base font-bold text-green-900">Operations</h4>
+                <div className="text-xs text-green-700">Executing efficiently</div>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="bg-white rounded-lg border-2 border-green-200 p-4">
-                <div className="text-sm text-green-700 mb-2">Implementation Timeline</div>
-                <div className="text-3xl font-bold text-green-900">
+            <div className="space-y-3">
+              <div className="bg-white rounded-lg border-2 border-green-200 p-3">
+                <div className="text-xs text-green-700 mb-1">Implementation Timeline</div>
+                <div className="text-2xl font-bold text-green-900">
                   {scenario.implementation?.timeline || 0}
                 </div>
-                <div className="text-sm text-green-600 mt-2">
+                <div className="text-xs text-green-600 mt-1">
                   months to full deployment
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white rounded-lg border border-green-200 p-3">
-                  <div className="text-xs text-green-700 mb-1">Complexity</div>
-                  <div className="text-lg font-bold text-green-900">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-white rounded-lg border border-green-200 p-2">
+                  <div className="text-xs text-green-700 mb-0.5">Complexity</div>
+                  <div className="text-base font-bold text-green-900">
                     {scenario.implementation?.complexity || 'N/A'}
                   </div>
                 </div>
-                <div className="bg-white rounded-lg border border-green-200 p-3">
-                  <div className="text-xs text-green-700 mb-1">Risk Score</div>
-                  <div className="text-lg font-bold text-green-900">
-                    {(scenario.riskScore || 0).toFixed(0)}/10
+                <div className="bg-white rounded-lg border border-green-200 p-2">
+                  <div className="text-xs text-green-700 mb-0.5">Risk</div>
+                  <div className="text-base font-bold text-green-900">
+                    {scenario.riskLevel || 'N/A'}
                   </div>
-                </div>
-              </div>
-
-              <div className="bg-green-100 rounded-lg p-3">
-                <div className="text-xs text-green-700 mb-1">Risk Assessment</div>
-                <div className="text-base font-bold text-green-900">
-                  {scenario.riskLevel || 'N/A'}
                 </div>
               </div>
             </div>
@@ -412,8 +396,8 @@ const TeamDecisionDashboard = () => {
                 </div>
               </div>
 
-              {/* Scenario Cards */}
-              <div className="space-y-6 mt-6">
+              {/* Scenario Cards - Responsive Grid Layout */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mt-6">
                 {Object.entries(SCENARIOS).map(([id, scenario]) => (
                   <ThreePillarScenarioCard
                     key={id}
@@ -1085,12 +1069,12 @@ const TeamDecisionDashboard = () => {
               <div className="mb-8">
                 <h3 className="text-xl font-bold text-slate-900 mb-4">Hospital Alignment with {SCENARIOS[hospitalScenarioFilter]?.name}</h3>
                 <p className="text-sm text-gray-600 mb-4">
-                  Sorted by alignment (low to high) with target vendors: {SCENARIOS[hospitalScenarioFilter]?.vendors?.join(' + ')}.
-                  Red rows (top) = need most support, Green rows (bottom) = already aligned.
+                  Hospitals sorted by alignment (low to high) with target vendors: {SCENARIOS[hospitalScenarioFilter]?.vendors?.join(' + ')}.
+                  Red rows = need most support, Green rows = already aligned. Target vendors highlighted in blue.
                 </p>
                 <div className="overflow-x-auto max-h-[600px] overflow-y-auto border border-gray-200 rounded-lg">
                   <table className="w-full border-collapse">
-                    <thead className="sticky top-0 bg-slate-100 border-b-2 border-slate-300">
+                    <thead className="sticky top-0 bg-slate-100 border-b-2 border-slate-300 z-10">
                       <tr>
                         <th className="text-left p-3 font-bold text-slate-900">Hospital</th>
                         <th className="text-left p-3 font-bold text-slate-900">Region</th>
@@ -1102,21 +1086,20 @@ const TeamDecisionDashboard = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {(() => {
-                        const targetVendors = SCENARIOS[hospitalScenarioFilter]?.vendors || [];
+                      {Object.entries(realData.hospitals || {})
+                        .sort((a, b) => {
+                          const targetVendors = SCENARIOS[hospitalScenarioFilter]?.vendors || [];
+                          const aAlignment = targetVendors.reduce((sum, vendor) => sum + (a[1].vendors?.[vendor]?.cases || 0), 0) / (a[1].totalCases || 1);
+                          const bAlignment = targetVendors.reduce((sum, vendor) => sum + (b[1].vendors?.[vendor]?.cases || 0), 0) / (b[1].totalCases || 1);
+                          return aAlignment - bAlignment;
+                        })
+                        .map(([hospitalName, hospital], idx) => {
+                          const targetVendors = SCENARIOS[hospitalScenarioFilter]?.vendors || [];
+                          const targetCases = targetVendors.reduce((sum, vendor) => {
+                            return sum + (hospital.vendors?.[vendor]?.cases || 0);
+                          }, 0);
+                          const alignmentPct = hospital.totalCases > 0 ? (targetCases / hospital.totalCases) * 100 : 0;
 
-                        return Object.entries(realData.hospitals || {})
-                          .map(([hospitalName, hospital]) => {
-                            // Calculate alignment percentage
-                            const targetCases = targetVendors.reduce((sum, vendor) => {
-                              return sum + (hospital.vendors?.[vendor]?.cases || 0);
-                            }, 0);
-                            const alignmentPct = hospital.totalCases > 0 ? (targetCases / hospital.totalCases) * 100 : 0;
-
-                            return { hospitalName, hospital, alignmentPct };
-                          })
-                          .sort((a, b) => a.alignmentPct - b.alignmentPct)
-                          .map(({ hospitalName, hospital, alignmentPct }, idx) => {
                           // Color-code by alignment with scenario
                           const bgColor = alignmentPct >= 50
                             ? 'bg-green-50'
@@ -1133,9 +1116,6 @@ const TeamDecisionDashboard = () => {
                           const topVendors = Object.entries(hospital.vendors || {})
                             .sort((a, b) => b[1].cases - a[1].cases)
                             .slice(0, 3);
-
-                          // Highlight target vendors
-                          const targetVendors = SCENARIOS[hospitalScenarioFilter]?.vendors || [];
 
                           return (
                             <tr key={idx} className={`border-b border-gray-200 hover:bg-slate-100 ${bgColor}`}>
@@ -1154,35 +1134,47 @@ const TeamDecisionDashboard = () => {
                               </td>
                               <td className="p-3 text-sm font-semibold text-purple-900">{hospital.primaryVendor}</td>
                               <td className="p-3 text-xs text-gray-600">
-                                <div className="flex flex-wrap gap-1">
+                                <div className="space-y-1.5">
                                   {topVendors.map(([vendor, data], i) => {
                                     const isTargetVendor = targetVendors.includes(vendor);
+                                    const vendorPct = hospital.totalCases > 0 ? (data.cases / hospital.totalCases * 100).toFixed(0) : 0;
                                     return (
-                                      <span
-                                        key={i}
-                                        className={`px-2 py-1 rounded ${
-                                          isTargetVendor
-                                            ? 'bg-blue-100 text-blue-900 font-semibold border border-blue-300'
-                                            : i === 0
-                                            ? 'bg-purple-100 text-purple-900 font-semibold'
-                                            : 'bg-gray-100 text-gray-700'
-                                        }`}
-                                      >
-                                        {vendor}: {data.cases}
-                                      </span>
+                                      <div key={i} className="flex items-center gap-2">
+                                        <span
+                                          className={`px-2 py-0.5 rounded text-xs font-semibold min-w-[120px] ${
+                                            isTargetVendor
+                                              ? 'bg-blue-100 text-blue-900 border border-blue-300'
+                                              : i === 0
+                                              ? 'bg-purple-100 text-purple-900'
+                                              : 'bg-gray-100 text-gray-700'
+                                          }`}
+                                        >
+                                          {vendor}
+                                        </span>
+                                        <div className="flex-1 flex items-center gap-1">
+                                          <div className="flex-1 bg-gray-200 rounded-full h-2 max-w-[80px]">
+                                            <div
+                                              className={`h-2 rounded-full ${isTargetVendor ? 'bg-blue-600' : i === 0 ? 'bg-purple-600' : 'bg-gray-400'}`}
+                                              style={{ width: `${vendorPct}%` }}
+                                            ></div>
+                                          </div>
+                                          <span className="text-xs font-bold text-gray-900 min-w-[45px]">
+                                            {data.cases} ({vendorPct}%)
+                                          </span>
+                                        </div>
+                                      </div>
                                     );
                                   })}
                                   {vendorCount > 3 && (
-                                    <span className="px-2 py-1 bg-gray-50 text-gray-500 italic">
-                                      +{vendorCount - 3} more
-                                    </span>
+                                    <div className="text-xs text-gray-500 italic mt-1">
+                                      +{vendorCount - 3} more vendors
+                                    </div>
                                   )}
                                 </div>
                               </td>
                             </tr>
                           );
-                        });
-                      })()}
+                        })}
                     </tbody>
                   </table>
                 </div>

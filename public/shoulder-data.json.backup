@@ -11721,8 +11721,8 @@
       "npv5Year": 0
     },
     "tri-vendor-premium": {
-      "name": "Stryker + Zimmer + Arthrex",
-      "shortName": "Stryker + Zimmer + Arthrex",
+      "name": "Tri-Vendor Strategy - Premium Focus",
+      "shortName": "Tri-Vendor",
       "description": "Consolidate to top 3 vendors by volume (Stryker, Zimmer, Arthrex). Negotiate volume-based pricing. Eliminate 'Other' category.",
       "vendors": [
         "Stryker",
@@ -11750,8 +11750,8 @@
       "npv5Year": 17480944
     },
     "dual-premium": {
-      "name": "Stryker + Zimmer Biomet",
-      "shortName": "Stryker + Zimmer",
+      "name": "Dual-Vendor Premium Strategy",
+      "shortName": "Dual Premium",
       "description": "Focus on Stryker + Zimmer Biomet as primary vendors. Strong negotiating leverage with 70% volume concentration. Transition Arthrex users.",
       "vendors": [
         "Stryker",
@@ -11778,8 +11778,8 @@
       "npv5Year": 26171416
     },
     "dual-value": {
-      "name": "Stryker + Arthrex",
-      "shortName": "Stryker + Arthrex",
+      "name": "Dual-Vendor Balanced Strategy",
+      "shortName": "Dual Balanced",
       "description": "Stryker (premium) + Arthrex (value innovation). Clinical excellence with cost optimization. Target reverse shoulder growth.",
       "vendors": [
         "Stryker",
@@ -11806,8 +11806,8 @@
       "npv5Year": 31898398
     },
     "single-vendor-stryker": {
-      "name": "Stryker Only",
-      "shortName": "Stryker Only",
+      "name": "Single-Vendor Strategy - Stryker",
+      "shortName": "Single Vendor",
       "description": "Full consolidation to Stryker as sole shoulder vendor. Maximum negotiating leverage and GPO alignment, but highest surgeon disruption.",
       "vendors": [
         "Stryker"
@@ -12797,68 +12797,5 @@
       "procedureType": "PRIMARY",
       "bodyPart": "SHOULDER"
     }
-  ],
-  "workflowTracking": {
-    "currentStage": "implementation",
-    "lastUpdated": "2024-10-01T00:00:00.000Z",
-    "stages": {
-      "sourcing-review": {
-        "status": "completed",
-        "startDate": "2024-06-01",
-        "completionDate": "2024-09-10",
-        "notes": "Completed market analysis and vendor evaluation for shoulder replacement implants"
-      },
-      "decision": {
-        "status": "completed",
-        "decisionDate": "2024-09-15",
-        "selectedScenario": "tri-vendor",
-        "notes": "Selected tri-vendor strategy: Zimmer Biomet + Stryker + DePuy for shoulder procedures"
-      },
-      "implementation": {
-        "status": "active",
-        "startDate": "2024-10-01",
-        "expectedCompletion": "2025-03-31",
-        "percentComplete": 35,
-        "milestones": [
-          {
-            "name": "Contract signing",
-            "completed": true,
-            "date": "2024-09-28"
-          },
-          {
-            "name": "Vendor onboarding",
-            "completed": true,
-            "date": "2024-10-12"
-          },
-          {
-            "name": "Surgeon training sessions",
-            "completed": false,
-            "expectedDate": "2025-01-31"
-          },
-          {
-            "name": "Go-live for all sites",
-            "completed": false,
-            "expectedDate": "2025-02-01"
-          },
-          {
-            "name": "Full adoption",
-            "completed": false,
-            "expectedDate": "2025-03-31"
-          }
-        ],
-        "notes": "Rolling out new tri-vendor contracts for shoulder procedures. Completed vendor onboarding. Surgeon training in progress through Q1 2025."
-      },
-      "lookback": {
-        "status": "upcoming",
-        "scheduledDate": "2025-04-15",
-        "notes": "First lookback scheduled 3 months post-implementation to compare actual vs predicted savings and adoption"
-      },
-      "renewal": {
-        "status": "upcoming",
-        "contractExpirationDate": "2027-09-30",
-        "nextReviewDate": "2027-06-01",
-        "notes": "3-year contracts expire September 2027. Renewal review will begin 3 months prior."
-      }
-    }
-  }
+  ]
 }

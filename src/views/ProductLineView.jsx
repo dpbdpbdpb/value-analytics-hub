@@ -12,55 +12,71 @@ const ProductLineView = () => {
   // Determine specialty name based on productLineId
   const specialtyName = productLineId === 'shoulder' ? 'shoulder' : 'hipknee';
 
-  // Sourcing Lifecycle Workflow Stages
-  const workflowStages = [
-    {
-      id: 'sourcing-review',
-      name: 'Sourcing Strategy Review',
-      icon: Search,
-      description: 'Analyze market, vendors, and internal data',
-      status: 'completed', // 'active' | 'completed' | 'upcoming'
-      relevantCanvases: ['team-decision', 'financial-view', 'clinical-view'],
-      nextReviewDate: null
-    },
-    {
-      id: 'decision',
-      name: 'Decision',
-      icon: CheckCircle,
-      description: 'Select vendor strategy and negotiate contracts',
-      status: 'completed',
-      relevantCanvases: ['team-decision', 'financial-view'],
-      decisionDate: '2024-09-15'
-    },
-    {
-      id: 'implementation',
-      name: 'Implementation',
-      icon: Wrench,
-      description: 'Roll out new vendor contracts and train surgeons',
-      status: 'active',
-      relevantCanvases: ['operational-view', 'surgeon-analytics'],
-      startDate: '2024-10-01',
-      expectedCompletion: '2025-03-31'
-    },
-    {
-      id: 'lookback',
-      name: 'Lookback Analysis',
-      icon: TrendingUp,
-      description: 'Track actual vs. predicted performance',
-      status: 'upcoming',
-      relevantCanvases: ['team-decision', 'clinical-view', 'financial-view'],
-      scheduledDate: '2025-04-15'
-    },
-    {
-      id: 'renewal',
-      name: 'Contract Renewal Review',
-      icon: RotateCcw,
-      description: 'Evaluate performance and prepare for next cycle',
-      status: 'upcoming',
-      relevantCanvases: ['team-decision', 'financial-view'],
-      contractExpirationDate: '2027-09-30'
+  // Sourcing Lifecycle Workflow Stages - dynamically loaded from data
+  const getWorkflowStages = () => {
+    const tracking = orthoData?.workflowTracking;
+    if (!tracking) {
+      // Fallback if no workflow data
+      return [];
     }
-  ];
+
+    const stageDefinitions = [
+      {
+        id: 'sourcing-review',
+        name: 'Sourcing Strategy Review',
+        icon: Search,
+        description: 'Analyze market, vendors, and internal data',
+        relevantCanvases: ['team-decision', 'financial-view', 'clinical-view']
+      },
+      {
+        id: 'decision',
+        name: 'Decision',
+        icon: CheckCircle,
+        description: 'Select vendor strategy and negotiate contracts',
+        relevantCanvases: ['team-decision', 'financial-view']
+      },
+      {
+        id: 'implementation',
+        name: 'Implementation',
+        icon: Wrench,
+        description: 'Roll out new vendor contracts and train surgeons',
+        relevantCanvases: ['operational-view', 'surgeon-analytics']
+      },
+      {
+        id: 'lookback',
+        name: 'Lookback Analysis',
+        icon: TrendingUp,
+        description: 'Track actual vs. predicted performance',
+        relevantCanvases: ['team-decision', 'clinical-view', 'financial-view']
+      },
+      {
+        id: 'renewal',
+        name: 'Contract Renewal Review',
+        icon: RotateCcw,
+        description: 'Evaluate performance and prepare for next cycle',
+        relevantCanvases: ['team-decision', 'financial-view']
+      }
+    ];
+
+    return stageDefinitions.map(def => {
+      const stageData = tracking.stages[def.id] || {};
+      return {
+        ...def,
+        status: stageData.status || 'upcoming',
+        startDate: stageData.startDate,
+        completionDate: stageData.completionDate,
+        decisionDate: stageData.decisionDate,
+        expectedCompletion: stageData.expectedCompletion,
+        scheduledDate: stageData.scheduledDate,
+        contractExpirationDate: stageData.contractExpirationDate,
+        percentComplete: stageData.percentComplete,
+        milestones: stageData.milestones,
+        notes: stageData.notes
+      };
+    });
+  };
+
+  const workflowStages = getWorkflowStages();
 
   // Load orthopedic data based on product line
   useEffect(() => {
@@ -323,7 +339,9 @@ const ProductLineView = () => {
               </div>
               <div className="text-right">
                 <div className="text-xs text-gray-600">Current Stage</div>
-                <div className="text-lg font-bold text-blue-600">Implementation</div>
+                <div className="text-lg font-bold text-blue-600">
+                  {workflowStages.find(s => s.status === 'active')?.name || 'Not Started'}
+                </div>
               </div>
             </div>
 
@@ -423,7 +441,9 @@ const ProductLineView = () => {
             <div className="flex items-start gap-3">
               <Target className="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" />
               <div>
-                <h3 className="font-bold text-blue-900 mb-2">Active Canvases for Implementation Stage</h3>
+                <h3 className="font-bold text-blue-900 mb-2">
+                  Active Canvases for {workflowStages.find(s => s.status === 'active')?.name || 'Current'} Stage
+                </h3>
                 <p className="text-blue-800 text-sm mb-3">
                   Based on your current workflow stage, the following decision canvases are most relevant:
                 </p>

@@ -22624,8 +22624,8 @@
       "npv5Year": 0
     },
     "tri-vendor": {
-      "name": "Stryker + Zimmer Biomet + J&J",
-      "shortName": "Stryker + Zimmer + J&J",
+      "name": "Tri-Vendor Consolidation",
+      "shortName": "Tri-Vendor",
       "description": "Consolidate to top 3 vendors: STRYKER, ZIMMER BIOMET, JOHNSON & JOHNSON. Represents 85.3% of current spend.",
       "vendors": [
         "STRYKER",
@@ -22653,8 +22653,8 @@
       "npv5Year": 23284027
     },
     "dual-premium": {
-      "name": "Stryker + Zimmer Biomet",
-      "shortName": "Stryker + Zimmer",
+      "name": "Dual Premium Strategy",
+      "shortName": "Dual Premium",
       "description": "Focus on top 2 premium vendors: STRYKER, ZIMMER BIOMET. Maximum standardization with proven quality.",
       "vendors": [
         "STRYKER",
@@ -22681,8 +22681,8 @@
       "npv5Year": 31976822
     },
     "dual-value": {
-      "name": "Stryker + Smith & Nephew",
-      "shortName": "Stryker + S&N",
+      "name": "Dual Value Strategy",
+      "shortName": "Dual Value",
       "description": "Balance premium quality (Stryker) with value pricing (Smith & Nephew) for cost optimization.",
       "vendors": [
         "STRYKER",
@@ -22709,8 +22709,8 @@
       "npv5Year": 38069229
     },
     "single-vendor": {
-      "name": "Stryker Only",
-      "shortName": "Stryker Only",
+      "name": "Single Vendor Strategy",
+      "shortName": "Single Vendor",
       "description": "Maximum consolidation to STRYKER only. Highest savings potential but significant surgeon disruption.",
       "vendors": [
         "STRYKER"
@@ -23187,68 +23187,5 @@
       "procedureType": "REVISION",
       "bodyPart": "HIP"
     }
-  ],
-  "workflowTracking": {
-    "currentStage": "implementation",
-    "lastUpdated": "2024-10-01T00:00:00.000Z",
-    "stages": {
-      "sourcing-review": {
-        "status": "completed",
-        "startDate": "2024-06-01",
-        "completionDate": "2024-09-10",
-        "notes": "Completed market analysis and vendor evaluation for hip-knee replacement implants"
-      },
-      "decision": {
-        "status": "completed",
-        "decisionDate": "2024-09-15",
-        "selectedScenario": "dual-premium",
-        "notes": "Selected dual-vendor strategy: Zimmer Biomet + Stryker based on surgeon preference analysis and cost optimization"
-      },
-      "implementation": {
-        "status": "active",
-        "startDate": "2024-10-01",
-        "expectedCompletion": "2025-03-31",
-        "percentComplete": 35,
-        "milestones": [
-          {
-            "name": "Contract signing",
-            "completed": true,
-            "date": "2024-09-28"
-          },
-          {
-            "name": "Vendor onboarding",
-            "completed": true,
-            "date": "2024-10-12"
-          },
-          {
-            "name": "Surgeon training sessions",
-            "completed": false,
-            "expectedDate": "2025-01-31"
-          },
-          {
-            "name": "Go-live for all sites",
-            "completed": false,
-            "expectedDate": "2025-02-01"
-          },
-          {
-            "name": "Full adoption",
-            "completed": false,
-            "expectedDate": "2025-03-31"
-          }
-        ],
-        "notes": "Rolling out new dual-vendor contracts. Completed vendor onboarding. Surgeon training in progress through Q1 2025."
-      },
-      "lookback": {
-        "status": "upcoming",
-        "scheduledDate": "2025-04-15",
-        "notes": "First lookback scheduled 3 months post-implementation to compare actual vs predicted savings and adoption"
-      },
-      "renewal": {
-        "status": "upcoming",
-        "contractExpirationDate": "2027-09-30",
-        "nextReviewDate": "2027-06-01",
-        "notes": "3-year contracts expire September 2027. Renewal review will begin 3 months prior."
-      }
-    }
-  }
+  ]
 }

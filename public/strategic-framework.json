@@ -275,6 +275,15 @@
           "owner": "Finance"
         },
         {
+          "id": "fin-3",
+          "pillar": "finance",
+          "assumption": "Volume-based pricing discounts will scale proportionally with vendor concentration",
+          "confidence": "medium",
+          "validationMetrics": ["Price per unit trends", "Volume tier achievement rate", "Rebate capture rate"],
+          "validationFrequency": "quarterly",
+          "owner": "Finance"
+        },
+        {
           "id": "clin-1",
           "pillar": "clinical",
           "assumption": "85% of surgeons will adopt new vendor landscape with proper engagement",
@@ -293,6 +302,15 @@
           "owner": "Clinical"
         },
         {
+          "id": "clin-3",
+          "pillar": "clinical",
+          "assumption": "High-volume vendor loyalists will serve as effective clinical champions for change management",
+          "confidence": "medium",
+          "validationMetrics": ["Champion participation rate", "Peer influence effectiveness", "Training session attendance"],
+          "validationFrequency": "monthly",
+          "owner": "Clinical"
+        },
+        {
           "id": "ops-1",
           "pillar": "operations",
           "assumption": "Implementation can be completed within 12 months",
@@ -307,6 +325,15 @@
           "assumption": "Supply chain complexity will decrease with fewer vendors",
           "confidence": "high",
           "validationMetrics": ["Inventory turnover rate", "Stockout incidents", "Vendor coordination time"],
+          "validationFrequency": "quarterly",
+          "owner": "Operations"
+        },
+        {
+          "id": "ops-3",
+          "pillar": "operations",
+          "assumption": "Standardized implant trays across facilities will reduce setup time and improve OR efficiency",
+          "confidence": "medium",
+          "validationMetrics": ["OR setup time", "Case turnover time", "Staff training hours required"],
           "validationFrequency": "quarterly",
           "owner": "Operations"
         }

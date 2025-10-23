@@ -2969,7 +2969,7 @@ const EnhancedOrthopedicDashboard = () => {
       <NavigationHeader role="executive" specialty="hipknee" specialtyName="Hip & Knee" persona={persona} />
 
       <div className="p-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full">
           {/* Header */}
           <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
           <div className="flex items-start justify-between mb-6">
