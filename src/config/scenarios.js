@@ -15,6 +15,20 @@ export const SCENARIO_IDS = {
   DUAL_INNOVATION: 'dual-innovation'
 };
 
+// Helper to format vendor names for display
+const formatVendorNames = (vendors) => {
+  if (!vendors || vendors.length === 0) return '';
+  const shortNames = vendors.map(v => {
+    const upper = v.toUpperCase();
+    if (upper.includes('ZIMMER')) return 'Zimmer';
+    if (upper.includes('STRYKER')) return 'Stryker';
+    if (upper.includes('J&J') || upper.includes('JOHNSON')) return 'J&J';
+    if (upper.includes('SMITH')) return 'Smith & Nephew';
+    return v;
+  });
+  return shortNames.join(' + ');
+};
+
 export const SCENARIO_NAMES = {
   [SCENARIO_IDS.STATUS_QUO]: 'Status Quo',
   [SCENARIO_IDS.TRI_VENDOR]: 'Tri-Source (Zimmer + Stryker + J&J)',
@@ -134,7 +148,7 @@ export const calculateVolumeWeightedRisk = (surgeons, scenarioVendors, totalCase
  * @returns {Object} Standardized scenarios with risk calculations
  */
 export const generateScenarios = (realData) => {
-  if (!realData) {
+  if (!realData || !realData.scenarios) {
     return generatePlaceholderScenarios();
   }
 
@@ -150,168 +164,59 @@ export const generateScenarios = (realData) => {
   const baselineSpend = (realData.metadata?.totalSpend || 0) / 1000000; // Convert to millions
   const surgeons = realData.surgeons || [];
 
-  const scenarios = {
-    [SCENARIO_IDS.STATUS_QUO]: {
-      id: SCENARIO_IDS.STATUS_QUO,
-      name: SCENARIO_NAMES[SCENARIO_IDS.STATUS_QUO],
-      shortName: 'Status Quo',
-      description: 'Continue with current multi-vendor fragmentation across all vendors',
-      vendors: ['ZIMMER BIOMET', 'STRYKER', 'J&J', 'SMITH & NEPHEW', 'CONFORMIS'],
-      vendorCount: 5,
-      savingsPercent: 0,
-      annualSavings: 0,
-      savingsRange: { conservative: 0, expected: 0, optimistic: 0 },
-      adoptionRate: 100,
-      riskLevel: 'low',
-      baselineCost: realData.metadata?.totalSpend || 0,
-      implementation: {
-        complexity: 'Low',
-        timeline: 0,
-        costMillions: 0
-      },
-      breakdown: {
-        volumeAggregation: 0,
-        priceOptimization: 0,
-        inventoryOptimization: 0,
-        adminEfficiency: 0
-      },
-      quintupleMissionScore: 45,
-      npv5Year: 0,
-      agentScore: getAgentScore(SCENARIO_IDS.STATUS_QUO)
-    },
-    [SCENARIO_IDS.TRI_VENDOR]: {
-      id: SCENARIO_IDS.TRI_VENDOR,
-      name: SCENARIO_NAMES[SCENARIO_IDS.TRI_VENDOR],
-      shortName: 'Tri-Source',
-      description: 'Balanced approach with three major vendors (Zimmer + Stryker + J&J)',
-      vendors: ['ZIMMER BIOMET', 'STRYKER', 'J&J'],
-      vendorCount: 3,
-      savingsPercent: 12,
-      annualSavings: baselineSpend * 0.12,
-      savingsRange: {
-        conservative: baselineSpend * 0.12 * 0.85,
-        expected: baselineSpend * 0.12,
-        optimistic: baselineSpend * 0.12 * 1.15
-      },
-      adoptionRate: 92,
-      riskLevel: 'low',
-      baselineCost: realData.metadata?.totalSpend || 0,
-      implementation: {
-        complexity: 'Medium',
-        timeline: 10,
-        costMillions: 2.2
-      },
-      breakdown: {
-        volumeAggregation: baselineSpend * 0.12 * 0.45,
-        priceOptimization: baselineSpend * 0.12 * 0.40,
-        inventoryOptimization: baselineSpend * 0.12 * 0.10,
-        adminEfficiency: baselineSpend * 0.12 * 0.05
-      },
-      quintupleMissionScore: 82,
-      npv5Year: baselineSpend * 0.12 * 5 - 2.2,
-      vendorSplit: { zimmer_biomet: 40, stryker: 35, j_j: 25 },
-      agentScore: getAgentScore(SCENARIO_IDS.TRI_VENDOR)
-    },
-    [SCENARIO_IDS.DUAL_PREMIUM]: {
-      id: SCENARIO_IDS.DUAL_PREMIUM,
-      name: SCENARIO_NAMES[SCENARIO_IDS.DUAL_PREMIUM],
-      shortName: 'Stryker + Zimmer',
-      description: 'Premium vendors focus (Stryker + Zimmer) - highest quality, moderate savings',
-      vendors: ['STRYKER', 'ZIMMER BIOMET'],
-      vendorCount: 2,
-      savingsPercent: 15,
-      annualSavings: baselineSpend * 0.15,
-      savingsRange: {
-        conservative: baselineSpend * 0.15 * 0.80,
-        expected: baselineSpend * 0.15,
-        optimistic: baselineSpend * 0.15 * 1.20
-      },
-      adoptionRate: 88,
-      riskLevel: 'medium',
-      baselineCost: realData.metadata?.totalSpend || 0,
-      implementation: {
-        complexity: 'High',
-        timeline: 14,
-        costMillions: 2.8
-      },
-      breakdown: {
-        volumeAggregation: baselineSpend * 0.15 * 0.50,
-        priceOptimization: baselineSpend * 0.15 * 0.35,
-        inventoryOptimization: baselineSpend * 0.15 * 0.10,
-        adminEfficiency: baselineSpend * 0.15 * 0.05
-      },
-      quintupleMissionScore: 85,
-      npv5Year: baselineSpend * 0.15 * 5 - 2.8,
-      vendorSplit: { stryker: 55, zimmer_biomet: 45 },
-      agentScore: getAgentScore(SCENARIO_IDS.DUAL_PREMIUM)
-    },
-    [SCENARIO_IDS.DUAL_VALUE]: {
-      id: SCENARIO_IDS.DUAL_VALUE,
-      name: SCENARIO_NAMES[SCENARIO_IDS.DUAL_VALUE],
-      shortName: 'Zimmer + J&J',
-      description: 'Value-focused consolidation (Zimmer + J&J) - strong savings, good quality',
-      vendors: ['ZIMMER BIOMET', 'J&J'],
-      vendorCount: 2,
-      savingsPercent: 18,
-      annualSavings: baselineSpend * 0.18,
-      savingsRange: {
-        conservative: baselineSpend * 0.18 * 0.85,
-        expected: baselineSpend * 0.18,
-        optimistic: baselineSpend * 0.18 * 1.15
-      },
-      adoptionRate: 85,
-      riskLevel: 'medium',
-      baselineCost: realData.metadata?.totalSpend || 0,
-      implementation: {
-        complexity: 'High',
-        timeline: 16,
-        costMillions: 3.0
-      },
-      breakdown: {
-        volumeAggregation: baselineSpend * 0.18 * 0.45,
-        priceOptimization: baselineSpend * 0.18 * 0.40,
-        inventoryOptimization: baselineSpend * 0.18 * 0.10,
-        adminEfficiency: baselineSpend * 0.18 * 0.05
-      },
-      quintupleMissionScore: 78,
-      npv5Year: baselineSpend * 0.18 * 5 - 3.0,
-      vendorSplit: { zimmer_biomet: 60, j_j: 40 },
-      agentScore: getAgentScore(SCENARIO_IDS.DUAL_VALUE)
-    },
-    [SCENARIO_IDS.DUAL_INNOVATION]: {
-      id: SCENARIO_IDS.DUAL_INNOVATION,
-      name: SCENARIO_NAMES[SCENARIO_IDS.DUAL_INNOVATION],
-      shortName: 'Stryker + J&J',
-      description: 'Innovation-focused (Stryker + J&J) - leading technology, higher adoption risk',
-      vendors: ['STRYKER', 'J&J'],
-      vendorCount: 2,
-      savingsPercent: 16,
-      annualSavings: baselineSpend * 0.16,
-      savingsRange: {
-        conservative: baselineSpend * 0.16 * 0.80,
-        expected: baselineSpend * 0.16,
-        optimistic: baselineSpend * 0.16 * 1.20
-      },
-      adoptionRate: 82,
-      riskLevel: 'high',
-      baselineCost: realData.metadata?.totalSpend || 0,
-      implementation: {
-        complexity: 'High',
-        timeline: 18,
-        costMillions: 3.2
-      },
-      breakdown: {
-        volumeAggregation: baselineSpend * 0.16 * 0.45,
-        priceOptimization: baselineSpend * 0.16 * 0.40,
-        inventoryOptimization: baselineSpend * 0.16 * 0.10,
-        adminEfficiency: baselineSpend * 0.16 * 0.05
-      },
-      quintupleMissionScore: 80,
-      npv5Year: baselineSpend * 0.16 * 5 - 3.2,
-      vendorSplit: { stryker: 50, j_j: 50 },
-      agentScore: getAgentScore(SCENARIO_IDS.DUAL_INNOVATION)
+  // Use ALL scenarios from the data file
+  const scenarios = {};
+
+  Object.keys(realData.scenarios).forEach(scenarioId => {
+    const dataScenario = realData.scenarios[scenarioId];
+    const vendors = dataScenario.vendors || [];
+
+    // Generate vendor-based name
+    let displayName;
+    if (scenarioId === 'status-quo') {
+      displayName = 'Status Quo';
+    } else if (vendors.length === 1) {
+      displayName = `Single Vendor (${formatVendorNames(vendors)})`;
+    } else {
+      displayName = formatVendorNames(vendors);
     }
-  };
+
+    scenarios[scenarioId] = {
+      id: scenarioId,
+      name: displayName,
+      shortName: dataScenario.shortName || displayName,
+      description: dataScenario.description || '',
+      vendors: vendors,
+      vendorCount: vendors.length,
+      savingsPercent: (dataScenario.savingsPercent || 0) * 100,
+      annualSavings: (dataScenario.annualSavings || 0) / 1000000, // Convert to millions
+      savingsRange: {
+        conservative: ((dataScenario.annualSavings || 0) * 0.85) / 1000000,
+        expected: (dataScenario.annualSavings || 0) / 1000000,
+        optimistic: ((dataScenario.annualSavings || 0) * 1.15) / 1000000
+      },
+      adoptionRate: (dataScenario.adoptionRate || 0) * 100,
+      riskLevel: dataScenario.riskLevel || 'medium',
+      baselineCost: realData.metadata?.totalSpend || 0,
+      implementation: {
+        complexity: dataScenario.implementation?.complexity || 'Medium',
+        timeline: dataScenario.implementation?.timeline || 12,
+        costMillions: dataScenario.implementation?.costMillions || 2.5
+      },
+      breakdown: {
+        volumeAggregation: ((dataScenario.annualSavings || 0) * 0.45) / 1000000,
+        priceOptimization: ((dataScenario.annualSavings || 0) * 0.40) / 1000000,
+        inventoryOptimization: ((dataScenario.annualSavings || 0) * 0.10) / 1000000,
+        adminEfficiency: ((dataScenario.annualSavings || 0) * 0.05) / 1000000
+      },
+      quintupleMissionScore: dataScenario.quintupleMissionScore || 75,
+      npv5Year: (dataScenario.npv5Year || 0) / 1000000, // Convert to millions
+      vendorSplit: dataScenario.vendorSplit || {},
+      agentScore: getAgentScore(scenarioId),
+      riskScore: dataScenario.riskScore || 5
+    };
+  });
+
 
   // Calculate volume-weighted risk for each scenario
   Object.keys(scenarios).forEach(scenarioId => {

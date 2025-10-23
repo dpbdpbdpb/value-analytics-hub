@@ -186,7 +186,7 @@ const TeamDecisionDashboard = () => {
                   </div>
                 </div>
                 <div className="bg-white rounded-lg border border-blue-200 p-2">
-                  <div className="text-xs text-blue-700 mb-0.5">Need Training</div>
+                  <div className="text-xs text-blue-700 mb-0.5">Need Transitioning</div>
                   <div className="text-base font-bold text-blue-900">
                     {Math.round(totalSurgeons * (1 - (scenario.adoptionRate || 0)))} surgeons
                   </div>

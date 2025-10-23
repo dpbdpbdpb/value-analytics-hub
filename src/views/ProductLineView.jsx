@@ -76,7 +76,7 @@ const ProductLineView = () => {
     });
   };
 
-  const workflowStages = getWorkflowStages();
+  const workflowStages = React.useMemo(() => getWorkflowStages(), [orthoData]);
 
   // Load orthopedic data based on product line
   useEffect(() => {
