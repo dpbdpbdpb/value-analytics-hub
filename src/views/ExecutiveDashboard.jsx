@@ -2811,9 +2811,9 @@ const EnhancedOrthopedicDashboard = () => {
                 <div className="text-3xl font-bold text-amber-900">
                   ${getAdjustedMetrics(selectedScenario)?.annualSavings.toFixed(2)}M
                 </div>
-                <div className="text-sm font-medium mt-2" style={{ color: ((getAdjustedMetrics(selectedScenario)?.annualSavings || 0) - (SCENARIOS[selectedScenario]?.annualSavings || 0)) >= 0 ? '#10B981' : '#EF4444' }}>
-                  {((getAdjustedMetrics(selectedScenario)?.annualSavings || 0) - (SCENARIOS[selectedScenario]?.annualSavings || 0)) >= 0 ? '↑' : '↓'}
-                  ${Math.abs((getAdjustedMetrics(selectedScenario)?.annualSavings || 0) - (SCENARIOS[selectedScenario]?.annualSavings || 0)).toFixed(2)}M vs baseline
+                <div className="text-sm font-medium mt-2" style={{ color: ((getAdjustedMetrics(selectedScenario)?.annualSavings || 0) - (SCENARIOS['status-quo']?.annualSavings || 0)) >= 0 ? '#10B981' : '#EF4444' }}>
+                  {((getAdjustedMetrics(selectedScenario)?.annualSavings || 0) - (SCENARIOS['status-quo']?.annualSavings || 0)) >= 0 ? '↑' : '↓'}
+                  ${Math.abs((getAdjustedMetrics(selectedScenario)?.annualSavings || 0) - (SCENARIOS['status-quo']?.annualSavings || 0)).toFixed(2)}M vs status quo
                 </div>
               </div>
 
@@ -2849,9 +2849,9 @@ const EnhancedOrthopedicDashboard = () => {
                 <div className="text-3xl font-bold text-blue-900">
                   {getAdjustedMetrics(selectedScenario)?.adoptionRate.toFixed(0)}%
                 </div>
-                <div className="text-sm font-medium mt-2" style={{ color: ((getAdjustedMetrics(selectedScenario)?.adoptionRate || 0) - (SCENARIOS[selectedScenario]?.adoptionRate || 0)) >= 0 ? '#10B981' : '#EF4444' }}>
-                  {((getAdjustedMetrics(selectedScenario)?.adoptionRate || 0) - (SCENARIOS[selectedScenario]?.adoptionRate || 0)) >= 0 ? '↑' : '↓'}
-                  {Math.abs((getAdjustedMetrics(selectedScenario)?.adoptionRate || 0) - (SCENARIOS[selectedScenario]?.adoptionRate || 0)).toFixed(0)}% vs baseline
+                <div className="text-sm font-medium mt-2" style={{ color: ((getAdjustedMetrics(selectedScenario)?.adoptionRate || 0) - (SCENARIOS['status-quo']?.adoptionRate || 0)) >= 0 ? '#10B981' : '#EF4444' }}>
+                  {((getAdjustedMetrics(selectedScenario)?.adoptionRate || 0) - (SCENARIOS['status-quo']?.adoptionRate || 0)) >= 0 ? '↑' : '↓'}
+                  {Math.abs((getAdjustedMetrics(selectedScenario)?.adoptionRate || 0) - (SCENARIOS['status-quo']?.adoptionRate || 0)).toFixed(0)}% vs status quo
                 </div>
               </div>
 

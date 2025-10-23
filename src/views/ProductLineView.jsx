@@ -14,7 +14,7 @@ const ProductLineView = () => {
 
   // Sourcing Lifecycle Workflow Stages - dynamically loaded from data
   const getWorkflowStages = () => {
-    const tracking = orthoData?.workflowTracking;
+    const tracking = orthoData?.workflowTracking || orthoData?.workflow;
     if (!tracking) {
       // Fallback if no workflow data
       return [];
@@ -242,13 +242,23 @@ const ProductLineView = () => {
       <div className="p-6">
         <div className="max-w-7xl mx-auto">
           {/* Breadcrumb / Back */}
-          <button
-            onClick={() => navigate(`/service-line/${serviceLineId}`)}
-            className="flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-6 font-medium"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Orthopedic Product Lines
-          </button>
+          <div className="flex items-center justify-between mb-6">
+            <button
+              onClick={() => navigate(`/service-line/${serviceLineId}`)}
+              className="flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Orthopedic Product Lines
+            </button>
+            <button
+              onClick={() => navigate('/admin/data-upload')}
+              className="flex items-center gap-2 text-gray-400 hover:text-gray-600 text-sm font-medium"
+              title="Update data"
+            >
+              <Settings className="w-4 h-4" />
+              Update Data
+            </button>
+          </div>
 
           {/* Header */}
           <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
@@ -264,7 +274,7 @@ const ProductLineView = () => {
                 </p>
               </div>
               <div className="text-right">
-                <div className="text-sm text-gray-600">Annual Implant Spend</div>
+                <div className="text-sm text-gray-600">Annual Surgical Supply Spend</div>
                 <div className="text-3xl font-bold text-gray-900">
                   {orthoData ? `$${(orthoData.metadata.totalSpend / 1000000).toFixed(1)}M` : '-'}
                 </div>
