@@ -568,9 +568,9 @@ const AdminDataUpload = () => {
     if (Array.isArray(data.matrixPricing)) {
       data.matrixPricing.forEach((item, idx) => {
         if (!item.category) warnings.push(`matrixPricing[${idx}] missing category`);
-        if (!item.currentAvgPrice) warnings.push(`matrixPricing[${idx}] missing currentAvgPrice`);
-        if (!item.matrixPrice) warnings.push(`matrixPricing[${idx}] missing matrixPrice`);
-        if (!item.potentialSavings) warnings.push(`matrixPricing[${idx}] missing potentialSavings`);
+        if (item.currentAvgPrice === undefined || item.currentAvgPrice === null) warnings.push(`matrixPricing[${idx}] missing currentAvgPrice`);
+        if (item.matrixPrice === undefined || item.matrixPrice === null) warnings.push(`matrixPricing[${idx}] missing matrixPrice`);
+        if (item.potentialSavings === undefined || item.potentialSavings === null) warnings.push(`matrixPricing[${idx}] missing potentialSavings`);
       });
     }
 
