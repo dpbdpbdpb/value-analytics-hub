@@ -23189,54 +23189,21 @@
     }
   ],
   "workflowTracking": {
-    "currentStage": "implementation",
-    "lastUpdated": "2024-10-01T00:00:00.000Z",
+    "currentStage": "sourcing-review",
+    "lastUpdated": "2025-10-23T00:00:00.000Z",
     "stages": {
       "sourcing-review": {
-        "status": "completed",
-        "startDate": "2024-06-01",
-        "completionDate": "2024-09-10",
-        "notes": "Completed market analysis and vendor evaluation for hip-knee replacement implants"
+        "status": "active",
+        "startDate": "2025-10-23",
+        "notes": "Analyzing market data, vendor landscape, and internal spend patterns for hip-knee replacement implants"
       },
       "decision": {
-        "status": "completed",
-        "decisionDate": "2024-09-15",
-        "selectedScenario": "dual-premium",
-        "notes": "Selected dual-vendor strategy: Zimmer Biomet + Stryker based on surgeon preference analysis and cost optimization"
+        "status": "upcoming",
+        "notes": "Decision phase will begin after sourcing review completion"
       },
       "implementation": {
-        "status": "active",
-        "startDate": "2024-10-01",
-        "expectedCompletion": "2025-03-31",
-        "percentComplete": 35,
-        "milestones": [
-          {
-            "name": "Contract signing",
-            "completed": true,
-            "date": "2024-09-28"
-          },
-          {
-            "name": "Vendor onboarding",
-            "completed": true,
-            "date": "2024-10-12"
-          },
-          {
-            "name": "Surgeon training sessions",
-            "completed": false,
-            "expectedDate": "2025-01-31"
-          },
-          {
-            "name": "Go-live for all sites",
-            "completed": false,
-            "expectedDate": "2025-02-01"
-          },
-          {
-            "name": "Full adoption",
-            "completed": false,
-            "expectedDate": "2025-03-31"
-          }
-        ],
-        "notes": "Rolling out new dual-vendor contracts. Completed vendor onboarding. Surgeon training in progress through Q1 2025."
+        "status": "upcoming",
+        "notes": "Implementation phase will begin after decision is made"
       },
       "lookback": {
         "status": "upcoming",
