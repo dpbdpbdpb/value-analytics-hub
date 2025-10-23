@@ -69,7 +69,7 @@ const EnhancedOrthopedicDashboard = () => {
     setDataError(null);
     try {
       // Use PUBLIC_URL for Create React App compatibility
-      const jsonPath = `${process.env.PUBLIC_URL}/orthopedic-data.json`;
+      const jsonPath = `${process.env.PUBLIC_URL}/data/hip-knee-data.json`;
       console.log('📊 Fetching data from:', jsonPath);
 
       const response = await fetch(jsonPath);

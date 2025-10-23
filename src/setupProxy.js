@@ -19,18 +19,18 @@ module.exports = function(app) {
       // Determine filename based on product line
       const filename = productLine === 'shoulder'
         ? 'shoulder-data.json'
-        : 'orthopedic-data.json';
+        : 'hip-knee-data.json';
 
-      const filePath = path.join(__dirname, '..', 'public', filename);
+      const filePath = path.join(__dirname, '..', 'public', 'data', filename);
 
       // Write the file
       fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
 
-      console.log(`✓ Saved ${filename} to public/`);
+      console.log(`✓ Saved ${filename} to public/data/`);
 
       res.json({
         success: true,
-        message: `Data saved successfully to public/${filename}`,
+        message: `Data saved successfully to public/data/${filename}`,
         filename
       });
     } catch (error) {

@@ -20,8 +20,8 @@ const TeamDecisionDashboard = () => {
     setLoading(true);
 
     // Load orthopedic data based on product line
-    const dataFileName = productLine === 'hipknee' ? 'orthopedic-data.json' : 'shoulder-data.json';
-    const jsonPath = `${process.env.PUBLIC_URL}/${dataFileName}`;
+    const dataFileName = productLine === 'hipknee' ? 'hip-knee-data.json' : 'shoulder-data.json';
+    const jsonPath = `${process.env.PUBLIC_URL}/data/${dataFileName}`;
 
     fetch(jsonPath)
       .then(response => response.json())

@@ -80,8 +80,8 @@ const ProductLineView = () => {
 
   // Load orthopedic data based on product line
   useEffect(() => {
-    const dataFile = productLineId === 'shoulder' ? 'shoulder-data.json' : 'orthopedic-data.json';
-    const jsonPath = `${process.env.PUBLIC_URL}/${dataFile}`;
+    const dataFile = productLineId === 'shoulder' ? 'shoulder-data.json' : 'hip-knee-data.json';
+    const jsonPath = `${process.env.PUBLIC_URL}/data/${dataFile}`;
     fetch(jsonPath)
       .then(response => response.json())
       .then(data => {

@@ -12,8 +12,8 @@ const ServiceLineView = () => {
 
   // Load orthopedic data
   useEffect(() => {
-    const hipKneePath = `${process.env.PUBLIC_URL}/orthopedic-data.json`;
-    const shoulderPath = `${process.env.PUBLIC_URL}/shoulder-data.json`;
+    const hipKneePath = `${process.env.PUBLIC_URL}/data/hip-knee-data.json`;
+    const shoulderPath = `${process.env.PUBLIC_URL}/data/shoulder-data.json`;
 
     Promise.all([
       fetch(hipKneePath).then(r => r.json()),

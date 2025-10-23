@@ -601,8 +601,8 @@ const AdminDataUpload = () => {
 
       if (response.ok) {
         setSaveSuccess(true);
-        const filename = productLine === 'shoulder' ? 'shoulder-data.json' : 'orthopedic-data.json';
-        alert(`✓ Data saved successfully!\n\nFile: public/${filename}\n\nNext steps:\n1. Run: git add public/${filename}\n2. Run: git commit -m "Update ${productLine} data"\n3. Run: git push`);
+        const filename = productLine === 'shoulder' ? 'shoulder-data.json' : 'hip-knee-data.json';
+        alert(`✓ Data saved successfully!\n\nFile: public/data/${filename}\n\nNext steps:\n1. Run: git add public/data/${filename}\n2. Run: git commit -m "Update ${productLine} data"\n3. Run: git push`);
       } else {
         throw new Error(result.error || 'Failed to save data');
       }

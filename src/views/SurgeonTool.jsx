@@ -40,7 +40,7 @@ const SurgeonTool = () => {
 
   // Load surgeon data from new baseline
   useEffect(() => {
-    const jsonPath = `${process.env.PUBLIC_URL}/orthopedic-data.json`;
+    const jsonPath = `${process.env.PUBLIC_URL}/data/hip-knee-data.json`;
     fetch(jsonPath)
       .then(response => {
         if (!response.ok) {
