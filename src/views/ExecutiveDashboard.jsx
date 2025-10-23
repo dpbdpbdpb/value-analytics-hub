@@ -263,15 +263,10 @@ const EnhancedOrthopedicDashboard = () => {
     const leverageImpact = volumeImpact * (1 + leverageAdjustment);
     const adjustedSavings = leverageImpact * (adjustedAdoption / base.adoptionRate);
 
-    const safeAgentScore = typeof base.agentScore === 'number' && !Number.isNaN(base.agentScore)
-      ? base.agentScore
-      : 3.5;
-
     return {
       ...base,
       adoptionRate: adjustedAdoption,
       annualSavings: adjustedSavings,
-      agentScore: safeAgentScore,
       implementation: {
         ...base.implementation,
         timeline: whatIfParams.implementationMonths
@@ -417,35 +412,12 @@ const EnhancedOrthopedicDashboard = () => {
     const s = getAdjustedMetrics(scenario);
     if (!s) return null;
 
-    // Determine recommendation badge based on agentScore
-    const getRecommendationBadge = (score) => {
-      if (score >= 4.2) return { text: 'STRONGLY RECOMMENDED', color: 'bg-green-600', textColor: 'text-white' };
-      if (score >= 3.8) return { text: 'RECOMMENDED', color: 'bg-green-500', textColor: 'text-white' };
-      if (score >= 3.0) return { text: 'CONSIDER', color: 'bg-yellow-500', textColor: 'text-white' };
-      if (score >= 2.5) return { text: 'CAUTION', color: 'bg-orange-500', textColor: 'text-white' };
-      return { text: 'NOT RECOMMENDED', color: 'bg-red-500', textColor: 'text-white' };
-    };
-
-    const agentScore = typeof s.agentScore === 'number' && !Number.isNaN(s.agentScore)
-      ? s.agentScore
-      : 3.5;
-    const recommendation = getRecommendationBadge(agentScore);
-
     return (
       <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-6 mb-6 border-2 border-purple-200">
         <div className="flex items-start justify-between mb-4">
           <div>
             <h3 className="text-xl font-bold text-purple-900">Executive Summary: Scenario {scenario}</h3>
             <p className="text-purple-700 mt-1">{s.name}</p>
-          </div>
-          <div className="text-right">
-            <div className="text-sm text-purple-600">8-Agent Validation Score</div>
-            <div className="text-2xl font-bold" style={{ color: COLORS.primary }}>
-              {agentScore.toFixed(1)}/5.0
-            </div>
-            <div className={`mt-2 px-3 py-1 rounded-full text-xs font-bold ${recommendation.color} ${recommendation.textColor}`}>
-              {recommendation.text}
-            </div>
           </div>
         </div>
 
@@ -597,16 +569,12 @@ const EnhancedOrthopedicDashboard = () => {
                 <th className="px-4 py-3 text-left font-bold text-gray-900">Annual Savings</th>
                 <th className="px-4 py-3 text-left font-bold text-gray-900">Adoption Rate</th>
                 <th className="px-4 py-3 text-left font-bold text-gray-900">Risk Level</th>
-                <th className="px-4 py-3 text-left font-bold text-gray-900">Agent Score</th>
                 <th className="px-4 py-3 text-left font-bold text-gray-900">Expected Value</th>
                 <th className="px-4 py-3 text-left font-bold text-gray-900">Action</th>
               </tr>
             </thead>
             <tbody>
               {filteredScenarios.map(scenario => {
-                const agentScore = typeof scenario.agentScore === 'number' && !Number.isNaN(scenario.agentScore)
-                  ? scenario.agentScore
-                  : 3.5;
                 return (
                   <tr
                     key={scenario.id}
@@ -648,9 +616,6 @@ const EnhancedOrthopedicDashboard = () => {
                       }`}>
                         {scenario.riskLevel.charAt(0).toUpperCase() + scenario.riskLevel.slice(1)}
                       </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="font-bold text-purple-600">{agentScore.toFixed(1)}/5.0</div>
                     </td>
                     <td className="px-4 py-4">
                       <div className="font-medium text-blue-600">${getProbabilityWeighted(scenario.id).toFixed(2)}M</div>
@@ -1314,12 +1279,10 @@ const EnhancedOrthopedicDashboard = () => {
                                     s.id === selectedScenario ? 'bg-purple-600 text-white' : 'bg-white text-gray-800'
                                   }`}
                                 >
-                                  {s.shortName}
+                                  <div className="truncate max-w-[120px]">{s.shortName}</div>
+                                  <div className="text-[10px] font-normal">${s.annualSavings.toFixed(1)}M</div>
                                 </div>
                               ))}
-                              <div className="text-xs text-gray-600 mt-1">
-                                {scenariosInCell[0].savingsPercent}% / {scenariosInCell[0].riskScore.toFixed(1)}
-                              </div>
                             </div>
                           ) : (
                             <div className="text-center px-1">
@@ -1467,7 +1430,8 @@ const EnhancedOrthopedicDashboard = () => {
                           : 'bg-white text-green-900 hover:bg-green-50 font-semibold'
                       }`}
                     >
-                      {s.shortName}: ${s.annualSavings.toFixed(1)}M
+                      <div className="truncate">{s.shortName}</div>
+                      <div className="text-[10px]">${s.annualSavings.toFixed(1)}M</div>
                     </div>
                   ))}
                   {Object.values(SCENARIOS).filter(s => s.annualSavings >= 15 && s.riskScore <= 3).length === 0 && (
@@ -1495,7 +1459,8 @@ const EnhancedOrthopedicDashboard = () => {
                           : 'bg-white text-yellow-900 hover:bg-yellow-50 font-semibold'
                       }`}
                     >
-                      {s.shortName}: ${s.annualSavings.toFixed(1)}M
+                      <div className="truncate">{s.shortName}</div>
+                      <div className="text-[10px]">${s.annualSavings.toFixed(1)}M</div>
                     </div>
                   ))}
                   {Object.values(SCENARIOS).filter(s => s.annualSavings >= 15 && s.riskScore > 3 && s.riskScore <= 6).length === 0 && (
@@ -1523,7 +1488,8 @@ const EnhancedOrthopedicDashboard = () => {
                           : 'bg-white text-red-900 hover:bg-red-50 font-semibold'
                       }`}
                     >
-                      {s.shortName}: ${s.annualSavings.toFixed(1)}M
+                      <div className="truncate">{s.shortName}</div>
+                      <div className="text-[10px]">${s.annualSavings.toFixed(1)}M</div>
                     </div>
                   ))}
                   {Object.values(SCENARIOS).filter(s => s.annualSavings >= 15 && s.riskScore > 6).length === 0 && (
@@ -1552,7 +1518,8 @@ const EnhancedOrthopedicDashboard = () => {
                           : 'bg-white text-green-800 hover:bg-green-50 font-semibold'
                       }`}
                     >
-                      {s.shortName}: ${s.annualSavings.toFixed(1)}M
+                      <div className="truncate">{s.shortName}</div>
+                      <div className="text-[10px]">${s.annualSavings.toFixed(1)}M</div>
                     </div>
                   ))}
                   {Object.values(SCENARIOS).filter(s => s.annualSavings >= 10 && s.annualSavings < 15 && s.riskScore <= 3).length === 0 && (
@@ -1580,7 +1547,8 @@ const EnhancedOrthopedicDashboard = () => {
                           : 'bg-white text-yellow-800 hover:bg-yellow-50 font-semibold'
                       }`}
                     >
-                      {s.shortName}: ${s.annualSavings.toFixed(1)}M
+                      <div className="truncate">{s.shortName}</div>
+                      <div className="text-[10px]">${s.annualSavings.toFixed(1)}M</div>
                     </div>
                   ))}
                   {Object.values(SCENARIOS).filter(s => s.annualSavings >= 10 && s.annualSavings < 15 && s.riskScore > 3 && s.riskScore <= 6).length === 0 && (
@@ -1608,7 +1576,8 @@ const EnhancedOrthopedicDashboard = () => {
                           : 'bg-white text-orange-900 hover:bg-orange-50 font-semibold'
                       }`}
                     >
-                      {s.shortName}: ${s.annualSavings.toFixed(1)}M
+                      <div className="truncate">{s.shortName}</div>
+                      <div className="text-[10px]">${s.annualSavings.toFixed(1)}M</div>
                     </div>
                   ))}
                   {Object.values(SCENARIOS).filter(s => s.annualSavings >= 10 && s.annualSavings < 15 && s.riskScore > 6).length === 0 && (
@@ -1637,7 +1606,8 @@ const EnhancedOrthopedicDashboard = () => {
                           : 'bg-white text-blue-900 hover:bg-blue-50 font-semibold'
                       }`}
                     >
-                      {s.shortName}: ${s.annualSavings.toFixed(1)}M
+                      <div className="truncate">{s.shortName}</div>
+                      <div className="text-[10px]">${s.annualSavings.toFixed(1)}M</div>
                     </div>
                   ))}
                   {Object.values(SCENARIOS).filter(s => s.annualSavings < 10 && s.riskScore <= 3).length === 0 && (
@@ -1665,7 +1635,8 @@ const EnhancedOrthopedicDashboard = () => {
                           : 'bg-white text-gray-800 hover:bg-gray-50 font-semibold'
                       }`}
                     >
-                      {s.shortName}: ${s.annualSavings.toFixed(1)}M
+                      <div className="truncate">{s.shortName}</div>
+                      <div className="text-[10px]">${s.annualSavings.toFixed(1)}M</div>
                     </div>
                   ))}
                   {Object.values(SCENARIOS).filter(s => s.annualSavings < 10 && s.riskScore > 3 && s.riskScore <= 6).length === 0 && (
@@ -1693,7 +1664,8 @@ const EnhancedOrthopedicDashboard = () => {
                           : 'bg-white text-red-900 hover:bg-red-50 font-semibold'
                       }`}
                     >
-                      {s.shortName}: ${s.annualSavings.toFixed(1)}M
+                      <div className="truncate">{s.shortName}</div>
+                      <div className="text-[10px]">${s.annualSavings.toFixed(1)}M</div>
                     </div>
                   ))}
                   {Object.values(SCENARIOS).filter(s => s.annualSavings < 10 && s.riskScore > 6).length === 0 && (
@@ -2423,18 +2395,26 @@ const EnhancedOrthopedicDashboard = () => {
           <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
             <h3 className="text-xl font-bold text-purple-900 mb-6 flex items-center gap-2">
               <Calendar className="w-6 h-6" />
-              2025 Negotiating Windows Timeline
+              Negotiating Windows Timeline (Next 12 Months)
             </h3>
 
             {/* Timeline */}
             <div className="relative">
               {/* Month headers */}
               <div className="grid grid-cols-12 gap-1 mb-4">
-                {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, idx) => (
-                  <div key={idx} className="text-center text-xs font-semibold text-gray-600">
-                    {month}
-                  </div>
-                ))}
+                {(() => {
+                  const today = new Date();
+                  const months = [];
+                  for (let i = 0; i < 12; i++) {
+                    const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
+                    months.push(date.toLocaleDateString('en-US', { month: 'short' }));
+                  }
+                  return months.map((month, idx) => (
+                    <div key={idx} className="text-center text-xs font-semibold text-gray-600">
+                      {month}
+                    </div>
+                  ));
+                })()}
               </div>
 
               {/* Vendor timelines */}
@@ -2581,6 +2561,27 @@ const EnhancedOrthopedicDashboard = () => {
           <div className="text-xs font-semibold uppercase tracking-wide opacity-90">Product Line</div>
           <div className="text-lg font-bold">Hip & Knee Replacement</div>
         </div>
+      </div>
+
+      {/* Scenario Selector - Prominent */}
+      <div className="mb-6 bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl p-6 shadow-xl">
+        <label className="block text-sm font-bold text-purple-100 uppercase tracking-wide mb-3">
+          Select Baseline Scenario
+        </label>
+        <select
+          value={selectedScenario}
+          onChange={(e) => setSelectedScenario(e.target.value)}
+          className="w-full px-6 py-4 text-lg font-bold border-4 border-purple-400 rounded-lg bg-white text-gray-900 hover:border-purple-300 focus:outline-none focus:ring-4 focus:ring-purple-300 cursor-pointer shadow-lg"
+        >
+          {Object.values(SCENARIOS).map(scenario => (
+            <option key={scenario.id} value={scenario.id}>
+              {scenario.shortName} - ${scenario.annualSavings.toFixed(2)}M savings ({scenario.savingsPercent}% reduction)
+            </option>
+          ))}
+        </select>
+        <p className="text-purple-100 text-sm mt-3 italic">
+          Choose your baseline scenario above, then adjust the parameters below to test different assumptions
+        </p>
       </div>
 
       {/* Parameter Definitions Banner */}

@@ -152,14 +152,6 @@ export const generateScenarios = (realData) => {
     return generatePlaceholderScenarios();
   }
 
-  const getAgentScore = (scenarioId) => {
-    const dataScore = realData?.scenarios?.[scenarioId]?.agentScore;
-    if (typeof dataScore === 'number' && !Number.isNaN(dataScore)) {
-      return dataScore;
-    }
-    return DEFAULT_AGENT_SCORES[scenarioId] ?? 3.5;
-  };
-
   const totalCases = realData.metadata?.totalCases || 0;
   const baselineSpend = (realData.metadata?.totalSpend || 0) / 1000000; // Convert to millions
   const surgeons = realData.surgeons || [];
@@ -212,7 +204,6 @@ export const generateScenarios = (realData) => {
       quintupleMissionScore: dataScenario.quintupleMissionScore || 75,
       npv5Year: (dataScenario.npv5Year || 0) / 1000000, // Convert to millions
       vendorSplit: dataScenario.vendorSplit || {},
-      agentScore: getAgentScore(scenarioId),
       riskScore: dataScenario.riskScore || 5
     };
   });
@@ -250,7 +241,6 @@ const generatePlaceholderScenarios = () => {
     adoptionRate: 0,
     riskLevel: 'loading',
     riskScore: 0,
-    agentScore: DEFAULT_AGENT_SCORES[scenarioId] ?? 3.5,
     quintupleMissionScore: 0,
     npv5Year: 0,
     implementation: {
