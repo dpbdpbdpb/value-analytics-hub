@@ -41,12 +41,25 @@ INSTRUCTIONS:
     - Cost Reduction: savings potential
     - Provider Experience: surgeon adoption, workflow impact
     - Health Equity: geographic/demographic access
-11. **Generate matrix pricing:** For each component category, calculate vendor pricing comparison:
-    - Group components by category (e.g., "Hip Stem", "Knee Tibial Tray", "Acetabular Cup")
-    - For each category, calculate median price per vendor
-    - Include sample count and price range (min/max) for transparency
-    - Filter out outliers (prices < $100 or > $15,000)
-    - This enables component-level price comparison across vendors
+11. **Generate matrix pricing in TWO formats:**
+
+    **Format 1 - matrixPricing (ARRAY for UI display):**
+    - Create an ARRAY of components with aggregated metrics
+    - For each component category:
+      * Calculate weighted average currentAvgPrice across all vendors
+      * Set matrixPrice as the lowest vendor price (target price)
+      * Estimate totalSpend based on volume and currentAvgPrice
+      * Calculate potentialSavings = volume * (currentAvgPrice - matrixPrice)
+    - Sort array by potentialSavings descending
+    - Only include components where potentialSavings > 0
+
+    **Format 2 - matrixPricingDetailed (OBJECT for detailed analysis):**
+    - Create an OBJECT keyed by component category
+    - For each category, include vendor-level detail:
+      * Calculate median price per vendor
+      * Include sample count and price range (min/max) for transparency
+      * Filter out outliers (prices < $100 or > $15,000)
+    - This enables deep-dive vendor price comparison
 12. **Calculate quality metrics:** If clinical outcomes data is available:
     - Revision rates (% of cases requiring revision surgery)
     - Readmission rates (30-day and 90-day all-cause)
@@ -196,7 +209,16 @@ Please provide the complete JSON file following this schema:
       "bodyPart": "HIP or KNEE or SHOULDER etc"
     }
   ],
-  "matrixPricing": {
+  "matrixPricing": [
+    {
+      "category": "COMPONENT_CATEGORY_NAME",
+      "totalSpend": 0,
+      "currentAvgPrice": 0,
+      "matrixPrice": 0,
+      "potentialSavings": 0
+    }
+  ],
+  "matrixPricingDetailed": {
     "COMPONENT_CATEGORY": {
       "category": "COMPONENT_CATEGORY_NAME",
       "vendors": {
@@ -323,8 +345,10 @@ VALIDATION CHECKS:
 - Validate that primaryVendorPercent for each surgeon sums correctly
 - Verify each surgeon is assigned to a hospital
 - Confirm peerInfluence data is calculated for all surgeons
-- Verify matrixPricing contains data for major component categories
-- Ensure matrixPricing median prices are reasonable ($100-$15,000 range)
+- **CRITICAL: Verify matrixPricing is an ARRAY with potentialSavings calculated**
+- **CRITICAL: Verify matrixPricingDetailed is an OBJECT with vendor-level detail**
+- Ensure both matrixPricing and matrixPricingDetailed contain same component categories
+- Ensure matrixPricing prices are reasonable ($100-$15,000 range)
 - Validate qualityMetrics rates are percentages (0-100 scale)
 - Verify qualityMetrics benchmarks are included for comparison
 - Check revenueCycle contribution margins are calculated correctly
