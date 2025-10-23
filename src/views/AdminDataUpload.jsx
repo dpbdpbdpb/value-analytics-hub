@@ -176,7 +176,11 @@ const AdminDataUpload = () => {
         getFieldValue(row, 'vendor', ['Vendor', 'vendor', 'VENDOR', 'Vendor Name', 'Manufacturer']) || 'UNKNOWN'
       );
       const surgeon = getFieldValue(row, 'surgeon', ['Surgeon', 'surgeon', 'SURGEON', 'Doctor', 'Physician']) || 'Unknown';
-      const component = getFieldValue(row, 'component', ['Component', 'component', 'COMPONENT', 'Item', 'Description', 'Product']) || 'Unknown';
+      const componentRaw = getFieldValue(row, 'component', ['Component', 'component', 'COMPONENT', 'Item', 'Description', 'Product']) || 'Unknown';
+
+      // Normalize component name for better grouping
+      const component = normalizeComponentName(componentRaw);
+
       const quantity = parseFloat(getFieldValue(row, 'quantity', ['Quantity', 'quantity', 'QTY', 'Qty', 'Count', 'Units']) || 1);
       const price = parseFloat(getFieldValue(row, 'price', ['Price', 'price', 'PRICE', 'Unit Price', 'Cost', 'Unit Cost']) || 0);
       const spend = quantity * price;
@@ -204,13 +208,13 @@ const AdminDataUpload = () => {
       surgeonMap[surgeon].vendors[vendor].cases += quantity;
       surgeonMap[surgeon].vendors[vendor].spend += spend;
 
-      // Aggregate components
+      // Aggregate components (using normalized name)
       if (!componentMap[component]) {
         componentMap[component] = [];
       }
       componentMap[component].push({ vendor, price, quantity });
 
-      // Matrix pricing detailed
+      // Matrix pricing detailed (using normalized name for grouping)
       if (!matrixPricingMap[component]) {
         matrixPricingMap[component] = { category: component, vendors: {} };
       }
@@ -345,6 +349,108 @@ const AdminDataUpload = () => {
     };
   };
 
+  // Normalize component names for better grouping
+  const normalizeComponentName = (name) => {
+    if (!name) return 'UNKNOWN';
+
+    let normalized = name.toUpperCase().trim();
+
+    // Remove common prefixes/suffixes that don't affect component category
+    const removePatterns = [
+      /\bSTERILE\b/g,
+      /\bLATEX-FREE\b/g,
+      /\bLATEX FREE\b/g,
+      /\bNON-STERILE\b/g,
+      /\bDISPOSABLE\b/g,
+      /\bSINGLE USE\b/g,
+      /\bREUSABLE\b/g,
+      /\s+SIZE\s+[A-Z0-9]+/gi,
+      /\s+\d+MM\b/gi,
+      /\s+\d+CM\b/gi,
+      /\s+-\d+\b/g,  // Remove trailing numbers like "-3"
+      /\s+TYPE\s*\d+/gi,
+      /\s+MODEL\s+[A-Z0-9]+/gi,
+      /\s+REF\s*[:#]?\s*[A-Z0-9-]+/gi,
+      /\s+CAT\s*[:#]?\s*[A-Z0-9-]+/gi,
+      /\s+LEFT\b/gi,
+      /\s+RIGHT\b/gi,
+      /\s+L\b$/,  // Trailing L or R
+      /\s+R\b$/
+    ];
+
+    removePatterns.forEach(pattern => {
+      normalized = normalized.replace(pattern, '');
+    });
+
+    // Standardize common terms
+    const standardizations = {
+      'ACETABULAR': 'ACETABULAR',
+      'ACETAB': 'ACETABULAR',
+      'FEMORAL': 'FEMORAL',
+      'FEM': 'FEMORAL',
+      'TIBIAL': 'TIBIAL',
+      'TIB': 'TIBIAL',
+      'PATELLAR': 'PATELLAR',
+      'PAT': 'PATELLAR',
+      'KNEE': 'KNEE',
+      'HIP': 'HIP',
+      'SHOULDER': 'SHOULDER',
+      'HUMERAL': 'HUMERAL',
+      'GLENOID': 'GLENOID',
+      'COMPONENT': 'COMP',
+      'IMPLANT': 'IMPLANT',
+      'PROSTHESIS': 'PROSTH',
+      'REVISION': 'REV',
+      'PRIMARY': 'PRIM'
+    };
+
+    Object.entries(standardizations).forEach(([from, to]) => {
+      const regex = new RegExp(`\\b${from}\\b`, 'g');
+      normalized = normalized.replace(regex, to);
+    });
+
+    // Remove extra whitespace
+    normalized = normalized.replace(/\s+/g, ' ').trim();
+
+    // Extract core component type for grouping
+    // Try to identify the main component type
+    if (normalized.includes('ACETABULAR') && normalized.includes('CUP')) {
+      return 'ACETABULAR CUP';
+    }
+    if (normalized.includes('ACETABULAR') && normalized.includes('SHELL')) {
+      return 'ACETABULAR SHELL';
+    }
+    if (normalized.includes('FEMORAL') && normalized.includes('HEAD')) {
+      return 'FEMORAL HEAD';
+    }
+    if (normalized.includes('FEMORAL') && normalized.includes('STEM')) {
+      return 'FEMORAL STEM';
+    }
+    if (normalized.includes('TIBIAL') && (normalized.includes('TRAY') || normalized.includes('BASEPLATE'))) {
+      return 'TIBIAL TRAY';
+    }
+    if (normalized.includes('TIBIAL') && normalized.includes('INSERT')) {
+      return 'TIBIAL INSERT';
+    }
+    if (normalized.includes('FEMORAL') && normalized.includes('KNEE')) {
+      return 'FEMORAL KNEE COMP';
+    }
+    if (normalized.includes('PATELLAR')) {
+      return 'PATELLAR COMP';
+    }
+    if (normalized.includes('GLENOID')) {
+      return 'GLENOID COMP';
+    }
+    if (normalized.includes('HUMERAL')) {
+      return 'HUMERAL COMP';
+    }
+
+    // If no specific pattern matched, return the cleaned-up name
+    // but limit length to avoid too-specific groupings
+    const words = normalized.split(' ').filter(w => w.length > 2);
+    return words.slice(0, 4).join(' ');
+  };
+
   // Normalize vendor names
   const normalizeVendorName = (name) => {
     if (!name) return 'UNKNOWN';
@@ -388,6 +494,24 @@ const AdminDataUpload = () => {
       }
     }
 
+    // Analyze matrix pricing categories
+    const matrixCategories = Array.isArray(data.matrixPricing) ? data.matrixPricing : [];
+    const matrixDetails = data.matrixPricingDetailed || {};
+
+    // Count components by vendor count
+    const multiVendorCategories = Object.values(matrixDetails).filter(
+      cat => Object.keys(cat.vendors || {}).length >= 2
+    ).length;
+    const singleVendorCategories = Object.values(matrixDetails).filter(
+      cat => Object.keys(cat.vendors || {}).length === 1
+    ).length;
+
+    if (multiVendorCategories === 0 && singleVendorCategories > 0) {
+      warnings.push(`Found ${singleVendorCategories} unique components, but none have pricing from multiple vendors. Matrix pricing requires 2+ vendors per component for price comparison.`);
+    } else if (multiVendorCategories < singleVendorCategories) {
+      warnings.push(`Only ${multiVendorCategories} of ${multiVendorCategories + singleVendorCategories} components have multi-vendor pricing. Consider consolidating similar component names.`);
+    }
+
     // Validate matrixPricing is an array
     if (data.matrixPricing && !Array.isArray(data.matrixPricing)) {
       errors.push('matrixPricing must be an array');
@@ -417,7 +541,13 @@ const AdminDataUpload = () => {
         components: (data.components || []).length,
         matrixCategories: Array.isArray(data.matrixPricing) ? data.matrixPricing.length : 0,
         totalSpend: data.metadata?.totalSpend || 0,
-        totalCases: data.metadata?.totalCases || 0
+        totalCases: data.metadata?.totalCases || 0,
+        multiVendorCategories,
+        singleVendorCategories
+      },
+      matrixDetails: {
+        topCategories: matrixCategories.slice(0, 10),
+        allCategories: matrixCategories.length
       }
     };
   };
@@ -707,6 +837,67 @@ const AdminDataUpload = () => {
                         <li key={idx}>{warn}</li>
                       ))}
                     </ul>
+                  </div>
+                )}
+
+                {/* Component Grouping Report */}
+                {validationResults.summary.multiVendorCategories !== undefined && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                      <Info className="w-5 h-5" />
+                      Component Normalization Report
+                    </h4>
+                    <div className="grid md:grid-cols-2 gap-4 mb-3">
+                      <div className="bg-white rounded-lg p-3 border-2 border-green-300">
+                        <div className="text-sm text-gray-600 mb-1">Multi-Vendor Components</div>
+                        <div className="text-2xl font-bold text-green-700">
+                          {validationResults.summary.multiVendorCategories}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          ✓ Can create matrix pricing (2+ vendors)
+                        </div>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 border-2 border-gray-300">
+                        <div className="text-sm text-gray-600 mb-1">Single-Vendor Components</div>
+                        <div className="text-2xl font-bold text-gray-700">
+                          {validationResults.summary.singleVendorCategories}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          ✗ Cannot compare prices (only 1 vendor)
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-xs text-blue-800">
+                      <strong>Component names were automatically normalized</strong> to group similar items
+                      (e.g., "Hip Cup 32mm" + "HIP CUP SIZE 32" → "ACETABULAR CUP"). This increased
+                      matrix categories from potentially hundreds to {validationResults.summary.matrixCategories} comparable groups.
+                    </div>
+
+                    {/* Top Matrix Categories */}
+                    {validationResults.matrixDetails?.topCategories && validationResults.matrixDetails.topCategories.length > 0 && (
+                      <details className="mt-3">
+                        <summary className="text-xs text-blue-700 cursor-pointer hover:text-blue-900 font-semibold">
+                          View Top Matrix Categories ({validationResults.matrixDetails.topCategories.length} of {validationResults.matrixDetails.allCategories})
+                        </summary>
+                        <div className="mt-2 space-y-2">
+                          {validationResults.matrixDetails.topCategories.map((cat, idx) => (
+                            <div key={idx} className="bg-white rounded p-2 text-xs border border-blue-200">
+                              <div className="flex justify-between items-start">
+                                <span className="font-semibold text-gray-900">{cat.category}</span>
+                                <span className="text-green-700 font-bold">
+                                  ${(cat.potentialSavings / 1000).toFixed(1)}K savings
+                                </span>
+                              </div>
+                              <div className="text-gray-600 mt-1">
+                                Current: ${cat.currentAvgPrice.toLocaleString()} →
+                                Target: ${cat.matrixPrice.toLocaleString()}
+                                ({((1 - cat.matrixPrice / cat.currentAvgPrice) * 100).toFixed(1)}% reduction)
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </details>
+                    )}
                   </div>
                 )}
 

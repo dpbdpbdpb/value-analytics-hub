@@ -55,6 +55,21 @@ const ServiceLineView = () => {
     completedDecisions: 0
   };
 
+  // Helper to get workflow phases from data
+  const getWorkflowPhases = (data) => {
+    if (!data) return [];
+    const tracking = data.workflowTracking || data.workflow;
+    if (!tracking || !tracking.stages) return [];
+
+    return Object.entries(tracking.stages)
+      .filter(([_, stage]) => stage.status === 'active')
+      .map(([id, stage]) => ({
+        id,
+        name: id.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+        status: stage.status
+      }));
+  };
+
   // Product lines - Hip/Knee and Shoulder have active data
   const productLines = [
     {
@@ -66,9 +81,7 @@ const ServiceLineView = () => {
       annualVolume: hipKneeMetrics.annualVolume,
       opportunityValue: hipKneeMetrics.opportunityValue,
       status: 'active',
-      decisions: [
-        { id: 'vendor-consolidation', name: 'Vendor Consolidation Strategy', status: 'analyzing' }
-      ]
+      phases: getWorkflowPhases(orthoData)
     },
     {
       id: 'shoulder',
@@ -79,9 +92,7 @@ const ServiceLineView = () => {
       annualVolume: shoulderMetrics.annualVolume,
       opportunityValue: shoulderMetrics.opportunityValue,
       status: 'active',
-      decisions: [
-        { id: 'vendor-consolidation', name: 'Vendor Consolidation Strategy', status: 'analyzing' }
-      ]
+      phases: getWorkflowPhases(shoulderData)
     },
     {
       id: 'spine',
@@ -277,19 +288,19 @@ const ServiceLineView = () => {
                     </div>
                   </div>
 
-                  {/* Active Decisions Preview */}
-                  {productLine.decisions.length > 0 && (
+                  {/* Active Lifecycle Phases */}
+                  {productLine.phases && productLine.phases.length > 0 && (
                     <div className="text-center">
                       <div className="text-xs font-semibold text-gray-600 mb-2">
-                        Active Canvases
+                        Active Phases
                       </div>
                       <div className="flex flex-col gap-1">
-                        {productLine.decisions.map((decision) => (
+                        {productLine.phases.map((phase) => (
                           <span
-                            key={decision.id}
-                            className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(decision.status)}`}
+                            key={phase.id}
+                            className="px-2 py-1 rounded text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-300"
                           >
-                            {decision.name}
+                            {phase.name}
                           </span>
                         ))}
                       </div>

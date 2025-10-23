@@ -446,27 +446,66 @@ const ProductLineView = () => {
             </div>
           </div>
 
-          {/* Active Canvases for Current Stage */}
+          {/* Active Lifecycle Phases */}
           <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-blue-600 rounded-lg p-6 mb-6">
             <div className="flex items-start gap-3">
-              <Target className="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" />
-              <div>
+              <Activity className="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div className="w-full">
                 <h3 className="font-bold text-blue-900 mb-2">
-                  Active Canvases for {workflowStages.find(s => s.status === 'active')?.name || 'Current'} Stage
+                  Active Sourcing Lifecycle Phases
                 </h3>
-                <p className="text-blue-800 text-sm mb-3">
-                  Based on your current workflow stage, the following decision canvases are most relevant:
+                <p className="text-blue-800 text-sm mb-4">
+                  Current phases in progress for this product line:
                 </p>
-                <div className="flex flex-wrap gap-2">
-                  {workflowStages.find(s => s.status === 'active')?.relevantCanvases.map((canvasId) => {
-                    const canvas = decisionCanvases.find(c => c.id === canvasId);
-                    return canvas ? (
-                      <div key={canvasId} className="bg-white px-3 py-2 rounded-lg border-2 border-blue-200 text-sm font-semibold text-blue-900">
-                        {canvas.name}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {workflowStages.filter(s => s.status === 'active' || s.status === 'completed').map((stage) => {
+                    const IconComponent = stage.icon;
+                    const isActive = stage.status === 'active';
+                    const isCompleted = stage.status === 'completed';
+
+                    return (
+                      <div
+                        key={stage.id}
+                        className={`bg-white p-4 rounded-lg border-2 ${
+                          isActive ? 'border-blue-500 shadow-md' : 'border-green-300'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                            isActive ? 'bg-blue-500' : 'bg-green-500'
+                          }`}>
+                            <IconComponent className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className={`font-bold text-sm ${
+                                isActive ? 'text-blue-900' : 'text-green-900'
+                              }`}>
+                                {stage.name}
+                              </h4>
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+                                isActive
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : 'bg-green-100 text-green-700'
+                              }`}>
+                                {isActive ? 'Active' : 'Completed'}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-600">{stage.description}</p>
+                            {stage.targetDate && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                Target: {new Date(stage.targetDate).toLocaleDateString()}
+                              </p>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    ) : null;
+                    );
                   })}
                 </div>
+                {workflowStages.filter(s => s.status === 'active' || s.status === 'completed').length === 0 && (
+                  <div className="text-sm text-gray-600 italic">No active phases at this time</div>
+                )}
               </div>
             </div>
           </div>
