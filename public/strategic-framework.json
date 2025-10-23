@@ -261,54 +261,54 @@
           "pillar": "finance",
           "assumption": "Vendor consolidation will yield 18-25% cost savings",
           "confidence": "high",
-          "validationMetrics": ["actual-spend-reduction", "contract-compliance"],
+          "validationMetrics": ["Actual spend reduction", "Contract compliance rate"],
           "validationFrequency": "quarterly",
-          "owner": "CFO Office"
+          "owner": "Finance"
         },
         {
           "id": "fin-2",
           "pillar": "finance",
           "assumption": "Implementation costs will be recovered within 18 months",
           "confidence": "medium",
-          "validationMetrics": ["npv-tracking", "actual-implementation-cost"],
+          "validationMetrics": ["NPV tracking", "Actual implementation costs"],
           "validationFrequency": "quarterly",
-          "owner": "CFO Office"
+          "owner": "Finance"
         },
         {
           "id": "clin-1",
           "pillar": "clinical",
           "assumption": "85% of surgeons will adopt new vendor landscape with proper engagement",
           "confidence": "medium",
-          "validationMetrics": ["surgeon-adoption-rate", "surgeon-satisfaction"],
+          "validationMetrics": ["Surgeon adoption rate", "Surgeon satisfaction scores"],
           "validationFrequency": "monthly",
-          "owner": "CMO Office"
+          "owner": "Clinical"
         },
         {
           "id": "clin-2",
           "pillar": "clinical",
           "assumption": "Patient outcomes will remain stable or improve with vendor consolidation",
           "confidence": "high",
-          "validationMetrics": ["revision-rates", "patient-satisfaction", "readmission-rates"],
+          "validationMetrics": ["Revision rates", "Patient satisfaction scores", "30-day readmission rates"],
           "validationFrequency": "quarterly",
-          "owner": "CMO Office"
+          "owner": "Clinical"
         },
         {
           "id": "ops-1",
           "pillar": "operations",
           "assumption": "Implementation can be completed within 12 months",
           "confidence": "medium",
-          "validationMetrics": ["milestone-completion", "timeline-variance"],
+          "validationMetrics": ["Project milestone completion", "Timeline variance percentage"],
           "validationFrequency": "monthly",
-          "owner": "COO Office"
+          "owner": "Operations"
         },
         {
           "id": "ops-2",
           "pillar": "operations",
           "assumption": "Supply chain complexity will decrease with fewer vendors",
           "confidence": "high",
-          "validationMetrics": ["inventory-turns", "stockout-incidents", "vendor-coordination-time"],
+          "validationMetrics": ["Inventory turnover rate", "Stockout incidents", "Vendor coordination time"],
           "validationFrequency": "quarterly",
-          "owner": "COO Office"
+          "owner": "Operations"
         }
       ],
       "lookbacks": []

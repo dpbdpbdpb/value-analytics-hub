@@ -49,8 +49,13 @@ const SurgeonTool = () => {
         return response.json();
       })
       .then(data => {
-        // Extract surgeons array and transform to add vendorBreakdown
+        // Extract surgeons array and transform to add vendorBreakdown and calculated fields
         const surgeons = (data.surgeons || []).map(surgeon => {
+          // Calculate avgSpendPerCase if not already present
+          const avgSpendPerCase = surgeon.totalCases > 0
+            ? surgeon.totalSpend / surgeon.totalCases
+            : 0;
+
           // Transform vendors object to vendorBreakdown array if not already present
           if (!surgeon.vendorBreakdown && surgeon.vendors) {
             surgeon.vendorBreakdown = Object.entries(surgeon.vendors).map(([vendor, data]) => ({
@@ -60,7 +65,11 @@ const SurgeonTool = () => {
               percentage: surgeon.totalSpend > 0 ? ((data.spend || 0) / surgeon.totalSpend * 100) : 0
             })).sort((a, b) => b.spend - a.spend);
           }
-          return surgeon;
+
+          return {
+            ...surgeon,
+            avgSpendPerCase
+          };
         });
         setSurgeonData(surgeons);
         setLoading(false);
@@ -1546,10 +1555,10 @@ const SurgeonTool = () => {
                         </div>
 
                         <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 border-2 border-purple-100">
-                          <div className="text-sm text-gray-600 mb-2">Cost Efficiency Percentile</div>
+                          <div className="text-sm text-gray-600 mb-2">Implant Cost Efficiency Percentile</div>
                           <div className="text-2xl font-bold text-purple-600 mb-2">{percentiles.costPercentile}%</div>
                           <div className="text-sm text-gray-700">
-                            You rank in top {100 - percentiles.costPercentile}% for cost per case
+                            You rank in top {100 - percentiles.costPercentile}% for implant cost per case
                           </div>
                           <div className="text-xs text-gray-600 mt-2">Rank #{percentiles.costRank} of {surgeonData.length}</div>
                         </div>
@@ -1601,7 +1610,7 @@ const SurgeonTool = () => {
                               dataKey="avgSpendPerCase"
                               name="Avg Cost"
                               tick={{ fontSize: 11 }}
-                              label={{ value: 'Avg Cost per Case ($)', angle: -90, position: 'left', offset: 40 }}
+                              label={{ value: 'Avg Implant Cost per Case ($)', angle: -90, position: 'left', offset: 40 }}
                               tickFormatter={(value) => `$${value.toFixed(0)}`}
                             />
                             <ZAxis range={[30, 400]} />
@@ -1710,7 +1719,7 @@ const SurgeonTool = () => {
                         {/* Top by Cost Efficiency */}
                         <div className="bg-white border-2 border-green-200 rounded-lg overflow-hidden">
                           <div className="bg-green-600 text-white px-4 py-3 font-bold">
-                            Top 10 by Cost Efficiency
+                            Top 10 by Implant Cost Efficiency
                           </div>
                           <div className="overflow-x-auto">
                             <table className="w-full text-sm">

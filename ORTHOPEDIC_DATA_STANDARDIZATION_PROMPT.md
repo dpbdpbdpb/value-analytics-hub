@@ -41,6 +41,36 @@ INSTRUCTIONS:
     - Cost Reduction: savings potential
     - Provider Experience: surgeon adoption, workflow impact
     - Health Equity: geographic/demographic access
+11. **Generate matrix pricing:** For each component category, calculate vendor pricing comparison:
+    - Group components by category (e.g., "Hip Stem", "Knee Tibial Tray", "Acetabular Cup")
+    - For each category, calculate median price per vendor
+    - Include sample count and price range (min/max) for transparency
+    - Filter out outliers (prices < $100 or > $15,000)
+    - This enables component-level price comparison across vendors
+12. **Calculate quality metrics:** If clinical outcomes data is available:
+    - Revision rates (% of cases requiring revision surgery)
+    - Readmission rates (30-day and 90-day all-cause)
+    - Average length of stay (LOS) in days
+    - Complication rates (any adverse event)
+    - Surgical site infection (SSI) rates
+    - Include benchmark comparisons (national/regional averages)
+    - Break down by vendor if sample sizes are sufficient
+13. **Calculate revenue cycle metrics:** If financial/billing data is available:
+    - Average reimbursement per case (from payer contracts)
+    - Average implant cost per case (from supply chain)
+    - Average direct cost per case (OR time, nursing, supplies)
+    - Contribution margin per case (reimbursement - implant cost - direct cost)
+    - Total revenue, costs, and contribution margin
+    - Break down by DRG code (Diagnosis-Related Group)
+    - Break down by payer mix (Medicare, Medicaid, Commercial, etc.)
+    - This enables profitability analysis and scenario financial modeling
+14. **Track workflow stage:** Document current position in sourcing lifecycle:
+    - Current stage: sourcing-review | decision | implementation | lookback | renewal
+    - Status of each stage: completed | active | upcoming
+    - Key dates: start dates, completion dates, scheduled dates
+    - Implementation milestones with completion status
+    - Selected scenario during decision phase
+    - This enables progress tracking and ensures appropriate canvas usage for each stage
 
 OUTPUT FORMAT:
 Please provide the complete JSON file following this schema:
@@ -165,7 +195,122 @@ Please provide the complete JSON file following this schema:
       "procedureType": "PRIMARY or REVISION",
       "bodyPart": "HIP or KNEE or SHOULDER etc"
     }
-  ]
+  ],
+  "matrixPricing": {
+    "COMPONENT_CATEGORY": {
+      "category": "COMPONENT_CATEGORY_NAME",
+      "vendors": {
+        "VENDOR_NAME": {
+          "medianPrice": 0,
+          "samples": 0,
+          "priceRange": { "min": 0, "max": 0 }
+        }
+      }
+    }
+  },
+  "qualityMetrics": {
+    "revisionRate": 0.0,
+    "readmissionRate30Day": 0.0,
+    "readmissionRate90Day": 0.0,
+    "avgLengthOfStay": 0.0,
+    "complicationRate": 0.0,
+    "infectionRate": 0.0,
+    "benchmarkRevisionRate": 0.0,
+    "benchmarkReadmission30": 0.0,
+    "benchmarkReadmission90": 0.0,
+    "benchmarkLOS": 0.0,
+    "benchmarkComplicationRate": 0.0,
+    "benchmarkInfectionRate": 0.0,
+    "dataSource": "EMR/Registry System Name",
+    "lastUpdated": "ISO_TIMESTAMP",
+    "byVendor": {
+      "VENDOR_NAME": {
+        "revisionRate": 0.0,
+        "readmissionRate30Day": 0.0,
+        "complicationRate": 0.0
+      }
+    }
+  },
+  "revenueCycle": {
+    "avgReimbursementPerCase": 0.0,
+    "avgImplantCostPerCase": 0.0,
+    "avgDirectCostPerCase": 0.0,
+    "avgContributionMarginPerCase": 0.0,
+    "totalRevenue": 0.0,
+    "totalImplantCosts": 0.0,
+    "totalDirectCosts": 0.0,
+    "totalContributionMargin": 0.0,
+    "contributionMarginPercent": 0.0,
+    "byDRG": {
+      "DRG_CODE": {
+        "drgCode": "XXX",
+        "description": "DRG Description",
+        "cases": 0,
+        "avgReimbursement": 0.0,
+        "avgImplantCost": 0.0,
+        "avgDirectCost": 0.0,
+        "avgContributionMargin": 0.0
+      }
+    },
+    "byPayer": {
+      "PAYER_NAME": {
+        "cases": 0,
+        "avgReimbursement": 0.0,
+        "totalRevenue": 0.0,
+        "contributionMargin": 0.0
+      }
+    },
+    "dataSource": "Revenue Cycle / Decision Support System",
+    "lastUpdated": "ISO_TIMESTAMP"
+  },
+  "workflowTracking": {
+    "currentStage": "implementation",
+    "lastUpdated": "ISO_TIMESTAMP",
+    "stages": {
+      "sourcing-review": {
+        "status": "completed",
+        "startDate": "YYYY-MM-DD",
+        "completionDate": "YYYY-MM-DD",
+        "notes": "Completed initial market analysis and vendor evaluation"
+      },
+      "decision": {
+        "status": "completed",
+        "decisionDate": "YYYY-MM-DD",
+        "selectedScenario": "SCENARIO_ID",
+        "notes": "Selected dual-vendor strategy (Vendor A + Vendor B)"
+      },
+      "implementation": {
+        "status": "active",
+        "startDate": "YYYY-MM-DD",
+        "expectedCompletion": "YYYY-MM-DD",
+        "percentComplete": 0.0,
+        "milestones": [
+          {
+            "name": "Contract signing",
+            "completed": true,
+            "date": "YYYY-MM-DD"
+          },
+          {
+            "name": "Surgeon training",
+            "completed": false,
+            "expectedDate": "YYYY-MM-DD"
+          }
+        ],
+        "notes": "Rolling out new contracts and training surgeons"
+      },
+      "lookback": {
+        "status": "upcoming",
+        "scheduledDate": "YYYY-MM-DD",
+        "notes": "First lookback scheduled 3 months post-implementation"
+      },
+      "renewal": {
+        "status": "upcoming",
+        "contractExpirationDate": "YYYY-MM-DD",
+        "nextReviewDate": "YYYY-MM-DD",
+        "notes": "Contracts expire in 3 years"
+      }
+    }
+  }
 }
 ```
 
@@ -178,6 +323,12 @@ VALIDATION CHECKS:
 - Validate that primaryVendorPercent for each surgeon sums correctly
 - Verify each surgeon is assigned to a hospital
 - Confirm peerInfluence data is calculated for all surgeons
+- Verify matrixPricing contains data for major component categories
+- Ensure matrixPricing median prices are reasonable ($100-$15,000 range)
+- Validate qualityMetrics rates are percentages (0-100 scale)
+- Verify qualityMetrics benchmarks are included for comparison
+- Check revenueCycle contribution margins are calculated correctly
+- Ensure revenueCycle totals match case-level aggregations
 
 HOSPITAL AGGREGATION GUIDELINES:
 For each hospital, calculate:
@@ -272,6 +423,36 @@ We implemented a dual-vendor strategy (Stryker + Zimmer) in July 2024. Please in
 
 ---
 
+## Data Sources for Complete Integration
+
+The standardization prompt supports integration with multiple data sources:
+
+### 1. Supply Chain / Vendor Data (Required)
+- **Source**: Supply chain management system, GPO data, vendor invoices
+- **Contains**: Component costs, quantities, surgeon usage patterns
+- **Fields Populated**: `vendors`, `components`, `surgeons.vendors`, `matrixPricing`
+
+### 2. Clinical Outcomes / Quality Data (Optional but Recommended)
+- **Source**: EMR, surgical registry (e.g., AJRR, NSQIP), quality reporting systems
+- **Contains**: Revision rates, readmissions, complications, length of stay
+- **Fields Populated**: `qualityMetrics`
+- **Note**: If unavailable, the dashboard will display placeholder data with clear labeling
+
+### 3. Revenue Cycle / Financial Data (Optional but Recommended)
+- **Source**: Decision support system, revenue cycle management, billing systems
+- **Contains**: Reimbursement rates, DRG codes, payer mix, profitability
+- **Fields Populated**: `revenueCycle`
+- **Note**: If unavailable, financial analysis will focus on cost reduction only
+
+### 4. Hospital / Surgeon Data (Required)
+- **Source**: Medical staff directory, credentialing database
+- **Contains**: Surgeon assignments, hospital affiliations, case volumes
+- **Fields Populated**: `hospitals`, `surgeons`, `peerInfluence`
+
+**Recommendation**: Start with supply chain data to get the dashboard operational, then progressively integrate clinical outcomes and revenue cycle data for comprehensive decision support.
+
+---
+
 ## Tips for Best Results
 
 1. **Clean Your Data First**: Remove any sensitive PHI, normalize vendor names, ensure consistent date formats
@@ -289,6 +470,11 @@ We implemented a dual-vendor strategy (Stryker + Zimmer) in July 2024. Please in
    - Refine Quintuple Aim scores
 
 5. **Save Raw Data**: Keep your original Excel/CSV files as backup - JSON is for the application only
+
+6. **Placeholder Data**: If quality or revenue cycle data is not yet available, the prompt will:
+   - Generate NULL values or placeholder text indicating data is pending
+   - Enable the dashboard to display informative messages about data availability
+   - Allow progressive enhancement as additional data sources are integrated
 
 ---
 

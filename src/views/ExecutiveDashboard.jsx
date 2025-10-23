@@ -44,6 +44,9 @@ const EnhancedOrthopedicDashboard = () => {
     adoptionModifier: 0, // -20 to +20
     priceErosion: 0, // -10 to +10
     implementationMonths: 12, // 6 to 24
+    volumeGrowth: 0, // -15 to +15
+    surgeonResistance: 0, // 0 to 30
+    negotiationLeverage: 0, // -10 to +20
   });
 
   // CommonSpirit brand colors
@@ -189,9 +192,9 @@ const EnhancedOrthopedicDashboard = () => {
   // Regional surgeon preference data from real data
   const REGIONAL_DATA = useMemo(() => convertToRegionalData(), [realData]);
 
-  // Quintuple Aim scoring (aligned with 7 scenarios)
+  // Quintuple Aim scoring (aligned with current scenarios)
   const QUINTUPLE_SCORING = {
-    A: {
+    'status-quo': {
       patientExperience: 50,
       populationHealth: 40,
       costReduction: 0,
@@ -200,7 +203,7 @@ const EnhancedOrthopedicDashboard = () => {
       missionBonus: 0,
       total: 45
     },
-    B: {
+    'tri-vendor': {
       patientExperience: 82,
       populationHealth: 78,
       costReduction: 68,
@@ -209,7 +212,16 @@ const EnhancedOrthopedicDashboard = () => {
       missionBonus: 12,
       total: 82
     },
-    C: {
+    'dual-premium': {
+      patientExperience: 85,
+      populationHealth: 83,
+      costReduction: 70,
+      providerExperience: 90,
+      healthEquity: 85,
+      missionBonus: 12,
+      total: 85
+    },
+    'dual-value': {
       patientExperience: 78,
       populationHealth: 75,
       costReduction: 80,
@@ -218,7 +230,7 @@ const EnhancedOrthopedicDashboard = () => {
       missionBonus: 10,
       total: 78
     },
-    D: {
+    'dual-innovation': {
       patientExperience: 80,
       populationHealth: 77,
       costReduction: 76,
@@ -226,15 +238,6 @@ const EnhancedOrthopedicDashboard = () => {
       healthEquity: 80,
       missionBonus: 11,
       total: 80
-    },
-    E: {
-      patientExperience: 75,
-      populationHealth: 72,
-      costReduction: 85,
-      providerExperience: 70,
-      healthEquity: 76,
-      missionBonus: 8,
-      total: 75
     }
   };
 
@@ -245,9 +248,21 @@ const EnhancedOrthopedicDashboard = () => {
 
     const adoptionAdjustment = whatIfParams.adoptionModifier / 100;
     const priceAdjustment = whatIfParams.priceErosion / 100;
+    const volumeAdjustment = whatIfParams.volumeGrowth / 100;
+    const resistanceAdjustment = whatIfParams.surgeonResistance / 100;
+    const leverageAdjustment = whatIfParams.negotiationLeverage / 100;
 
-    const adjustedAdoption = Math.max(0, Math.min(100, base.adoptionRate + whatIfParams.adoptionModifier));
-    const adjustedSavings = base.annualSavings * (1 + priceAdjustment) * (adjustedAdoption / base.adoptionRate);
+    // Adoption rate affected by surgeon resistance
+    const adjustedAdoption = Math.max(0, Math.min(100,
+      base.adoptionRate + whatIfParams.adoptionModifier - whatIfParams.surgeonResistance
+    ));
+
+    // Savings affected by price erosion, volume growth, and negotiation leverage
+    const baseSavings = base.annualSavings * (1 + priceAdjustment);
+    const volumeImpact = baseSavings * (1 + volumeAdjustment);
+    const leverageImpact = volumeImpact * (1 + leverageAdjustment);
+    const adjustedSavings = leverageImpact * (adjustedAdoption / base.adoptionRate);
+
     const safeAgentScore = typeof base.agentScore === 'number' && !Number.isNaN(base.agentScore)
       ? base.agentScore
       : 3.5;
@@ -740,23 +755,24 @@ const EnhancedOrthopedicDashboard = () => {
                       return (
                         <div
                           key={colIdx}
-                          className={`flex-1 h-20 border-2 ${bgColor} rounded-lg p-2 flex flex-col items-center justify-center`}
+                          className={`flex-1 min-h-[100px] border-2 ${bgColor} rounded-lg p-2 flex flex-col items-center justify-center`}
                         >
                           {scenariosInCell.length > 0 ? (
-                            <div className="text-center">
+                            <div className="text-center w-full space-y-1">
                               {scenariosInCell.map((s, idx) => (
-                                <div
-                                  key={idx}
-                                  className={`text-xs font-bold mb-1 px-2 py-1 rounded ${
-                                    s.id === selectedScenario ? 'bg-purple-600 text-white' : 'bg-white text-gray-800'
-                                  }`}
-                                >
-                                  {s.shortName}
+                                <div key={idx} className="mb-2">
+                                  <div
+                                    className={`text-xs font-bold px-2 py-1 rounded mb-1 ${
+                                      s.id === selectedScenario ? 'bg-purple-600 text-white' : 'bg-white text-gray-800'
+                                    }`}
+                                  >
+                                    {s.shortName}
+                                  </div>
+                                  <div className="text-xs text-gray-700 font-medium">
+                                    {(s.savingsPercent * 100).toFixed(0)}% / {s.riskScore.toFixed(1)}
+                                  </div>
                                 </div>
                               ))}
-                              <div className="text-xs text-gray-600 mt-1">
-                                {scenariosInCell[0].savingsPercent}% / {scenariosInCell[0].riskScore.toFixed(1)}
-                              </div>
                             </div>
                           ) : (
                             <div className="text-center px-1">
@@ -832,9 +848,137 @@ const EnhancedOrthopedicDashboard = () => {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10);
 
+    // Quality metrics - using placeholder/dummy data for demonstration
+    const qualityMetrics = realData?.qualityMetrics || {
+      // ⚠️ PLACEHOLDER DATA - Awaiting integration with clinical data systems
+      revisionRate: 2.3, // % - industry benchmark ~2-3%
+      readmissionRate30Day: 4.1, // % - 30-day all-cause readmission
+      readmissionRate90Day: 6.8, // % - 90-day all-cause readmission
+      avgLengthOfStay: 2.1, // days
+      complicationRate: 3.2, // % - any complication
+      infectionRate: 0.8, // % - surgical site infection
+      benchmarkRevisionRate: 2.5,
+      benchmarkReadmission30: 5.2,
+      benchmarkReadmission90: 7.5,
+      benchmarkLOS: 2.4,
+      benchmarkComplicationRate: 4.0,
+      benchmarkInfectionRate: 1.2,
+      dataSource: "PLACEHOLDER - Awaiting EMR/Registry Integration",
+      lastUpdated: null
+    };
+
     return (
       <div className="space-y-6">
-        {/* Clinical Overview */}
+        {/* Data Availability Notice */}
+        {!realData?.qualityMetrics && (
+          <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-lg">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <h4 className="font-bold text-amber-900 mb-1">Quality Metrics Data Placeholder</h4>
+                <p className="text-sm text-amber-800">
+                  The quality metrics shown below use <strong>placeholder/dummy data</strong> for demonstration purposes.
+                  This interface is ready to integrate with your EMR, surgical registry, or quality reporting systems.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Quality Metrics Overview */}
+        <div className="bg-white p-6 rounded-xl shadow-lg">
+          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Activity className="w-6 h-6 text-blue-600" />
+            Quality & Outcomes Metrics
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {/* Revision Rate */}
+            <div className="bg-gradient-to-br from-green-50 to-white border-2 border-green-200 rounded-lg p-4">
+              <div className="text-xs text-gray-600 mb-1">Revision Rate</div>
+              <div className="text-2xl font-bold text-green-900">{qualityMetrics.revisionRate}%</div>
+              <div className="text-xs text-gray-500 mt-1">vs {qualityMetrics.benchmarkRevisionRate}% benchmark</div>
+              <div className={`text-xs font-semibold mt-2 ${
+                qualityMetrics.revisionRate < qualityMetrics.benchmarkRevisionRate
+                  ? 'text-green-600'
+                  : 'text-amber-600'
+              }`}>
+                {qualityMetrics.revisionRate < qualityMetrics.benchmarkRevisionRate ? '✓ Better' : '⚠ Monitor'}
+              </div>
+            </div>
+
+            {/* 30-Day Readmission */}
+            <div className="bg-gradient-to-br from-blue-50 to-white border-2 border-blue-200 rounded-lg p-4">
+              <div className="text-xs text-gray-600 mb-1">30-Day Readmit</div>
+              <div className="text-2xl font-bold text-blue-900">{qualityMetrics.readmissionRate30Day}%</div>
+              <div className="text-xs text-gray-500 mt-1">vs {qualityMetrics.benchmarkReadmission30}% benchmark</div>
+              <div className={`text-xs font-semibold mt-2 ${
+                qualityMetrics.readmissionRate30Day < qualityMetrics.benchmarkReadmission30
+                  ? 'text-green-600'
+                  : 'text-amber-600'
+              }`}>
+                {qualityMetrics.readmissionRate30Day < qualityMetrics.benchmarkReadmission30 ? '✓ Better' : '⚠ Monitor'}
+              </div>
+            </div>
+
+            {/* 90-Day Readmission */}
+            <div className="bg-gradient-to-br from-purple-50 to-white border-2 border-purple-200 rounded-lg p-4">
+              <div className="text-xs text-gray-600 mb-1">90-Day Readmit</div>
+              <div className="text-2xl font-bold text-purple-900">{qualityMetrics.readmissionRate90Day}%</div>
+              <div className="text-xs text-gray-500 mt-1">vs {qualityMetrics.benchmarkReadmission90}% benchmark</div>
+              <div className={`text-xs font-semibold mt-2 ${
+                qualityMetrics.readmissionRate90Day < qualityMetrics.benchmarkReadmission90
+                  ? 'text-green-600'
+                  : 'text-amber-600'
+              }`}>
+                {qualityMetrics.readmissionRate90Day < qualityMetrics.benchmarkReadmission90 ? '✓ Better' : '⚠ Monitor'}
+              </div>
+            </div>
+
+            {/* Length of Stay */}
+            <div className="bg-gradient-to-br from-amber-50 to-white border-2 border-amber-200 rounded-lg p-4">
+              <div className="text-xs text-gray-600 mb-1">Avg Length of Stay</div>
+              <div className="text-2xl font-bold text-amber-900">{qualityMetrics.avgLengthOfStay} days</div>
+              <div className="text-xs text-gray-500 mt-1">vs {qualityMetrics.benchmarkLOS} days benchmark</div>
+              <div className={`text-xs font-semibold mt-2 ${
+                qualityMetrics.avgLengthOfStay < qualityMetrics.benchmarkLOS
+                  ? 'text-green-600'
+                  : 'text-amber-600'
+              }`}>
+                {qualityMetrics.avgLengthOfStay < qualityMetrics.benchmarkLOS ? '✓ Better' : '⚠ Monitor'}
+              </div>
+            </div>
+
+            {/* Complication Rate */}
+            <div className="bg-gradient-to-br from-red-50 to-white border-2 border-red-200 rounded-lg p-4">
+              <div className="text-xs text-gray-600 mb-1">Complication Rate</div>
+              <div className="text-2xl font-bold text-red-900">{qualityMetrics.complicationRate}%</div>
+              <div className="text-xs text-gray-500 mt-1">vs {qualityMetrics.benchmarkComplicationRate}% benchmark</div>
+              <div className={`text-xs font-semibold mt-2 ${
+                qualityMetrics.complicationRate < qualityMetrics.benchmarkComplicationRate
+                  ? 'text-green-600'
+                  : 'text-amber-600'
+              }`}>
+                {qualityMetrics.complicationRate < qualityMetrics.benchmarkComplicationRate ? '✓ Better' : '⚠ Monitor'}
+              </div>
+            </div>
+
+            {/* Infection Rate */}
+            <div className="bg-gradient-to-br from-pink-50 to-white border-2 border-pink-200 rounded-lg p-4">
+              <div className="text-xs text-gray-600 mb-1">Infection Rate (SSI)</div>
+              <div className="text-2xl font-bold text-pink-900">{qualityMetrics.infectionRate}%</div>
+              <div className="text-xs text-gray-500 mt-1">vs {qualityMetrics.benchmarkInfectionRate}% benchmark</div>
+              <div className={`text-xs font-semibold mt-2 ${
+                qualityMetrics.infectionRate < qualityMetrics.benchmarkInfectionRate
+                  ? 'text-green-600'
+                  : 'text-amber-600'
+              }`}>
+                {qualityMetrics.infectionRate < qualityMetrics.benchmarkInfectionRate ? '✓ Better' : '⚠ Monitor'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Volume & Surgeon Overview */}
         <div className="grid grid-cols-3 gap-6">
           <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-green-200">
             <div className="text-sm text-green-700 mb-1">Total Surgeons</div>
@@ -870,6 +1014,7 @@ const EnhancedOrthopedicDashboard = () => {
                   <th className="text-left p-4 font-bold text-green-900">Vendor</th>
                   <th className="text-center p-4 font-bold text-green-900">Surgeons</th>
                   <th className="text-center p-4 font-bold text-green-900">% of Total</th>
+                  <th className="text-center p-4 font-bold text-green-900">High-Volume Loyalists</th>
                   <th className="text-left p-4 font-bold text-green-900">Adoption Level</th>
                 </tr>
               </thead>
@@ -878,11 +1023,18 @@ const EnhancedOrthopedicDashboard = () => {
                   const percentage = ((count / totalSurgeons) * 100).toFixed(1);
                   const isHighAdoption = percentage >= 30;
                   const isMediumAdoption = percentage >= 10 && percentage < 30;
+                  // Estimate high-volume loyalists: ~35% of surgeons are high-volume (>50 cases/year)
+                  // and ~70% of those using a vendor are vendor loyalists (strong preference)
+                  const highVolumeLoyalists = Math.round(count * 0.35 * 0.70);
                   return (
                     <tr key={idx} className="border-b border-gray-200 hover:bg-green-50">
                       <td className="p-4 font-semibold text-gray-900">{vendor}</td>
                       <td className="p-4 text-center text-gray-900">{count}</td>
                       <td className="p-4 text-center font-bold text-green-900">{percentage}%</td>
+                      <td className="p-4 text-center">
+                        <div className="font-bold text-purple-900">{highVolumeLoyalists}</div>
+                        <div className="text-xs text-gray-600">({(highVolumeLoyalists / count * 100).toFixed(0)}% of vendor)</div>
+                      </td>
                       <td className="p-4 text-sm">
                         <span className={`px-3 py-1 rounded-full font-semibold ${
                           isHighAdoption
@@ -1623,6 +1775,24 @@ const EnhancedOrthopedicDashboard = () => {
   const renderMissionTab = () => {
     const missionData = QUINTUPLE_SCORING[selectedScenario];
 
+    // If no mission data for this scenario, show error
+    if (!missionData) {
+      return (
+        <div className="bg-white rounded-xl shadow-lg p-8">
+          <div className="text-center">
+            <AlertCircle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Mission Data Not Available</h2>
+            <p className="text-gray-600">
+              Quintuple Aim scoring is not available for scenario: <strong>{selectedScenario}</strong>
+            </p>
+            <p className="text-sm text-gray-500 mt-2">
+              Available scenarios: {Object.keys(QUINTUPLE_SCORING).join(', ')}
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     const quintupleAimDefinitions = [
       {
         name: 'Patient Experience',
@@ -2248,6 +2418,143 @@ const EnhancedOrthopedicDashboard = () => {
               </div>
             ))}
           </div>
+
+          {/* Timeline Visualization */}
+          <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
+            <h3 className="text-xl font-bold text-purple-900 mb-6 flex items-center gap-2">
+              <Calendar className="w-6 h-6" />
+              2025 Negotiating Windows Timeline
+            </h3>
+
+            {/* Timeline */}
+            <div className="relative">
+              {/* Month headers */}
+              <div className="grid grid-cols-12 gap-1 mb-4">
+                {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, idx) => (
+                  <div key={idx} className="text-center text-xs font-semibold text-gray-600">
+                    {month}
+                  </div>
+                ))}
+              </div>
+
+              {/* Vendor timelines */}
+              <div className="space-y-6">
+                {negotiatingWindows.map((vendor, vIdx) => (
+                  <div key={vIdx} className="relative">
+                    <div className="flex items-start gap-4">
+                      {/* Vendor name */}
+                      <div className="w-32 flex-shrink-0">
+                        <div className="font-bold text-purple-900">{vendor.vendor}</div>
+                        <div className="text-xs text-gray-600">FY End: {vendor.fiscalYearEnd}</div>
+                      </div>
+
+                      {/* Timeline bar */}
+                      <div className="flex-1 relative">
+                        <div className="grid grid-cols-12 gap-1 h-16">
+                          {/* Background months */}
+                          {[...Array(12)].map((_, mIdx) => (
+                            <div key={mIdx} className="border border-gray-200 rounded bg-gray-50"></div>
+                          ))}
+
+                          {/* Optimal windows overlay */}
+                          {vendor.optimalWindows.map((window, wIdx) => {
+                            // Map period to month range
+                            let startMonth, spanMonths;
+                            if (window.period.includes('Q1')) {
+                              startMonth = 0; spanMonths = 3;
+                            } else if (window.period.includes('Q2-Q3') || window.period.includes('Apr-Sep')) {
+                              startMonth = 3; spanMonths = 6;
+                            } else if (window.period.includes('Q1-Q2') || window.period.includes('Jan-Jun')) {
+                              startMonth = 0; spanMonths = 6;
+                            } else if (window.period.includes('Q4')) {
+                              startMonth = 9; spanMonths = 3;
+                            } else {
+                              startMonth = 0; spanMonths = 1;
+                            }
+
+                            const bgColor = window.leverage === 'Very High'
+                              ? 'bg-green-500'
+                              : window.leverage === 'High'
+                              ? 'bg-blue-500'
+                              : 'bg-amber-500';
+
+                            return (
+                              <div
+                                key={wIdx}
+                                className={`absolute ${bgColor} bg-opacity-80 rounded shadow-md flex items-center justify-center text-white font-bold text-xs px-2 border-2 border-white`}
+                                style={{
+                                  left: `${(startMonth / 12) * 100}%`,
+                                  width: `${(spanMonths / 12) * 100}%`,
+                                  top: `${wIdx * 50}%`,
+                                  height: '45%'
+                                }}
+                                title={`${window.period}: ${window.rationale}`}
+                              >
+                                <div className="truncate">{window.period}</div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Earnings markers */}
+                        <div className="absolute top-0 left-0 right-0 h-16 pointer-events-none">
+                          {vendor.earningsReports && vendor.earningsReports.map((earnings, eIdx) => {
+                            // Map earnings to approximate month
+                            let monthPos = 0;
+                            if (earnings.includes('January') || earnings.includes('Late January')) monthPos = 0.8;
+                            else if (earnings.includes('February') || earnings.includes('Early February')) monthPos = 1.2;
+                            else if (earnings.includes('April') || earnings.includes('Late April')) monthPos = 3.8;
+                            else if (earnings.includes('May') || earnings.includes('Early May')) monthPos = 4.2;
+                            else if (earnings.includes('July') || earnings.includes('Late July')) monthPos = 6.8;
+                            else if (earnings.includes('August') || earnings.includes('Early August')) monthPos = 7.2;
+                            else if (earnings.includes('October') || earnings.includes('Late October')) monthPos = 9.8;
+                            else if (earnings.includes('November') || earnings.includes('Early November')) monthPos = 10.2;
+
+                            return (
+                              <div
+                                key={eIdx}
+                                className="absolute w-1 bg-red-500 opacity-60"
+                                style={{
+                                  left: `${(monthPos / 12) * 100}%`,
+                                  top: 0,
+                                  height: '100%'
+                                }}
+                                title={`Earnings: ${earnings}`}
+                              >
+                                <div className="absolute -top-2 left-0 transform -translate-x-1/2">
+                                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Legend */}
+              <div className="mt-6 flex items-center justify-center gap-6 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-green-500 rounded"></div>
+                  <span className="text-gray-700">Very High Leverage</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-blue-500 rounded"></div>
+                  <span className="text-gray-700">High Leverage</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-amber-500 rounded"></div>
+                  <span className="text-gray-700">Medium Leverage</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-4 bg-red-500"></div>
+                  <span className="text-gray-700">Earnings Report</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -2256,100 +2563,402 @@ const EnhancedOrthopedicDashboard = () => {
 
   // WHAT-IF SCENARIO TOOLS
   const renderWhatIfTools = () => (
-    <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-      <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-        <Sliders className="w-5 h-5" style={{ color: COLORS.primary }} />
-        Interactive What-If Scenario Analysis
-      </h3>
+    <div className="bg-gradient-to-br from-white to-purple-50 rounded-xl shadow-xl p-8 mb-6 border-2 border-purple-200">
+      {/* Header with Product Line Badge */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl flex items-center justify-center shadow-lg">
+            <Sliders className="w-7 h-7 text-white" />
+          </div>
+          <div>
+            <h3 className="text-2xl font-bold text-gray-900">
+              Interactive What-If Scenario Analysis
+            </h3>
+            <p className="text-sm text-gray-600">Model different assumptions to stress-test your strategy</p>
+          </div>
+        </div>
+        <div className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl shadow-lg">
+          <div className="text-xs font-semibold uppercase tracking-wide opacity-90">Product Line</div>
+          <div className="text-lg font-bold">Hip & Knee Replacement</div>
+        </div>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Adoption Rate Modifier: {whatIfParams.adoptionModifier > 0 ? '+' : ''}{whatIfParams.adoptionModifier}%
-          </label>
+      {/* Parameter Definitions Banner */}
+      <div className="mb-6 p-4 bg-blue-50 border-l-4 border-blue-600 rounded-lg">
+        <div className="flex items-start gap-2">
+          <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-blue-900">
+            <strong>How to use:</strong> Adjust the sliders below to model different scenarios. Each parameter affects the projected outcomes in real-time. Hover over parameter names for detailed definitions.
+          </div>
+        </div>
+      </div>
+
+      {/* Parameter Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+        {/* Adoption Rate Modifier */}
+        <div className="bg-white rounded-lg p-5 shadow-md border border-gray-200">
+          <div className="flex items-start gap-2 mb-3">
+            <label className="block text-base font-bold text-gray-900">
+              Adoption Rate Modifier
+            </label>
+            <HelpCircle
+              className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5 cursor-help"
+              title="Percentage change in surgeon adoption of the standardized vendor strategy. Positive values indicate better adoption, negative values indicate resistance."
+            />
+          </div>
+          <div className="text-sm text-gray-600 mb-3 italic">
+            Adjust surgeon buy-in to standardization
+          </div>
+          <div className="text-2xl font-bold mb-2" style={{ color: COLORS.primary }}>
+            {whatIfParams.adoptionModifier > 0 ? '+' : ''}{whatIfParams.adoptionModifier}%
+          </div>
           <input
             type="range"
             min="-20"
             max="20"
             value={whatIfParams.adoptionModifier}
             onChange={(e) => setWhatIfParams({ ...whatIfParams, adoptionModifier: parseInt(e.target.value) })}
-            className="w-full"
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
           />
-          <div className="flex justify-between text-xs text-gray-500 mt-1">
+          <div className="flex justify-between text-xs text-gray-500 mt-2">
             <span>-20%</span>
-            <span>0</span>
+            <span className="font-semibold">Baseline</span>
             <span>+20%</span>
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Price Erosion: {whatIfParams.priceErosion > 0 ? '+' : ''}{whatIfParams.priceErosion}%
-          </label>
+        {/* Price Erosion */}
+        <div className="bg-white rounded-lg p-5 shadow-md border border-gray-200">
+          <div className="flex items-start gap-2 mb-3">
+            <label className="block text-base font-bold text-gray-900">
+              Price Erosion
+            </label>
+            <HelpCircle
+              className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5 cursor-help"
+              title="Annual rate of price increases or decreases from vendors. Negative values = price reductions (better for us), positive values = price increases (worse for us)."
+            />
+          </div>
+          <div className="text-sm text-gray-600 mb-3 italic">
+            Annual vendor price change
+          </div>
+          <div className="text-2xl font-bold mb-2" style={{ color: COLORS.primary }}>
+            {whatIfParams.priceErosion > 0 ? '+' : ''}{whatIfParams.priceErosion}%
+          </div>
           <input
             type="range"
             min="-10"
             max="10"
             value={whatIfParams.priceErosion}
             onChange={(e) => setWhatIfParams({ ...whatIfParams, priceErosion: parseInt(e.target.value) })}
-            className="w-full"
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
           />
-          <div className="flex justify-between text-xs text-gray-500 mt-1">
-            <span>-10%</span>
-            <span>0</span>
-            <span>+10%</span>
+          <div className="flex justify-between text-xs text-gray-500 mt-2">
+            <span>-10% (savings)</span>
+            <span className="font-semibold">0</span>
+            <span>+10% (cost)</span>
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Implementation Timeline: {whatIfParams.implementationMonths} months
-          </label>
+        {/* Implementation Timeline */}
+        <div className="bg-white rounded-lg p-5 shadow-md border border-gray-200">
+          <div className="flex items-start gap-2 mb-3">
+            <label className="block text-base font-bold text-gray-900">
+              Implementation Timeline
+            </label>
+            <HelpCircle
+              className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5 cursor-help"
+              title="Total months from contract signing to full deployment. Longer timelines delay savings realization but may improve adoption."
+            />
+          </div>
+          <div className="text-sm text-gray-600 mb-3 italic">
+            Months to full deployment
+          </div>
+          <div className="text-2xl font-bold mb-2" style={{ color: COLORS.primary }}>
+            {whatIfParams.implementationMonths} months
+          </div>
           <input
             type="range"
             min="6"
             max="24"
             value={whatIfParams.implementationMonths}
             onChange={(e) => setWhatIfParams({ ...whatIfParams, implementationMonths: parseInt(e.target.value) })}
-            className="w-full"
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
           />
-          <div className="flex justify-between text-xs text-gray-500 mt-1">
-            <span>6mo</span>
-            <span>12mo</span>
-            <span>24mo</span>
+          <div className="flex justify-between text-xs text-gray-500 mt-2">
+            <span>6mo (fast)</span>
+            <span className="font-semibold">12mo</span>
+            <span>24mo (slow)</span>
+          </div>
+        </div>
+
+        {/* Volume Growth */}
+        <div className="bg-white rounded-lg p-5 shadow-md border border-gray-200">
+          <div className="flex items-start gap-2 mb-3">
+            <label className="block text-base font-bold text-gray-900">
+              Volume Growth
+            </label>
+            <HelpCircle
+              className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5 cursor-help"
+              title="Projected annual change in surgical case volume. Positive values = more procedures (aging population), negative values = fewer procedures (improved prevention)."
+            />
+          </div>
+          <div className="text-sm text-gray-600 mb-3 italic">
+            Annual case volume change
+          </div>
+          <div className="text-2xl font-bold mb-2" style={{ color: COLORS.primary }}>
+            {whatIfParams.volumeGrowth > 0 ? '+' : ''}{whatIfParams.volumeGrowth}%
+          </div>
+          <input
+            type="range"
+            min="-15"
+            max="15"
+            value={whatIfParams.volumeGrowth}
+            onChange={(e) => setWhatIfParams({ ...whatIfParams, volumeGrowth: parseInt(e.target.value) })}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
+          />
+          <div className="flex justify-between text-xs text-gray-500 mt-2">
+            <span>-15%</span>
+            <span className="font-semibold">0</span>
+            <span>+15%</span>
+          </div>
+        </div>
+
+        {/* Surgeon Resistance */}
+        <div className="bg-white rounded-lg p-5 shadow-md border border-gray-200">
+          <div className="flex items-start gap-2 mb-3">
+            <label className="block text-base font-bold text-gray-900">
+              Surgeon Resistance
+            </label>
+            <HelpCircle
+              className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5 cursor-help"
+              title="Percentage of surgeons who actively resist changing vendors. Higher values reduce effective adoption rate and may require additional change management."
+            />
+          </div>
+          <div className="text-sm text-gray-600 mb-3 italic">
+            Expected pushback on changes
+          </div>
+          <div className="text-2xl font-bold mb-2" style={{ color: COLORS.primary }}>
+            {whatIfParams.surgeonResistance}%
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="30"
+            value={whatIfParams.surgeonResistance}
+            onChange={(e) => setWhatIfParams({ ...whatIfParams, surgeonResistance: parseInt(e.target.value) })}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
+          />
+          <div className="flex justify-between text-xs text-gray-500 mt-2">
+            <span>0% (none)</span>
+            <span className="font-semibold">15%</span>
+            <span>30% (high)</span>
+          </div>
+        </div>
+
+        {/* Negotiation Leverage */}
+        <div className="bg-white rounded-lg p-5 shadow-md border border-gray-200">
+          <div className="flex items-start gap-2 mb-3">
+            <label className="block text-base font-bold text-gray-900">
+              Negotiation Leverage
+            </label>
+            <HelpCircle
+              className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5 cursor-help"
+              title="Additional savings from improved negotiating position. Positive values = better terms through volume consolidation, negative values = weaker position (vendor consolidation)."
+            />
+          </div>
+          <div className="text-sm text-gray-600 mb-3 italic">
+            Enhanced contract terms
+          </div>
+          <div className="text-2xl font-bold mb-2" style={{ color: COLORS.primary }}>
+            {whatIfParams.negotiationLeverage > 0 ? '+' : ''}{whatIfParams.negotiationLeverage}%
+          </div>
+          <input
+            type="range"
+            min="-10"
+            max="20"
+            value={whatIfParams.negotiationLeverage}
+            onChange={(e) => setWhatIfParams({ ...whatIfParams, negotiationLeverage: parseInt(e.target.value) })}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
+          />
+          <div className="flex justify-between text-xs text-gray-500 mt-2">
+            <span>-10%</span>
+            <span className="font-semibold">0</span>
+            <span>+20%</span>
           </div>
         </div>
       </div>
 
-      <div className="mt-4 p-4 bg-purple-50 rounded-lg">
-        <div className="grid grid-cols-3 gap-4 text-center">
-          <div>
-            <div className="text-sm text-purple-700">Adjusted Adoption</div>
-            <div className="text-xl font-bold text-purple-900">
-              {getAdjustedMetrics(selectedScenario)?.adoptionRate.toFixed(0)}%
+      {/* Key Outcomes by Pillar */}
+      <div className="bg-white rounded-xl p-6 shadow-lg border-2 border-purple-200">
+        <h4 className="text-xl font-bold mb-6 flex items-center gap-2" style={{ color: COLORS.primary }}>
+          <Calculator className="w-6 h-6" />
+          Real-Time Impact on Key Outcomes
+        </h4>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Financial Outcomes */}
+          <div className="bg-gradient-to-br from-amber-50 to-white rounded-xl p-5 border-2 border-amber-300">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-10 h-10 bg-amber-600 rounded-lg flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-white" />
+              </div>
+              <h5 className="text-lg font-bold text-amber-900">Financial</h5>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-white rounded-lg p-4 border border-amber-200">
+                <div className="text-sm text-amber-700 mb-1">Annual Savings</div>
+                <div className="text-3xl font-bold text-amber-900">
+                  ${getAdjustedMetrics(selectedScenario)?.annualSavings.toFixed(2)}M
+                </div>
+                <div className="text-sm font-medium mt-2" style={{ color: ((getAdjustedMetrics(selectedScenario)?.annualSavings || 0) - (SCENARIOS[selectedScenario]?.annualSavings || 0)) >= 0 ? '#10B981' : '#EF4444' }}>
+                  {((getAdjustedMetrics(selectedScenario)?.annualSavings || 0) - (SCENARIOS[selectedScenario]?.annualSavings || 0)) >= 0 ? '↑' : '↓'}
+                  ${Math.abs((getAdjustedMetrics(selectedScenario)?.annualSavings || 0) - (SCENARIOS[selectedScenario]?.annualSavings || 0)).toFixed(2)}M vs baseline
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-amber-50 rounded-lg p-3">
+                  <div className="text-xs text-amber-700 mb-1">5-Year NPV</div>
+                  <div className="text-lg font-bold text-amber-900">
+                    ${(getAdjustedMetrics(selectedScenario)?.annualSavings * 5 || 0).toFixed(1)}M
+                  </div>
+                </div>
+                <div className="bg-amber-50 rounded-lg p-3">
+                  <div className="text-xs text-amber-700 mb-1">ROI</div>
+                  <div className="text-lg font-bold text-amber-900">
+                    {(((getAdjustedMetrics(selectedScenario)?.annualSavings || 0) * 5 / 1000000) / (SCENARIOS[selectedScenario]?.implementation?.costMillions || 1)).toFixed(1)}x
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <div>
-            <div className="text-sm text-purple-700">Adjusted Savings</div>
-            <div className="text-xl font-bold text-purple-900">
-              ${getAdjustedMetrics(selectedScenario)?.annualSavings.toFixed(2)}M
+
+          {/* Clinical Outcomes */}
+          <div className="bg-gradient-to-br from-blue-50 to-white rounded-xl p-5 border-2 border-blue-300">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                <Stethoscope className="w-6 h-6 text-white" />
+              </div>
+              <h5 className="text-lg font-bold text-blue-900">Clinical</h5>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-white rounded-lg p-4 border border-blue-200">
+                <div className="text-sm text-blue-700 mb-1">Surgeon Adoption</div>
+                <div className="text-3xl font-bold text-blue-900">
+                  {getAdjustedMetrics(selectedScenario)?.adoptionRate.toFixed(0)}%
+                </div>
+                <div className="text-sm font-medium mt-2" style={{ color: ((getAdjustedMetrics(selectedScenario)?.adoptionRate || 0) - (SCENARIOS[selectedScenario]?.adoptionRate || 0)) >= 0 ? '#10B981' : '#EF4444' }}>
+                  {((getAdjustedMetrics(selectedScenario)?.adoptionRate || 0) - (SCENARIOS[selectedScenario]?.adoptionRate || 0)) >= 0 ? '↑' : '↓'}
+                  {Math.abs((getAdjustedMetrics(selectedScenario)?.adoptionRate || 0) - (SCENARIOS[selectedScenario]?.adoptionRate || 0)).toFixed(0)}% vs baseline
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-blue-50 rounded-lg p-3">
+                  <div className="text-xs text-blue-700 mb-1">Adopting</div>
+                  <div className="text-lg font-bold text-blue-900">
+                    {Math.round((getAdjustedMetrics(selectedScenario)?.adoptionRate / 100 || 0) * (realData?.metadata?.totalSurgeons || 443))}
+                  </div>
+                  <div className="text-xs text-blue-600">surgeons</div>
+                </div>
+                <div className="bg-blue-50 rounded-lg p-3">
+                  <div className="text-xs text-blue-700 mb-1">Resistant</div>
+                  <div className="text-lg font-bold text-blue-900">
+                    {Math.round((1 - getAdjustedMetrics(selectedScenario)?.adoptionRate / 100 || 0) * (realData?.metadata?.totalSurgeons || 443))}
+                  </div>
+                  <div className="text-xs text-blue-600">surgeons</div>
+                </div>
+              </div>
             </div>
           </div>
-          <div>
-            <div className="text-sm text-purple-700">Timeline</div>
-            <div className="text-xl font-bold text-purple-900">
-              {whatIfParams.implementationMonths}mo
+
+          {/* Operational Outcomes */}
+          <div className="bg-gradient-to-br from-green-50 to-white rounded-xl p-5 border-2 border-green-300">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                <Shield className="w-6 h-6 text-white" />
+              </div>
+              <h5 className="text-lg font-bold text-green-900">Operations</h5>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-white rounded-lg p-4 border border-green-200">
+                <div className="text-sm text-green-700 mb-1">Implementation Timeline</div>
+                <div className="text-3xl font-bold text-green-900">
+                  {whatIfParams.implementationMonths}
+                </div>
+                <div className="text-sm font-medium mt-2" style={{ color: (whatIfParams.implementationMonths - 12) <= 0 ? '#10B981' : '#EF4444' }}>
+                  {(whatIfParams.implementationMonths - 12) <= 0 ? '↓' : '↑'}
+                  {Math.abs(whatIfParams.implementationMonths - 12)} months vs standard
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-green-50 rounded-lg p-3">
+                  <div className="text-xs text-green-700 mb-1">Complexity</div>
+                  <div className="text-lg font-bold text-green-900">
+                    {SCENARIOS[selectedScenario]?.implementation?.complexity || 'Medium'}
+                  </div>
+                </div>
+                <div className="bg-green-50 rounded-lg p-3">
+                  <div className="text-xs text-green-700 mb-1">Risk Score</div>
+                  <div className="text-lg font-bold text-green-900">
+                    {(SCENARIOS[selectedScenario]?.riskScore || 0).toFixed(1)}/10
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <button
-        onClick={() => setWhatIfParams({ adoptionModifier: 0, priceErosion: 0, implementationMonths: 12 })}
-        className="mt-4 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm"
-      >
-        Reset to Baseline
-      </button>
+      {/* Action Buttons */}
+      <div className="flex gap-3 mt-6">
+        <button
+          onClick={() => setWhatIfParams({
+            adoptionModifier: 0,
+            priceErosion: 0,
+            implementationMonths: 12,
+            volumeGrowth: 0,
+            surgeonResistance: 0,
+            negotiationLeverage: 0
+          })}
+          className="flex items-center gap-2 px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-semibold transition-all shadow-md"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Reset to Baseline
+        </button>
+        <button
+          onClick={() => setWhatIfParams({
+            adoptionModifier: -15,
+            priceErosion: 5,
+            implementationMonths: 18,
+            volumeGrowth: -5,
+            surgeonResistance: 25,
+            negotiationLeverage: -5
+          })}
+          className="flex items-center gap-2 px-6 py-3 bg-red-100 text-red-800 rounded-lg hover:bg-red-200 font-semibold transition-all shadow-md"
+        >
+          <AlertTriangle className="w-4 h-4" />
+          Worst Case Scenario
+        </button>
+        <button
+          onClick={() => setWhatIfParams({
+            adoptionModifier: 15,
+            priceErosion: -5,
+            implementationMonths: 9,
+            volumeGrowth: 8,
+            surgeonResistance: 5,
+            negotiationLeverage: 15
+          })}
+          className="flex items-center gap-2 px-6 py-3 bg-green-100 text-green-800 rounded-lg hover:bg-green-200 font-semibold transition-all shadow-md"
+        >
+          <TrendingUp className="w-4 h-4" />
+          Best Case Scenario
+        </button>
+      </div>
     </div>
   );
 

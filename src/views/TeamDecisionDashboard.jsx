@@ -66,219 +66,186 @@ const TeamDecisionDashboard = () => {
     return (
       <div
         onClick={onClick}
-        className={`rounded-xl border-2 p-5 cursor-pointer transition-all ${
+        className={`rounded-xl border-2 p-6 cursor-pointer transition-all ${
           isSelected
-            ? 'border-blue-500 bg-blue-50 shadow-xl'
-            : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-md'
+            ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-white shadow-xl'
+            : 'border-gray-300 bg-white hover:border-blue-400 hover:shadow-lg'
         }`}
       >
         {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <h3 className="text-2xl font-bold text-gray-900">
-              {scenario.name}
-            </h3>
-            <p className="text-sm text-gray-600 mt-1">{scenario.description}</p>
-          </div>
-          {isSelected && (
-            <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-              <div className="w-3 h-3 bg-white rounded-full"></div>
+        <div className="flex items-start justify-between mb-6">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <h3 className="text-2xl font-bold text-gray-900">
+                {scenario.name}
+              </h3>
+              {isSelected && (
+                <div className="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full">
+                  SELECTED
+                </div>
+              )}
             </div>
-          )}
-        </div>
+            <p className="text-base text-gray-600">{scenario.description}</p>
+          </div>
 
-        {/* Quintuple Aim North Star */}
-        <div className="bg-gradient-to-r from-slate-600 to-slate-700 text-white rounded-lg p-4 mb-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Star className="w-5 h-5 text-yellow-300" />
-              <h4 className="font-bold text-base">Quintuple Aim</h4>
+          {/* Mission Alignment Score */}
+          <div className="ml-6 flex-shrink-0 text-center bg-gradient-to-br from-slate-600 to-slate-700 text-white rounded-lg p-4 min-w-[120px]">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <Star className="w-4 h-4 text-yellow-300" />
+              <div className="text-xs font-semibold">Mission Score</div>
             </div>
-            <div className="text-right">
-              <div className="text-xs opacity-90">Mission Alignment</div>
-              <div className="text-2xl font-bold">{(scenario.quintupleMissionScore || 0).toFixed(0)}/100</div>
-            </div>
-          </div>
-          <div className="grid grid-cols-5 gap-3 text-xs">
-            <div className="text-center">
-              <div className="mb-1">👤</div>
-              <div className="font-semibold">Patient Exp</div>
-              <div className="opacity-90">{scenario.quintupleScores?.patientExperience || 'N/A'}</div>
-            </div>
-            <div className="text-center">
-              <div className="mb-1">🏥</div>
-              <div className="font-semibold">Pop Health</div>
-              <div className="opacity-90">{scenario.quintupleScores?.populationHealth || 'N/A'}</div>
-            </div>
-            <div className="text-center">
-              <div className="mb-1">💰</div>
-              <div className="font-semibold">Cost</div>
-              <div className="opacity-90">{scenario.quintupleScores?.costReduction || 'N/A'}</div>
-            </div>
-            <div className="text-center">
-              <div className="mb-1">⚕️</div>
-              <div className="font-semibold">Provider</div>
-              <div className="opacity-90">{scenario.quintupleScores?.providerExperience || 'N/A'}</div>
-            </div>
-            <div className="text-center">
-              <div className="mb-1">⚖️</div>
-              <div className="font-semibold">Equity</div>
-              <div className="opacity-90">{scenario.quintupleScores?.healthEquity || 'N/A'}</div>
-            </div>
+            <div className="text-3xl font-bold">{(scenario.quintupleMissionScore || 0).toFixed(0)}</div>
+            <div className="text-xs opacity-75">out of 100</div>
           </div>
         </div>
 
         {/* Three Pillar Grid */}
-        <div className="mb-4 text-center text-sm text-gray-600">
-          <span className="font-semibold">How each pillar serves the Quintuple Aim:</span>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Finance Pillar */}
-          <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-5">
-            <div className="flex items-center gap-2 mb-3 pb-3 border-b border-amber-200">
-              <DollarSign className="w-5 h-5 text-amber-600" />
+          <div className="bg-gradient-to-br from-amber-50 to-white border-2 border-amber-300 rounded-xl p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 bg-amber-600 rounded-lg flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-white" />
+              </div>
               <div>
-                <h4 className="font-bold text-amber-900">Finance</h4>
-                <div className="text-xs text-amber-600 italic">Funding the mission</div>
+                <h4 className="text-lg font-bold text-amber-900">Finance</h4>
+                <div className="text-sm text-amber-700">Funding the mission</div>
               </div>
             </div>
-            <div className="space-y-3">
-              <div className="text-center py-2 bg-white rounded border border-amber-100">
-                <div className="text-xs text-amber-700 mb-1">Annual Savings</div>
-                <div className="text-2xl font-bold text-amber-900">
-                  {formatCurrency(scenario.annualSavings || 0, { millions: true })}
+
+            <div className="space-y-4">
+              {scenario.annualSavings === 0 ? (
+                <div className="text-center py-8 bg-white rounded-lg border-2 border-amber-200">
+                  <div className="text-amber-700 font-semibold">No cost savings</div>
+                  <div className="text-sm text-amber-600 mt-1">Baseline scenario</div>
                 </div>
-                <div className="text-xs text-amber-600 mt-1">{(scenario.savingsPercent || 0).toFixed(1)}% savings</div>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-center text-sm">
-                <div className="py-2 bg-white rounded border border-amber-100">
-                  <div className="text-xs text-amber-700">5-Yr NPV</div>
-                  <div className="font-bold text-amber-900">{formatCurrency(scenario.npv5Year || 0, { millions: true })}</div>
-                </div>
-                <div className="py-2 bg-white rounded border border-amber-100">
-                  <div className="text-xs text-amber-700">Impl. Cost</div>
-                  <div className="font-bold text-amber-900">{formatCurrency(scenario.implementation?.costMillions || 0, { millions: true })}</div>
-                </div>
-              </div>
+              ) : (
+                <>
+                  <div className="bg-white rounded-lg border-2 border-amber-200 p-4">
+                    <div className="text-sm text-amber-700 mb-2">Annual Savings</div>
+                    <div className="text-3xl font-bold text-amber-900">
+                      {formatCurrency(scenario.annualSavings || 0, { millions: true })}
+                    </div>
+                    <div className="text-sm text-amber-600 mt-2">
+                      {(scenario.savingsPercent * 100 || 0).toFixed(1)}% reduction in spend
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-white rounded-lg border border-amber-200 p-3">
+                      <div className="text-xs text-amber-700 mb-1">5-Year NPV</div>
+                      <div className="text-lg font-bold text-amber-900">
+                        {formatCurrency(scenario.npv5Year || 0, { millions: true })}
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-lg border border-amber-200 p-3">
+                      <div className="text-xs text-amber-700 mb-1">ROI Multiple</div>
+                      <div className="text-lg font-bold text-amber-900">
+                        {(((scenario.npv5Year || 0) / 1000000) / (scenario.implementation?.costMillions || 1)).toFixed(1)}x
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-amber-100 rounded-lg p-3">
+                    <div className="text-xs text-amber-700 mb-1">Implementation Cost</div>
+                    <div className="text-base font-bold text-amber-900">
+                      {formatCurrency(scenario.implementation?.costMillions || 0, { millions: true })}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
           {/* Clinical Pillar */}
-          <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-5">
-            <div className="flex items-center gap-2 mb-3 pb-3 border-b border-blue-200">
-              <Stethoscope className="w-5 h-5 text-blue-600" />
+          <div className="bg-gradient-to-br from-blue-50 to-white border-2 border-blue-300 rounded-xl p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                <Stethoscope className="w-6 h-6 text-white" />
+              </div>
               <div>
-                <h4 className="font-bold text-blue-900">Clinical</h4>
-                <div className="text-xs text-blue-600 italic">Delivering excellent care</div>
+                <h4 className="text-lg font-bold text-blue-900">Clinical</h4>
+                <div className="text-sm text-blue-700">Delivering excellent care</div>
               </div>
             </div>
-            <div className="space-y-3">
-              <div className="text-center py-2 bg-white rounded border border-blue-100">
-                <div className="text-xs text-blue-700 mb-1">Vendor Switching Impact</div>
-                <div className="text-2xl font-bold text-blue-900">
-                  {Math.round(totalSurgeons * (1 - (scenario.adoptionRate || 0)))}
+
+            <div className="space-y-4">
+              <div className="bg-white rounded-lg border-2 border-blue-200 p-4">
+                <div className="text-sm text-blue-700 mb-2">Adoption Rate</div>
+                <div className="text-3xl font-bold text-blue-900">
+                  {(scenario.adoptionRate * 100 || 0).toFixed(0)}%
                 </div>
-                <div className="text-xs text-blue-600 mt-1">
-                  surgeons ({(100 - (scenario.adoptionRate || 0) * 100).toFixed(0)}% of total)
+                <div className="text-sm text-blue-600 mt-2">
+                  {Math.round(totalSurgeons * (scenario.adoptionRate || 0))} of {totalSurgeons} surgeons
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2 text-center text-sm">
-                <div className="py-2 bg-white rounded border border-blue-100">
-                  <div className="text-xs text-blue-700">Vendors</div>
-                  <div className="font-bold text-blue-900">{scenario.vendors?.length || 0}</div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-white rounded-lg border border-blue-200 p-3">
+                  <div className="text-xs text-blue-700 mb-1">Vendors</div>
+                  <div className="text-lg font-bold text-blue-900">
+                    {scenario.vendors?.length || 0}
+                  </div>
                 </div>
-                <div className="py-2 bg-white rounded border border-blue-100">
-                  <div className="text-xs text-blue-700">Disruption</div>
-                  <div className="font-bold text-blue-900 text-xs">
+                <div className="bg-white rounded-lg border border-blue-200 p-3">
+                  <div className="text-xs text-blue-700 mb-1">Disruption</div>
+                  <div className="text-lg font-bold text-blue-900">
                     {(100 - scenario.adoptionRate * 100) <= 15 ? 'Minimal' : (100 - scenario.adoptionRate * 100) <= 30 ? 'Moderate' : 'High'}
                   </div>
+                </div>
+              </div>
+
+              <div className="bg-blue-100 rounded-lg p-3">
+                <div className="text-xs text-blue-700 mb-1">Non-Adopting Surgeons</div>
+                <div className="text-base font-bold text-blue-900">
+                  {Math.round(totalSurgeons * (1 - (scenario.adoptionRate || 0)))} surgeons
                 </div>
               </div>
             </div>
           </div>
 
           {/* Operations Pillar */}
-          <div className="bg-green-50 border-2 border-green-200 rounded-lg p-5">
-            <div className="flex items-center gap-2 mb-3 pb-3 border-b border-green-200">
-              <Shield className="w-5 h-5 text-green-600" />
+          <div className="bg-gradient-to-br from-green-50 to-white border-2 border-green-300 rounded-xl p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                <Shield className="w-6 h-6 text-white" />
+              </div>
               <div>
-                <h4 className="font-bold text-green-900">Operations</h4>
-                <div className="text-xs text-green-600 italic">Executing efficiently</div>
+                <h4 className="text-lg font-bold text-green-900">Operations</h4>
+                <div className="text-sm text-green-700">Executing efficiently</div>
               </div>
             </div>
-            <div className="space-y-3">
-              <div className="text-center py-2 bg-white rounded border border-green-100">
-                <div className="text-xs text-green-700 mb-1">Complexity</div>
-                <div className="text-2xl font-bold text-green-900">
-                  {scenario.implementation?.complexity || 'N/A'}
-                </div>
-                <div className="text-xs text-green-600 mt-1">{scenario.implementation?.timeline || 0} month timeline</div>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-center text-sm">
-                <div className="py-2 bg-white rounded border border-green-100">
-                  <div className="text-xs text-green-700">Risk Level</div>
-                  <div className="font-bold text-green-900 text-xs">{scenario.riskLevel || 'N/A'}</div>
-                </div>
-                <div className="py-2 bg-white rounded border border-green-100">
-                  <div className="text-xs text-green-700">Risk Score</div>
-                  <div className="font-bold text-green-900">{(scenario.riskScore || 0).toFixed(0)}/10</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Tradeoffs by Pillar */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
-          {/* Finance Tradeoffs */}
-          <div className="bg-amber-50 border-l-4 border-amber-600 p-3 rounded">
-            <div className="flex items-start gap-2">
-              <DollarSign className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <div className="font-bold text-amber-900 text-xs mb-1">Finance</div>
-                <div className="text-xs text-amber-800">
-                  {scenario.annualSavings === 0 ? (
-                    'No savings'
-                  ) : (
-                    <>
-                      <div className="font-semibold">{formatCurrency(scenario.annualSavings || 0, { millions: true })} annual savings</div>
-                      <div className="mt-0.5 text-amber-700">{(((scenario.npv5Year || 0) / 1000000) / (scenario.implementation?.costMillions || 1)).toFixed(1)}x ROI over 5 years</div>
-                    </>
-                  )}
+            <div className="space-y-4">
+              <div className="bg-white rounded-lg border-2 border-green-200 p-4">
+                <div className="text-sm text-green-700 mb-2">Implementation Timeline</div>
+                <div className="text-3xl font-bold text-green-900">
+                  {scenario.implementation?.timeline || 0}
+                </div>
+                <div className="text-sm text-green-600 mt-2">
+                  months to full deployment
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Clinical Tradeoffs */}
-          <div className="bg-green-50 border-l-4 border-green-600 p-3 rounded">
-            <div className="flex items-start gap-2">
-              <Stethoscope className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <div className="font-bold text-green-900 text-xs mb-1">Clinical</div>
-                <div className="text-xs text-green-800">
-                  {(100 - scenario.adoptionRate * 100) === 0 ? (
-                    'Zero disruption'
-                  ) : (
-                    <>
-                      <div className="font-semibold">{Math.round(totalSurgeons * (1 - scenario.adoptionRate))} surgeons switching</div>
-                      <div className="mt-0.5 text-green-700">{(100 - scenario.adoptionRate * 100).toFixed(0)}% of total surgeons</div>
-                    </>
-                  )}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-white rounded-lg border border-green-200 p-3">
+                  <div className="text-xs text-green-700 mb-1">Complexity</div>
+                  <div className="text-lg font-bold text-green-900">
+                    {scenario.implementation?.complexity || 'N/A'}
+                  </div>
+                </div>
+                <div className="bg-white rounded-lg border border-green-200 p-3">
+                  <div className="text-xs text-green-700 mb-1">Risk Score</div>
+                  <div className="text-lg font-bold text-green-900">
+                    {(scenario.riskScore || 0).toFixed(0)}/10
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Operations Tradeoffs */}
-          <div className="bg-purple-50 border-l-4 border-purple-600 p-3 rounded">
-            <div className="flex items-start gap-2">
-              <Shield className="w-4 h-4 text-purple-600 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <div className="font-bold text-purple-900 text-xs mb-1">Operations</div>
-                <div className="text-xs text-purple-800">
-                  <div className="font-semibold">{scenario.implementation?.timelineMonths || 0} month timeline</div>
-                  <div className="mt-0.5 text-purple-700">{scenario.riskLevel} risk · {scenario.vendors?.length || 0} vendors</div>
+              <div className="bg-green-100 rounded-lg p-3">
+                <div className="text-xs text-green-700 mb-1">Risk Assessment</div>
+                <div className="text-base font-bold text-green-900">
+                  {scenario.riskLevel || 'N/A'}
                 </div>
               </div>
             </div>
@@ -315,7 +282,7 @@ const TeamDecisionDashboard = () => {
       <NavigationHeader role="team" specialty="hipknee" specialtyName="Hip & Knee" persona="team" />
 
       <div className="p-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full mx-auto px-4">
           {/* Header */}
           <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
             <div className="flex items-start justify-between mb-6">
@@ -446,7 +413,7 @@ const TeamDecisionDashboard = () => {
               </div>
 
               {/* Scenario Cards */}
-              <div className="grid grid-cols-3 gap-8 mt-6">
+              <div className="space-y-6 mt-6">
                 {Object.entries(SCENARIOS).map(([id, scenario]) => (
                   <ThreePillarScenarioCard
                     key={id}
@@ -639,27 +606,22 @@ const TeamDecisionDashboard = () => {
                         </td>
                       ))}
                     </tr>
-                    <tr className="border-b border-gray-200 hover:bg-amber-50">
-                      <td className="p-4 font-semibold text-gray-700">Payback Multiple</td>
+                    <tr className="bg-blue-50 border-b border-blue-200">
+                      <td className="p-4 font-semibold text-blue-900">Clinical Impact</td>
                       {Object.values(SCENARIOS).map((scenario, idx) => {
-                        const npvInMillions = (scenario.npv5Year || 0) / 1000000;
-                        const payback = scenario.implementation?.costMillions > 0
-                          ? (npvInMillions / scenario.implementation.costMillions).toFixed(1)
-                          : 'N/A';
+                        const affectedSurgeons = Math.round(totalSurgeons * (1 - scenario.adoptionRate));
+                        // Estimate high volume loyalists: ~30% of affected surgeons are high volume (>50 cases/year)
+                        // and ~60% of high volume surgeons are vendor loyalists (strong preference)
+                        const highVolumeLoyalists = Math.round(affectedSurgeons * 0.30 * 0.60);
                         return (
-                          <td key={idx} className="text-center p-4 text-amber-900">
-                            {payback}x
+                          <td key={idx} className="text-center p-4 text-blue-900 text-sm">
+                            <div className="font-semibold">{affectedSurgeons} surgeons affected</div>
+                            <div className="text-xs text-blue-700 mt-1">
+                              ({highVolumeLoyalists} high-volume vendor loyalists)
+                            </div>
                           </td>
                         );
                       })}
-                    </tr>
-                    <tr className="bg-blue-50 border-b border-blue-200">
-                      <td className="p-4 font-semibold text-blue-900">Clinical Impact</td>
-                      {Object.values(SCENARIOS).map((scenario, idx) => (
-                        <td key={idx} className="text-center p-4 text-blue-900 text-sm">
-                          {Math.round(totalSurgeons * (1 - scenario.adoptionRate))} surgeons affected
-                        </td>
-                      ))}
                     </tr>
                     <tr className="bg-green-50">
                       <td className="p-4 font-semibold text-green-900">Implementation Timeline</td>

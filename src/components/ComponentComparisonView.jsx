@@ -69,6 +69,28 @@ const ComponentComparisonView = ({ surgeon, allSurgeonData }) => {
 
   const components = getFilteredComponents();
 
+  // Check if surgeon has component data
+  if (!surgeon?.topComponents || surgeon.topComponents.length === 0) {
+    return (
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2 mb-4">
+          <Package className="text-purple-600" />
+          Component Pricing Comparison
+        </h3>
+        <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 text-center">
+          <Package className="w-16 h-16 text-blue-400 mx-auto mb-4" />
+          <h4 className="text-xl font-bold text-gray-900 mb-2">Component Data Not Available</h4>
+          <p className="text-gray-600 mb-4">
+            Detailed component-level pricing data is not yet available for this surgeon.
+          </p>
+          <p className="text-sm text-gray-500">
+            Component data requires surgeon-specific implant usage records. This data will be populated when detailed supply chain data is integrated.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-xl shadow-lg p-6">
       <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2 mb-4">

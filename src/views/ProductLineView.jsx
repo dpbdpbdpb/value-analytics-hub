@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronRight, ArrowLeft, Target, BarChart3, Users, Stethoscope, DollarSign, Settings } from 'lucide-react';
+import { ChevronRight, ArrowLeft, Target, BarChart3, Users, Stethoscope, DollarSign, Settings, Search, CheckCircle, Wrench, TrendingUp, RotateCcw, Calendar } from 'lucide-react';
 import NavigationHeader from '../components/shared/NavigationHeader';
 
 const ProductLineView = () => {
@@ -11,6 +11,56 @@ const ProductLineView = () => {
 
   // Determine specialty name based on productLineId
   const specialtyName = productLineId === 'shoulder' ? 'shoulder' : 'hipknee';
+
+  // Sourcing Lifecycle Workflow Stages
+  const workflowStages = [
+    {
+      id: 'sourcing-review',
+      name: 'Sourcing Strategy Review',
+      icon: Search,
+      description: 'Analyze market, vendors, and internal data',
+      status: 'completed', // 'active' | 'completed' | 'upcoming'
+      relevantCanvases: ['team-decision', 'financial-view', 'clinical-view'],
+      nextReviewDate: null
+    },
+    {
+      id: 'decision',
+      name: 'Decision',
+      icon: CheckCircle,
+      description: 'Select vendor strategy and negotiate contracts',
+      status: 'completed',
+      relevantCanvases: ['team-decision', 'financial-view'],
+      decisionDate: '2024-09-15'
+    },
+    {
+      id: 'implementation',
+      name: 'Implementation',
+      icon: Wrench,
+      description: 'Roll out new vendor contracts and train surgeons',
+      status: 'active',
+      relevantCanvases: ['operational-view', 'surgeon-analytics'],
+      startDate: '2024-10-01',
+      expectedCompletion: '2025-03-31'
+    },
+    {
+      id: 'lookback',
+      name: 'Lookback Analysis',
+      icon: TrendingUp,
+      description: 'Track actual vs. predicted performance',
+      status: 'upcoming',
+      relevantCanvases: ['team-decision', 'clinical-view', 'financial-view'],
+      scheduledDate: '2025-04-15'
+    },
+    {
+      id: 'renewal',
+      name: 'Contract Renewal Review',
+      icon: RotateCcw,
+      description: 'Evaluate performance and prepare for next cycle',
+      status: 'upcoming',
+      relevantCanvases: ['team-decision', 'financial-view'],
+      contractExpirationDate: '2027-09-30'
+    }
+  ];
 
   // Load orthopedic data based on product line
   useEffect(() => {
@@ -198,11 +248,16 @@ const ProductLineView = () => {
                 </p>
               </div>
               <div className="text-right">
-                <div className="text-sm text-gray-600">Value Opportunity</div>
-                <div className="text-3xl font-bold text-blue-600">
-                  {orthoData ? `$${(Math.max(...Object.values(orthoData.scenarios || {}).map(s => s.annualSavings || 0)) / 1000000).toFixed(0)}M` : '-'}
+                <div className="text-sm text-gray-600">Annual Implant Spend</div>
+                <div className="text-3xl font-bold text-gray-900">
+                  {orthoData ? `$${(orthoData.metadata.totalSpend / 1000000).toFixed(1)}M` : '-'}
                 </div>
-                <div className="text-sm text-gray-600 mt-1">annual savings potential</div>
+                <div className="text-sm text-gray-600 mt-1">
+                  Savings Opportunity:
+                  <span className="text-green-600 font-bold ml-1">
+                    ${orthoData ? (Math.max(...Object.values(orthoData.scenarios || {}).map(s => s.annualSavings || 0)) / 1000000).toFixed(1) : '-'}M
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -229,7 +284,7 @@ const ProductLineView = () => {
               <div className="bg-amber-50 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <DollarSign className="w-5 h-5 text-amber-600" />
-                  <div className="text-sm text-gray-600">Avg Cost/Case</div>
+                  <div className="text-sm text-gray-600">Avg Implant Cost/Case</div>
                 </div>
                 <div className="text-2xl font-bold text-amber-900">
                   {orthoData ? `$${(orthoData.metadata.totalSpend / orthoData.metadata.totalCases).toLocaleString(undefined, {maximumFractionDigits: 0})}` : '-'}
@@ -256,6 +311,133 @@ const ProductLineView = () => {
                 Each decision canvas provides a unique perspective (Clinical, Financial, Operational) or integrates all three.
                 Use these tools to analyze tradeoffs, model scenarios, and make transparent data-driven decisions.
               </p>
+            </div>
+          </div>
+
+          {/* Sourcing Lifecycle Workflow */}
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-1">Sourcing Lifecycle Workflow</h2>
+                <p className="text-gray-600 text-sm">Track progress through the strategic sourcing cycle</p>
+              </div>
+              <div className="text-right">
+                <div className="text-xs text-gray-600">Current Stage</div>
+                <div className="text-lg font-bold text-blue-600">Implementation</div>
+              </div>
+            </div>
+
+            {/* Workflow Timeline */}
+            <div className="relative">
+              {/* Connection Line */}
+              <div className="absolute top-8 left-0 right-0 h-1 bg-gray-200" style={{ width: 'calc(100% - 60px)', left: '30px' }}></div>
+
+              {/* Stages */}
+              <div className="relative grid grid-cols-5 gap-4">
+                {workflowStages.map((stage, idx) => {
+                  const IconComponent = stage.icon;
+                  const isActive = stage.status === 'active';
+                  const isCompleted = stage.status === 'completed';
+                  const isUpcoming = stage.status === 'upcoming';
+
+                  return (
+                    <div key={stage.id} className="flex flex-col items-center">
+                      {/* Icon Circle */}
+                      <div className={`relative z-10 w-16 h-16 rounded-full flex items-center justify-center mb-3 border-4 transition-all ${
+                        isCompleted
+                          ? 'bg-green-500 border-green-600'
+                          : isActive
+                          ? 'bg-blue-500 border-blue-600 ring-4 ring-blue-200 animate-pulse'
+                          : 'bg-gray-300 border-gray-400'
+                      }`}>
+                        <IconComponent className={`w-7 h-7 ${isCompleted || isActive ? 'text-white' : 'text-gray-600'}`} />
+                      </div>
+
+                      {/* Stage Info */}
+                      <div className={`text-center ${isActive ? 'bg-blue-50 rounded-lg p-3 border-2 border-blue-200' : ''}`}>
+                        <div className={`font-bold text-sm mb-1 ${
+                          isCompleted ? 'text-green-900' : isActive ? 'text-blue-900' : 'text-gray-600'
+                        }`}>
+                          {stage.name}
+                        </div>
+                        <div className="text-xs text-gray-600 mb-2">{stage.description}</div>
+
+                        {/* Status Badge */}
+                        <div className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
+                          isCompleted
+                            ? 'bg-green-100 text-green-800'
+                            : isActive
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {isCompleted ? '✓ Complete' : isActive ? '⚡ In Progress' : '⏳ Upcoming'}
+                        </div>
+
+                        {/* Dates */}
+                        {stage.decisionDate && (
+                          <div className="text-xs text-gray-500 mt-2">
+                            <Calendar className="w-3 h-3 inline mr-1" />
+                            {stage.decisionDate}
+                          </div>
+                        )}
+                        {stage.expectedCompletion && isActive && (
+                          <div className="text-xs text-blue-600 mt-2 font-semibold">
+                            <Calendar className="w-3 h-3 inline mr-1" />
+                            Due: {stage.expectedCompletion}
+                          </div>
+                        )}
+                        {stage.scheduledDate && isUpcoming && (
+                          <div className="text-xs text-gray-500 mt-2">
+                            <Calendar className="w-3 h-3 inline mr-1" />
+                            Scheduled: {stage.scheduledDate}
+                          </div>
+                        )}
+                        {stage.contractExpirationDate && (
+                          <div className="text-xs text-gray-500 mt-2">
+                            <Calendar className="w-3 h-3 inline mr-1" />
+                            Expires: {stage.contractExpirationDate}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Cycle Note */}
+            <div className="mt-6 bg-slate-50 border border-slate-200 rounded-lg p-4 flex items-start gap-3">
+              <RotateCcw className="w-5 h-5 text-slate-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <div className="font-bold text-slate-900 mb-1">Continuous Improvement Cycle</div>
+                <p className="text-sm text-slate-700">
+                  After Contract Renewal Review, the cycle returns to Sourcing Strategy Review. This iterative process ensures
+                  continuous optimization of vendor relationships, clinical outcomes, and financial performance.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Active Canvases for Current Stage */}
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-blue-600 rounded-lg p-6 mb-6">
+            <div className="flex items-start gap-3">
+              <Target className="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-bold text-blue-900 mb-2">Active Canvases for Implementation Stage</h3>
+                <p className="text-blue-800 text-sm mb-3">
+                  Based on your current workflow stage, the following decision canvases are most relevant:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {workflowStages.find(s => s.status === 'active')?.relevantCanvases.map((canvasId) => {
+                    const canvas = decisionCanvases.find(c => c.id === canvasId);
+                    return canvas ? (
+                      <div key={canvasId} className="bg-white px-3 py-2 rounded-lg border-2 border-blue-200 text-sm font-semibold text-blue-900">
+                        {canvas.name}
+                      </div>
+                    ) : null;
+                  })}
+                </div>
+              </div>
             </div>
           </div>
 
