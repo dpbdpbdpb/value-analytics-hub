@@ -835,15 +835,15 @@ const EnhancedOrthopedicDashboard = () => {
     return (
       <div className="space-y-6">
         {/* Data Availability Notice */}
-        {!realData?.qualityMetrics && (
+        {realData?.metadata?.syntheticDataSections?.includes('qualityMetrics') && (
           <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-lg">
             <div className="flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
               <div>
-                <h4 className="font-bold text-amber-900 mb-1">Quality Metrics Data Placeholder</h4>
+                <h4 className="font-bold text-amber-900 mb-1">⚠️ Synthetic Data - For Demo Only</h4>
                 <p className="text-sm text-amber-800">
-                  The quality metrics shown below use <strong>placeholder/dummy data</strong> for demonstration purposes.
-                  This interface is ready to integrate with your EMR, surgical registry, or quality reporting systems.
+                  The quality metrics shown below use <strong>synthetic placeholder data</strong> for demonstration purposes.
+                  These values are NOT from your uploaded Excel file. This interface is ready to integrate with your EMR, surgical registry, or quality reporting systems.
                 </p>
               </div>
             </div>
