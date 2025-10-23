@@ -150,6 +150,17 @@ const AdminDataUpload = () => {
     }
   };
 
+  // Helper: Identify if component is a primary component (one per surgery)
+  const isPrimaryComponent = (componentName) => {
+    const name = componentName.toUpperCase();
+    // Primary hip components (typically 1 per surgery)
+    const hipPrimary = ['ACETABULAR CUP', 'ACETABULAR SHELL', 'CUP'];
+    // Primary knee components (typically 1 per surgery)
+    const kneePrimary = ['FEMORAL COMPONENT', 'TIBIAL TRAY', 'TIBIAL BASEPLATE'];
+
+    return hipPrimary.some(p => name.includes(p)) || kneePrimary.some(p => name.includes(p));
+  };
+
   // Transform raw data to JSON (implementing the prompt logic)
   const transformRawDataToJSON = async (data, productLine) => {
     // Group data by vendor
@@ -187,7 +198,11 @@ const AdminDataUpload = () => {
       const price = parseFloat(getFieldValue(row, 'price', ['Price', 'price', 'PRICE', 'Unit Price', 'Cost', 'Unit Cost']) || 0);
       const spend = quantity * price;
 
-      totalCases += quantity;
+      // Count cases only from primary components (acetabular cups, femoral/tibial components)
+      // This estimates actual surgical procedures rather than counting all component SKUs
+      if (isPrimaryComponent(component)) {
+        totalCases += quantity;
+      }
       totalSpend += spend;
 
       // Aggregate vendors
@@ -202,12 +217,18 @@ const AdminDataUpload = () => {
       if (!surgeonMap[surgeon]) {
         surgeonMap[surgeon] = { totalCases: 0, totalSpend: 0, vendors: {} };
       }
-      surgeonMap[surgeon].totalCases += quantity;
+      // Count cases only from primary components for accurate surgery count
+      if (isPrimaryComponent(component)) {
+        surgeonMap[surgeon].totalCases += quantity;
+      }
       surgeonMap[surgeon].totalSpend += spend;
       if (!surgeonMap[surgeon].vendors[vendor]) {
         surgeonMap[surgeon].vendors[vendor] = { cases: 0, spend: 0 };
       }
-      surgeonMap[surgeon].vendors[vendor].cases += quantity;
+      // Count cases only from primary components
+      if (isPrimaryComponent(component)) {
+        surgeonMap[surgeon].vendors[vendor].cases += quantity;
+      }
       surgeonMap[surgeon].vendors[vendor].spend += spend;
 
       // Aggregate components (using normalized name)
@@ -511,6 +532,10 @@ const AdminDataUpload = () => {
       }
     }
 
+    // Add methodology note about case counting
+    const info = [];
+    info.push(`📊 Case Counting Methodology: Cases are estimated by counting primary components (acetabular cups, femoral components, tibial trays) rather than all component SKUs. This provides an accurate estimate of actual surgical procedures.`);
+
     // Analyze matrix pricing categories
     const matrixCategories = Array.isArray(data.matrixPricing) ? data.matrixPricing : [];
     const matrixDetails = data.matrixPricingDetailed || {};
@@ -553,6 +578,7 @@ const AdminDataUpload = () => {
       isValid: errors.length === 0,
       errors,
       warnings,
+      info,
       summary: {
         vendors: Object.keys(data.vendors || {}).length,
         components: (data.components || []).length,
@@ -875,6 +901,17 @@ const AdminDataUpload = () => {
                     <ul className="list-disc list-inside text-yellow-700 text-sm space-y-1">
                       {validationResults.warnings.map((warn, idx) => (
                         <li key={idx}>{warn}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {validationResults.info && validationResults.info.length > 0 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="font-semibold text-blue-800 mb-2">ℹ️ Methodology:</p>
+                    <ul className="list-disc list-inside text-blue-700 text-sm space-y-1">
+                      {validationResults.info.map((info, idx) => (
+                        <li key={idx}>{info}</li>
                       ))}
                     </ul>
                   </div>
