@@ -4477,7 +4477,7 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
         {/* Tab Content */}
         <div className="transition-all">
           {activeTab === 'overview' && renderOverviewTab()}
-          {activeTab === 'surgeons' && renderSurgeonTab()}
+          {activeTab === 'surgeons' && renderClinicalTab()}
         </div>
 
         {/* Footer with Data Source */}
