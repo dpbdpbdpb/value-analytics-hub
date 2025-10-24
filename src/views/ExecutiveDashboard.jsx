@@ -86,6 +86,64 @@ const EnhancedOrthopedicDashboard = () => {
     return VENDOR_ROBOTS[vendor] || null;
   };
 
+  // Abbreviate vendor names for display
+  const abbreviateVendor = (vendor) => {
+    const abbreviations = {
+      'JOHNSON & JOHNSON': 'J&J',
+      'SMITH & NEPHEW': 'S&N',
+      'ZIMMER BIOMET': 'ZIMMER',
+      'STRYKER': 'STRYKER',
+      'EXACTECH': 'EXACTECH',
+      'MEDACTA': 'MEDACTA',
+      'CONFORMIS': 'CONFORMIS',
+      'CORIN': 'CORIN',
+      'MICROPORT ORTHOPEDICS': 'MICROPORT'
+    };
+    return abbreviations[vendor] || vendor;
+  };
+
+  // Interpolate color based on risk score (0-10)
+  // Returns smooth gradient: green (0) → yellow (2.5) → orange (5) → red-orange (7.5) → red (10)
+  const getRiskColor = (riskScore) => {
+    // Handle zero risk specially
+    if (riskScore === 0) return '#10B981'; // green
+
+    // Clamp to 0-10 range
+    const score = Math.max(0, Math.min(10, riskScore));
+
+    // Define color stops
+    const stops = [
+      { score: 0, color: { r: 16, g: 185, b: 129 } },    // #10B981 green
+      { score: 2.5, color: { r: 251, g: 191, b: 36 } },  // #FBBF24 yellow
+      { score: 5, color: { r: 245, g: 158, b: 11 } },    // #F59E0B orange
+      { score: 7.5, color: { r: 239, g: 68, b: 68 } },   // #EF4444 red
+      { score: 10, color: { r: 220, g: 38, b: 38 } }     // #DC2626 dark red
+    ];
+
+    // Find the two stops to interpolate between
+    let lowerStop = stops[0];
+    let upperStop = stops[1];
+
+    for (let i = 0; i < stops.length - 1; i++) {
+      if (score >= stops[i].score && score <= stops[i + 1].score) {
+        lowerStop = stops[i];
+        upperStop = stops[i + 1];
+        break;
+      }
+    }
+
+    // Calculate interpolation factor
+    const range = upperStop.score - lowerStop.score;
+    const factor = range === 0 ? 0 : (score - lowerStop.score) / range;
+
+    // Interpolate RGB values
+    const r = Math.round(lowerStop.color.r + (upperStop.color.r - lowerStop.color.r) * factor);
+    const g = Math.round(lowerStop.color.g + (upperStop.color.g - lowerStop.color.g) * factor);
+    const b = Math.round(lowerStop.color.b + (upperStop.color.b - lowerStop.color.b) * factor);
+
+    return `rgb(${r}, ${g}, ${b})`;
+  };
+
   // Fetch real data from JSON
   const fetchData = async () => {
     setIsLoading(true);
@@ -1103,6 +1161,7 @@ const EnhancedOrthopedicDashboard = () => {
           transitioningVendors: new Set(),
           vendorCaseCounts: {}, // Track cases by vendor
           highVolLoyalistVendors: {}, // Track vendors for high-volume loyalists
+          highVolLoyalistVendorCases: {}, // Track cases by non-preferred vendors
           roboticVendors: {} // Track robotic cases by vendor
         };
       }
@@ -1147,6 +1206,11 @@ const EnhancedOrthopedicDashboard = () => {
             hospitalImpact[facility].highVolLoyalistVendors[vendor] = 0;
           }
           hospitalImpact[facility].highVolLoyalistVendors[vendor]++;
+          // Track cases by non-preferred vendor
+          if (!hospitalImpact[facility].highVolLoyalistVendorCases[vendor]) {
+            hospitalImpact[facility].highVolLoyalistVendorCases[vendor] = 0;
+          }
+          hospitalImpact[facility].highVolLoyalistVendorCases[vendor] += surgeon.volume;
         }
       }
     });
@@ -1189,6 +1253,15 @@ const EnhancedOrthopedicDashboard = () => {
       const preferredVendorPercent = hospital.totalCases > 0 ? (preferredVendorCases / hospital.totalCases) * 100 : 0;
       hospital.preferredVendor = preferredVendor;
       hospital.preferredVendorPercent = preferredVendorPercent;
+
+      // Calculate non-preferred vendor cases (vendors not in scenario vendor list)
+      const nonPreferredVendorCases = {};
+      Object.entries(hospital.vendorCaseCounts).forEach(([vendor, cases]) => {
+        if (!scenarioVendors.includes(vendor) && vendor !== 'Unknown') {
+          nonPreferredVendorCases[vendor] = cases;
+        }
+      });
+      hospital.nonPreferredVendorCases = nonPreferredVendorCases;
 
       // Calculate hospital risk score (0-10 scale, higher = more risk)
       // Base risk from loyalists and sherpa ratio
@@ -1241,24 +1314,12 @@ const EnhancedOrthopedicDashboard = () => {
       // Store risk score in hospital object for reuse
       hospital.riskScore = riskScore;
 
-      // Calculate risk level based on high-volume loyalists and sherpa ratio
+      // Derive categorical risk level from numeric risk score for consistency
       let riskLevel = 'Low';
-      if (hospital.highVolumeLoyalists >= 3) {
-        if (sherpaRatio < 1.5) {
-          riskLevel = 'High';
-        } else if (sherpaRatio < 2.5) {
-          riskLevel = 'Medium';
-        }
-      } else if (hospital.highVolumeLoyalists === 2) {
-        if (sherpaRatio < 0.8) {
-          riskLevel = 'High';
-        } else if (sherpaRatio < 2) {
-          riskLevel = 'Medium';
-        }
-      } else if (hospital.highVolumeLoyalists === 1) {
-        if (sherpaRatio < 1) {
-          riskLevel = 'Medium';
-        }
+      if (riskScore >= 7) {
+        riskLevel = 'High';
+      } else if (riskScore >= 4) {
+        riskLevel = 'Medium';
       }
       hospital.riskLevel = riskLevel;
 
@@ -1448,8 +1509,8 @@ const EnhancedOrthopedicDashboard = () => {
 
           <div className="mb-4 bg-blue-50 border-l-4 border-blue-600 p-4 rounded-lg">
             <p className="text-sm text-blue-800 mb-2">
-              <strong>Strategic Decision Tool:</strong> Each bar represents a hospital with cases at risk (sorted by risk score: low → high). The purple line shows cumulative % of total system spend captured.
-              Markers show where you reach 70%, 80%, and 90% of system spend - helping you prioritize which hospitals to focus on for maximum impact.
+              <strong>Strategic Decision Tool:</strong> Each bar represents a hospital (sorted by risk score: low → high). Bar colors show a continuous risk gradient from green (0 = no risk) smoothly transitioning through yellow, orange, to red (10 = highest risk).
+              The purple line shows cumulative % of total system spend captured. Markers show where you reach 70%, 80%, and 90% of system spend - helping you prioritize which hospitals to focus on for maximum impact. Y-axis scaled to 95th percentile for clarity.
             </p>
             <p className="text-sm text-blue-800">
               <strong>Risk Score Calculation (0-10):</strong> Base risk is determined by the number of high-volume loyalists (surgeons with >200 cases/year loyal to non-scenario vendors)
@@ -1491,16 +1552,16 @@ const EnhancedOrthopedicDashboard = () => {
 
               surgeonImpact.forEach(surgeon => {
                 if (surgeon.facility === hospital.facility && surgeon.vendors) {
+                  // Calculate total spend for this surgeon at this hospital
+                  Object.values(surgeon.vendors).forEach(v => {
+                    totalHospitalSpend += (v.spend || 0);
+                  });
+
                   // Add up spend on scenario vendors
                   scenarioVendors.forEach(vendor => {
                     if (surgeon.vendors[vendor]) {
                       scenarioSpend += (surgeon.vendors[vendor].spend || 0);
                     }
-                  });
-
-                  // Calculate total spend for this surgeon
-                  Object.values(surgeon.vendors).forEach(v => {
-                    totalHospitalSpend += (v.spend || 0);
                   });
                 }
               });
@@ -1515,14 +1576,13 @@ const EnhancedOrthopedicDashboard = () => {
               };
             }).filter(h => h.totalSpend > 0); // Only include hospitals with spend data
 
-            // Sort by risk score (ascending - lowest to highest risk), with tiebreaker
+            // Sort by risk score (ascending - lowest to highest risk), use spend only for exact ties
             const sortedByRisk = [...hospitalsWithCompliance].sort((a, b) => {
-              // Primary sort: risk score ascending
-              if ((a.riskScore || 0) !== (b.riskScore || 0)) {
-                return (a.riskScore || 0) - (b.riskScore || 0);
-              }
-              // If tied, sort by cases at risk ascending (more cases = higher priority, appears rightmost)
-              return (a.casesAtRisk || 0) - (b.casesAtRisk || 0);
+              // Primary sort: risk score ascending (low to high)
+              const riskDiff = (a.riskScore || 0) - (b.riskScore || 0);
+              if (riskDiff !== 0) return riskDiff;
+              // Tiebreaker: spend descending (high to low) only for exact same risk score
+              return (b.totalSpend || 0) - (a.totalSpend || 0);
             });
 
             // Calculate total system spend for percentage calculation
@@ -1554,7 +1614,10 @@ const EnhancedOrthopedicDashboard = () => {
               return { threshold, hospitalIndex: idx, reached: idx !== -1 };
             });
 
-            const maxSpend = Math.max(...cumulativeData.map(h => h.totalSpend));
+            // Use 95th percentile for max scale to compress white space from outliers
+            const sortedSpends = [...cumulativeData.map(h => h.totalSpend)].sort((a, b) => a - b);
+            const percentile95Index = Math.floor(sortedSpends.length * 0.95);
+            const maxSpend = sortedSpends[percentile95Index] || Math.max(...sortedSpends);
 
             // SVG dimensions
             const width = 1200;
@@ -1683,12 +1746,9 @@ const EnhancedOrthopedicDashboard = () => {
                       const barHeight = (hospital.totalSpend / maxSpend) * chartHeight;
                       const y = padding.top + chartHeight - barHeight;
 
-                      const riskColors = {
-                        'Low': '#10B981',
-                        'Medium': '#F59E0B',
-                        'High': '#EF4444'
-                      };
-                      const color = riskColors[hospital.riskLevel || 'Low'];
+                      // Color by continuous risk score gradient
+                      const riskScore = hospital.riskScore || 0;
+                      const color = getRiskColor(riskScore);
                       const riskLevel = hospital.riskLevel || 'Low';
                       const shouldLabel = riskLevel === 'Medium' || riskLevel === 'High';
 
@@ -1706,7 +1766,7 @@ const EnhancedOrthopedicDashboard = () => {
                             <title>
                               {hospital.facility}
 {`
-Risk: ${riskLevel}
+Risk Score: ${riskScore.toFixed(1)}
 Spend: $${(hospital.totalSpend/1000000).toFixed(2)}M
 Compliance: ${hospital.compliancePercent.toFixed(1)}%
 Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
@@ -1869,12 +1929,10 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
                   <th className="text-center p-4 font-bold text-purple-900">Preferred Vendor</th>
                   <th className="text-center p-4 font-bold text-purple-900">Robots Available</th>
                   <th className="text-center p-4 font-bold text-purple-900" title="Surgeons with >200 cases/year who are ≥70% loyal to non-preferred vendors. These surgeons represent high-impact transition challenges.">High-Vol Loyalists<br/><span className="text-xs font-normal">(to non-preferred)</span></th>
-                  <th className="text-center p-4 font-bold text-purple-900">Cases at Risk</th>
-                  <th className="text-center p-4 font-bold text-purple-900">Non-Preferred Vendors</th>
+                  <th className="text-left p-4 font-bold text-purple-900">Vendor Breakdown<br/><span className="text-xs font-normal">(Top 4 by volume)</span></th>
                   <th className="text-center p-4 font-bold text-purple-900">Experienced Sherpas<br/><span className="text-xs font-normal">(≥30 cases/yr)</span></th>
                   <th className="text-center p-4 font-bold text-purple-900">Sherpa Capacity<br/><span className="text-xs font-normal">(volume-weighted)</span></th>
                   <th className="text-center p-4 font-bold text-purple-900">Risk Score<br/><span className="text-xs font-normal">(0-10)</span></th>
-                  <th className="text-left p-4 font-bold text-purple-900">Implementation Risk</th>
                 </tr>
               </thead>
               <tbody>
@@ -1939,7 +1997,7 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
                       {/* Threshold marker if this row crosses a threshold */}
                       {crossedHere.length > 0 && (
                         <tr key={`threshold-${idx}`} className="bg-purple-100">
-                          <td colSpan="13" className="p-2 text-center">
+                          <td colSpan="12" className="p-2 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <div className="h-0.5 flex-1 bg-purple-400"></div>
                               <span className="text-sm font-bold text-purple-700">
@@ -1996,18 +2054,38 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
                           )}
                         </span>
                       </td>
-                      <td className="p-4 text-center font-bold text-purple-600">{hospital.casesAtRisk.toLocaleString()}</td>
-                      <td className="p-4 text-center">
-                        {hospital.highVolumeLoyalists > 0 ? (
-                          <div className="text-sm">
-                            {Object.entries(hospital.highVolLoyalistVendors || {})
+                      <td className="p-4">
+                        {hospital.vendorCaseCounts && Object.keys(hospital.vendorCaseCounts).length > 0 ? (
+                          <div className="space-y-1">
+                            {Object.entries(hospital.vendorCaseCounts)
+                              .filter(([vendor, cases]) => cases > 0)
                               .sort((a, b) => b[1] - a[1])
-                              .map(([vendor, count]) => (
-                                <div key={vendor} className="text-gray-900">
-                                  <span className="font-semibold">{vendor}</span>
-                                  <span className="text-gray-600 ml-1">({count})</span>
-                                </div>
-                              ))}
+                              .slice(0, 4)
+                              .map(([vendor, cases]) => {
+                                const percentage = hospital.totalCases > 0 ? (cases / hospital.totalCases) * 100 : 0;
+                                const isPreferred = scenarioVendors.includes(vendor);
+                                return (
+                                  <div key={vendor} className="flex items-center gap-2 text-xs">
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-1">
+                                        <div
+                                          className={`h-4 rounded ${isPreferred ? 'bg-green-500' : 'bg-red-400'}`}
+                                          style={{ width: `${Math.max(percentage, 2)}%` }}
+                                        ></div>
+                                        <span className="font-semibold text-gray-900 whitespace-nowrap">
+                                          {abbreviateVendor(vendor)}
+                                        </span>
+                                        <span className="text-gray-600">
+                                          {percentage.toFixed(0)}%
+                                        </span>
+                                        <span className="text-gray-500 text-xs">
+                                          ({cases.toLocaleString()})
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
                           </div>
                         ) : (
                           <span className="text-gray-400 text-xs">—</span>
@@ -2043,11 +2121,6 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
                           'text-green-600'
                         }`}>
                           {hospital.riskScore ? hospital.riskScore.toFixed(1) : '0.0'}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${riskColor}`}>
-                          {riskLevel}
                         </span>
                       </td>
                     </tr>
@@ -2619,15 +2692,9 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
         const loyaltyRisk = primaryVendorPercent * 3; // Higher loyalty = harder transition
         const transitionPenalty = 2;
         surgeonRiskScore = Math.min(10, Math.max(0, hospitalRiskScore * 0.6 + loyaltyRisk + transitionPenalty));
-      } else if (isLoyalist) {
-        // No risk: Aligned to scenario vendor (no transition needed)
-        surgeonRiskScore = 0;
-      } else if (isSherpa) {
-        // Low risk: Sherpa - stable and can help others
-        surgeonRiskScore = 1.0;
       } else {
-        // Low risk: Flexible - no strong vendor preference
-        surgeonRiskScore = 0.5;
+        // No risk: Don't need to transition (aligned loyalist, sherpa, or flexible)
+        surgeonRiskScore = 0;
       }
 
       return {
@@ -3298,8 +3365,8 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
             Surgeon Risk & Spend Analysis - Pareto Chart
           </h3>
           <p className="text-sm text-gray-600 mb-4">
-            <strong>Strategic Decision Tool:</strong> Each bar represents a surgeon with cases (sorted by risk score: low → high, then by spend within each risk tier). Colors indicate status - red = transition, amber = sherpa, green = aligned.
-            The purple line shows cumulative % of total system spend. Markers show where you reach 70%, 80%, and 90% thresholds.
+            <strong>Strategic Decision Tool:</strong> Each bar represents a surgeon with cases (sorted by risk score: low → high). Bar colors show a continuous risk gradient from green (0 = no risk) smoothly transitioning through yellow, orange, to red (10 = highest risk).
+            The purple line shows cumulative % of total system spend. Markers show where you reach 70%, 80%, and 90% thresholds. Y-axis scaled to 95th percentile for clarity (outlier bars may be clipped).
           </p>
 
           {(() => {
@@ -3309,14 +3376,14 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
               .reduce((sum, s) => sum + s.totalSpend, 0);
 
             // Include all surgeons with spend (not just transitioning)
-            // Sort by risk score ascending (lowest to highest), then by spend descending as tiebreaker
+            // Sort by risk score ascending (lowest to highest), use spend only for exact ties
             const sortedSurgeons = [...surgeonAnalytics]
               .filter(s => s.totalSpend > 0)
               .sort((a, b) => {
                 // Primary sort: risk score ascending (low to high)
                 const riskDiff = (a.surgeonRiskScore || 0) - (b.surgeonRiskScore || 0);
                 if (riskDiff !== 0) return riskDiff;
-                // Secondary sort: spend descending (high to low) for smoother Pareto progression
+                // Tiebreaker: spend descending (high to low) only for exact same risk score
                 return (b.totalSpend || 0) - (a.totalSpend || 0);
               });
 
@@ -3341,12 +3408,15 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
               return { threshold, surgeonIndex: idx, reached: idx !== -1 };
             });
 
-            const maxSpend = Math.max(...cumulativeData.map(s => s.totalSpend));
+            // Use 95th percentile for max scale to compress white space from outliers
+            const sortedSpends = [...cumulativeData.map(s => s.totalSpend)].sort((a, b) => a - b);
+            const percentile95Index = Math.floor(sortedSpends.length * 0.95);
+            const maxSpend = sortedSpends[percentile95Index] || Math.max(...sortedSpends);
 
             // SVG dimensions
             const width = 1200;
             const height = 500;
-            const padding = { top: 150, right: 80, bottom: 60, left: 80 };
+            const padding = { top: 40, right: 80, bottom: 60, left: 80 };
             const chartWidth = width - padding.left - padding.right;
             const chartHeight = height - padding.top - padding.bottom;
 
@@ -3470,11 +3540,9 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
                       const barHeight = (surgeon.totalSpend / maxSpend) * chartHeight;
                       const y = padding.top + chartHeight - barHeight;
 
-                      // Color by status
-                      const color = surgeon.mustTransition ? '#EF4444' :  // red = transition
-                                    surgeon.isSherpa ? '#F59E0B' :          // amber = sherpa
-                                    surgeon.isLoyalist ? '#059669' :        // green = aligned
-                                    '#9CA3AF';                              // gray = flexible
+                      // Color by continuous risk score gradient
+                      const riskScore = surgeon.surgeonRiskScore || 0;
+                      const color = getRiskColor(riskScore);
 
                       return (
                         <g key={idx}>
@@ -3578,11 +3646,10 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
                   <th className="text-left p-3 font-bold text-purple-900">Facility</th>
                   <th className="text-center p-3 font-bold text-purple-900">Region</th>
                   <th className="text-center p-3 font-bold text-purple-900">Total Cases</th>
-                  <th className="text-left p-3 font-bold text-purple-900">Primary Vendor</th>
-                  <th className="text-center p-3 font-bold text-purple-900">Loyalty %</th>
-                  <th className="text-center p-3 font-bold text-purple-900">Risk Score</th>
+                  <th className="text-left p-3 font-bold text-purple-900">Vendor Breakdown<br/><span className="text-xs font-normal">(Top 3)</span></th>
+                  <th className="text-center p-3 font-bold text-purple-900">Robotic Cases</th>
                   <th className="text-center p-3 font-bold text-purple-900">Status</th>
-                  <th className="text-center p-3 font-bold text-purple-900">Robotic %</th>
+                  <th className="text-center p-3 font-bold text-purple-900">Risk Score</th>
                   <th className="text-center p-3 font-bold text-purple-900">Action</th>
                 </tr>
               </thead>
@@ -3619,7 +3686,7 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
                         {/* Threshold marker if this row crosses a threshold */}
                         {crossedHere.length > 0 && (
                           <tr key={`threshold-${idx}`} className="bg-purple-100">
-                            <td colSpan="10" className="p-2 text-center">
+                            <td colSpan="9" className="p-2 text-center">
                               <div className="flex items-center justify-center gap-2">
                                 <div className="h-0.5 flex-1 bg-purple-400"></div>
                                 <span className="text-sm font-bold text-purple-700">
@@ -3635,11 +3702,72 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
                     <td className="p-3 text-gray-700 text-sm">{surgeon.facility}</td>
                     <td className="p-3 text-center text-gray-700">{surgeon.region}</td>
                     <td className="p-3 text-center font-semibold text-blue-600">{surgeon.volume.toLocaleString()}</td>
-                    <td className="p-3 text-gray-900">{surgeon.primaryVendor}</td>
+                    <td className="p-3">
+                      {surgeon.vendors && Object.keys(surgeon.vendors).length > 0 ? (
+                        <div className="space-y-0.5">
+                          {(() => {
+                            const vendorEntries = Object.entries(surgeon.vendors)
+                              .filter(([vendor, data]) => data.cases > 0)
+                              .sort((a, b) => b[1].cases - a[1].cases);
+                            const top3 = vendorEntries.slice(0, 3);
+                            const top3Cases = top3.reduce((sum, [_, data]) => sum + data.cases, 0);
+                            const otherCases = surgeon.volume - top3Cases;
+                            const otherPercent = surgeon.volume > 0 ? (otherCases / surgeon.volume) * 100 : 0;
+
+                            return (
+                              <>
+                                {top3.map(([vendor, data]) => {
+                                  const percentage = surgeon.volume > 0 ? (data.cases / surgeon.volume) * 100 : 0;
+                                  const isPreferred = scenarioVendors.includes(vendor);
+                                  return (
+                                    <div key={vendor} className="flex items-center gap-1 text-xs">
+                                      <div
+                                        className={`h-3 rounded ${isPreferred ? 'bg-green-500' : 'bg-red-400'}`}
+                                        style={{ width: `${Math.max(percentage * 0.8, 2)}%` }}
+                                      ></div>
+                                      <span className="font-semibold text-gray-900 whitespace-nowrap text-xs">
+                                        {abbreviateVendor(vendor)}
+                                      </span>
+                                      <span className="text-gray-600 text-xs">
+                                        {percentage.toFixed(0)}%
+                                      </span>
+                                      <span className="text-gray-500 text-xs">
+                                        ({data.cases.toLocaleString()})
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                                {otherPercent >= 5 && (
+                                  <div className="flex items-center gap-1 text-xs text-gray-500">
+                                    <span className="text-xs">Other {otherPercent.toFixed(0)}% ({otherCases.toLocaleString()})</span>
+                                  </div>
+                                )}
+                              </>
+                            );
+                          })()}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-xs">—</span>
+                      )}
+                    </td>
                     <td className="p-3 text-center">
-                      <span className={`font-semibold ${surgeon.isLoyalist ? 'text-orange-600' : 'text-gray-600'}`}>
-                        {(surgeon.primaryVendorPercent * 100).toFixed(0)}%
-                      </span>
+                      <div className="font-semibold text-teal-900">{surgeon.roboticCases.toLocaleString()}</div>
+                      <div className="text-xs text-teal-600">{surgeon.roboticPercent.toFixed(1)}%</div>
+                    </td>
+                    <td className="p-3 text-center">
+                      {surgeon.mustTransition ? (
+                        <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-semibold">
+                          TRANSITION
+                        </span>
+                      ) : surgeon.isSherpa ? (
+                        <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold">
+                          SHERPA
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs font-semibold">
+                          FLEXIBLE
+                        </span>
+                      )}
                     </td>
                     <td className="p-3 text-center">
                       <span className={`font-bold ${
@@ -3649,16 +3777,6 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
                       }`}>
                         {surgeon.surgeonRiskScore ? surgeon.surgeonRiskScore.toFixed(1) : '0.0'}
                       </span>
-                    </td>
-                    <td className="p-3 text-center">
-                      {surgeon.mustTransition && (
-                        <span className="px-2 py-1 border-2 border-red-500 text-red-700 rounded text-xs font-semibold">
-                          TRANSITION
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-3 text-center text-teal-600 font-semibold">
-                      {surgeon.roboticPercent.toFixed(1)}%
                     </td>
                     <td className="p-3 text-center">
                       <button
