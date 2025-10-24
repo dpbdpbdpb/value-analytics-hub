@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useParams } from 'react-router-dom';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, RadarChart, Radar,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -20,9 +20,14 @@ import NavigationHeader from '../components/shared/NavigationHeader';
 import RegionSwitchingHeatmap from '../components/RegionSwitchingHeatmap';
 
 const EnhancedOrthopedicDashboard = () => {
+  // Get specialty from URL params (e.g., /executive/shoulder -> specialty = 'shoulder')
+  const { specialty } = useParams();
+  const productLine = specialty || 'hipknee'; // default to hipknee if not specified
+
   // Get persona from URL params
   const [searchParams] = useSearchParams();
   const persona = searchParams.get('persona') || 'integrated'; // default to integrated (all tabs)
+
   // Data loading state
   const [realData, setRealData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -151,8 +156,10 @@ const EnhancedOrthopedicDashboard = () => {
     setDataError(null);
     try {
       // Use PUBLIC_URL for Create React App compatibility
-      const jsonPath = `${process.env.PUBLIC_URL}/data/hip-knee-data.json`;
-      console.log('📊 Fetching data from:', jsonPath);
+      // Map specialty to data file name (hipknee -> hip-knee-data.json, shoulder -> shoulder-data.json)
+      const dataFileName = productLine === 'hipknee' ? 'hip-knee-data.json' : `${productLine}-data.json`;
+      const jsonPath = `${process.env.PUBLIC_URL}/data/${dataFileName}`;
+      console.log('📊 Fetching data from:', jsonPath, `(Product Line: ${productLine})`);
 
       const response = await fetch(jsonPath);
       if (!response.ok) {
@@ -170,10 +177,11 @@ const EnhancedOrthopedicDashboard = () => {
     }
   };
 
-  // Load data on mount
+  // Load data on mount and when product line changes
   useEffect(() => {
     fetchData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productLine]);
 
   // Calculate total matrix pricing savings
   const calculateMatrixSavings = () => {
@@ -4324,10 +4332,13 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
   );
 
   // Main render
+  // Get display name for specialty
+  const specialtyDisplayName = productLine === 'shoulder' ? 'Shoulder' : 'Hip & Knee';
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Navigation Header */}
-      <NavigationHeader role="executive" specialty="hipknee" specialtyName="Hip & Knee" persona={persona} />
+      <NavigationHeader role="executive" specialty={productLine} specialtyName={specialtyDisplayName} persona={persona} />
 
       <div className="p-6">
         <div className="w-full">

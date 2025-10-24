@@ -32,20 +32,18 @@ function App() {
         <Route path="/team-decision/:specialty" element={<TeamDecisionDashboard />} />
 
         {/* Executive Dashboard Routes */}
-        <Route path="/executive/hipknee" element={<ExecutiveDashboard />} />
+        <Route path="/executive/:specialty" element={<ExecutiveDashboard />} />
 
         {/* Surgeon Tool Routes */}
-        <Route path="/surgeon/hipknee" element={<SurgeonTool />} />
+        <Route path="/surgeon/:specialty" element={<SurgeonTool />} />
 
-        {/* Coming Soon Routes */}
+        {/* Coming Soon Routes (legacy - sports, trauma, spine still pending) */}
         <Route path="/executive/sports" element={<ComingSoon specialty="Sports Medicine" />} />
         <Route path="/executive/trauma" element={<ComingSoon specialty="Trauma" />} />
-        <Route path="/executive/shoulder" element={<ComingSoon specialty="Shoulder" />} />
         <Route path="/executive/spine" element={<ComingSoon specialty="Spine" />} />
 
         <Route path="/surgeon/sports" element={<ComingSoon specialty="Sports Medicine" />} />
         <Route path="/surgeon/trauma" element={<ComingSoon specialty="Trauma" />} />
-        <Route path="/surgeon/shoulder" element={<ComingSoon specialty="Shoulder" />} />
         <Route path="/surgeon/spine" element={<ComingSoon specialty="Spine" />} />
 
         {/* Admin routes */}

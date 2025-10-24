@@ -533,18 +533,34 @@ const AdminDataUpload = () => {
     // Pricing caps apply to IMPLANT constructs only, not total spend
 
     // Estimate implant-only spend (typically 30-35% of total orthopedic spend)
-    // This includes: acetabular cups/shells, femoral heads/stems, tibial trays/inserts, etc.
+    // This includes: acetabular cups/shells, femoral heads/stems, tibial trays/inserts, glenoid/humeral components, etc.
     const estimatedImplantPercent = 0.31; // Based on typical orthopedic spend breakdown
     const estimatedImplantSpend = totalSpend * estimatedImplantPercent;
     const currentImplantCostPerCase = estimatedImplantSpend / totalCases;
 
-    // Cap pricing: $2500 for knee implants, $3000 for hip implants
-    // Assume roughly 50/50 split between hip and knee cases
-    const kneeCases = Math.round(totalCases * 0.5);
-    const hipCases = Math.round(totalCases * 0.5);
-    const cappedKneeSpend = kneeCases * 2500;
-    const cappedHipSpend = hipCases * 3000;
-    const cappedImplantSpend = cappedKneeSpend + cappedHipSpend;
+    // Cap pricing based on product line
+    let cappedImplantSpend;
+    let pricingCapDescription;
+
+    if (productLine === 'shoulder') {
+      // Shoulder pricing caps: $4500 for total shoulder, $5500 for reverse shoulder
+      // Assume 60/40 split between total and reverse shoulder cases
+      const totalShoulderCases = Math.round(totalCases * 0.6);
+      const reverseShoulderCases = Math.round(totalCases * 0.4);
+      const cappedTotalShoulderSpend = totalShoulderCases * 4500;
+      const cappedReverseShoulderSpend = reverseShoulderCases * 5500;
+      cappedImplantSpend = cappedTotalShoulderSpend + cappedReverseShoulderSpend;
+      pricingCapDescription = `Cap implant pricing at $4,500 per total shoulder construct and $5,500 per reverse shoulder construct across all vendors. Current avg: $${Math.round(currentImplantCostPerCase).toLocaleString()}/case.`;
+    } else {
+      // Hip/Knee pricing caps: $2500 for knee implants, $3000 for hip implants
+      // Assume roughly 50/50 split between hip and knee cases
+      const kneeCases = Math.round(totalCases * 0.5);
+      const hipCases = Math.round(totalCases * 0.5);
+      const cappedKneeSpend = kneeCases * 2500;
+      const cappedHipSpend = hipCases * 3000;
+      cappedImplantSpend = cappedKneeSpend + cappedHipSpend;
+      pricingCapDescription = `Cap implant pricing at $2,500 per knee construct and $3,000 per hip construct across all vendors. Current avg: $${Math.round(currentImplantCostPerCase).toLocaleString()}/case.`;
+    }
 
     // Savings = reduction in implant spend only
     const pricingCapSavings = Math.max(0, estimatedImplantSpend - cappedImplantSpend);
@@ -663,7 +679,7 @@ const AdminDataUpload = () => {
       'pricing-cap': {
         name: 'Pricing Cap by Construct',
         shortName: 'Pricing Cap',
-        description: `Cap implant pricing at $2,500 per knee construct and $3,000 per hip construct across all vendors. Current avg: $${Math.round(currentImplantCostPerCase).toLocaleString()}/case.`,
+        description: pricingCapDescription,
         vendors: vendorsBySpend.map(v => v.name), // Keep all vendors, just cap pricing
         annualSavings: pricingCapSavings,
         savingsPercent: pricingCapPercent,

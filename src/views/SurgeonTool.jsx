@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { Search, X, TrendingUp, TrendingDown, AlertCircle, DollarSign, Package, Users, Award, Info, ChevronDown, ChevronUp, Download, CheckCircle, AlertTriangle, Target, Mail, Heart, Star, Activity } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, ComposedChart, ScatterChart, Scatter, ZAxis, AreaChart, Area, ReferenceLine, Label } from 'recharts';
 import NavigationHeader from '../components/shared/NavigationHeader';
@@ -6,6 +7,10 @@ import ComponentComparisonView from '../components/ComponentComparisonView';
 import ComingSoonBadge from '../components/shared/ComingSoonBadge';
 
 const SurgeonTool = () => {
+  // Get specialty from URL params
+  const { specialty } = useParams();
+  const productLine = specialty || 'hipknee'; // default to hipknee if not specified
+
   const [surgeonData, setSurgeonData] = useState([]);
   const [scenarios, setScenarios] = useState({});
   const [loading, setLoading] = useState(true);
@@ -42,7 +47,11 @@ const SurgeonTool = () => {
 
   // Load surgeon data from new baseline
   useEffect(() => {
-    const jsonPath = `${process.env.PUBLIC_URL}/data/hip-knee-data.json`;
+    // Map specialty to data file name (hipknee -> hip-knee-data.json, shoulder -> shoulder-data.json)
+    const dataFileName = productLine === 'hipknee' ? 'hip-knee-data.json' : `${productLine}-data.json`;
+    const jsonPath = `${process.env.PUBLIC_URL}/data/${dataFileName}`;
+    console.log('📊 SurgeonTool: Fetching data from:', jsonPath, `(Product Line: ${productLine})`);
+
     fetch(jsonPath)
       .then(response => {
         if (!response.ok) {
@@ -140,7 +149,8 @@ const SurgeonTool = () => {
         setError(err.message);
         setLoading(false);
       });
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productLine]);
 
   // Utility function to separate hip vs. knee data
   const separateHipKneeData = (surgeon) => {
@@ -987,10 +997,13 @@ const SurgeonTool = () => {
     );
   }
 
+  // Get display name for specialty
+  const specialtyDisplayName = productLine === 'shoulder' ? 'Shoulder' : 'Hip & Knee';
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
       {/* Navigation Header */}
-      <NavigationHeader role="surgeon" specialty="hipknee" specialtyName="Hip & Knee" />
+      <NavigationHeader role="surgeon" specialty={productLine} specialtyName={specialtyDisplayName} />
 
       <div className="p-4">
         <div className="max-w-6xl mx-auto">
