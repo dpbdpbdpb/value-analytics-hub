@@ -179,10 +179,23 @@ const AdminDataUpload = () => {
         'KNEE REPLACEMENT SYSTEMS'
       ];
 
+      // Shoulder primary components (1 per surgery)
+      const shoulderPrimaryCategories = [
+        'HUMERAL COMPONENTS',
+        'HUMERAL STEMS',
+        'GLENOID COMPONENTS',
+        'GLENOID BASES',
+        'GLENOID BASEPLATES',
+        'TOTAL SHOULDER REPLACEMENT KITS',
+        'SHOULDER REPLACEMENT SYSTEMS',
+        'REVERSE SHOULDER SYSTEMS'
+      ];
+
       // Check for exact or partial matches
       const isPrimaryCategory =
         hipPrimaryCategories.some(cat => category.includes(cat)) ||
-        kneePrimaryCategories.some(cat => category.includes(cat));
+        kneePrimaryCategories.some(cat => category.includes(cat)) ||
+        shoulderPrimaryCategories.some(cat => category.includes(cat));
 
       if (isPrimaryCategory) return true;
     }
@@ -195,8 +208,8 @@ const AdminDataUpload = () => {
     const isHipPrimary =
       (name.includes('ACETABULAR') && (name.includes('CUP') || name.includes('SHELL'))) ||
       (name.includes('ACETAB') && (name.includes('CUP') || name.includes('SHELL'))) ||
-      (name.includes('FEMORAL') && name.includes('STEM') && !name.includes('KNEE')) ||
-      (name.includes('FEM') && name.includes('STEM') && !name.includes('KNEE')) ||
+      (name.includes('FEMORAL') && name.includes('STEM') && !name.includes('KNEE') && !name.includes('SHOULDER')) ||
+      (name.includes('FEM') && name.includes('STEM') && !name.includes('KNEE') && !name.includes('SHOULDER')) ||
       (name.includes('HIP') && (name.includes('CUP') || name.includes('SHELL') || name.includes('STEM')));
 
     // Knee primary component indicators (typically 1 per surgery)
@@ -208,7 +221,13 @@ const AdminDataUpload = () => {
       (name.includes('KNEE') && name.includes('FEMORAL')) ||
       (name.includes('KNEE') && name.includes('TIBIAL'));
 
-    return isHipPrimary || isKneePrimary;
+    // Shoulder primary component indicators (typically 1 per surgery)
+    const isShoulderPrimary =
+      (name.includes('HUMERAL') && (name.includes('STEM') || name.includes('HEAD') || name.includes('COMP') || name.includes('COMPONENT'))) ||
+      (name.includes('GLENOID') && (name.includes('COMP') || name.includes('COMPONENT') || name.includes('BASE') || name.includes('BASEPLATE'))) ||
+      (name.includes('SHOULDER') && (name.includes('STEM') || name.includes('HEAD') || name.includes('GLENOID') || name.includes('HUMERAL')));
+
+    return isHipPrimary || isKneePrimary || isShoulderPrimary;
   };
 
   // Transform raw data to JSON (implementing the prompt logic)

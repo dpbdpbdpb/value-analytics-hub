@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronRight, ArrowLeft, Target, TrendingUp, Clock, Users, CheckCircle } from 'lucide-react';
+import { ChevronRight, ArrowLeft, Target, TrendingUp, Clock, Users, CheckCircle, Upload } from 'lucide-react';
 import NavigationHeader from '../components/shared/NavigationHeader';
 
 const ServiceLineView = () => {
@@ -182,10 +182,19 @@ const ServiceLineView = () => {
                   Product lines and decision canvases for orthopedic value analytics
                 </p>
               </div>
-              <div className="text-right">
-                <div className="text-sm text-gray-600">Total Spend</div>
-                <div className="text-3xl font-bold text-blue-600">{hipKneeMetrics.opportunityValue}</div>
-                <div className="text-sm text-gray-600 mt-1">Hip & Knee product line</div>
+              <div className="flex items-start gap-6">
+                <div className="text-right">
+                  <div className="text-sm text-gray-600">Total Spend</div>
+                  <div className="text-3xl font-bold text-blue-600">{hipKneeMetrics.opportunityValue}</div>
+                  <div className="text-sm text-gray-600 mt-1">Hip & Knee product line</div>
+                </div>
+                <button
+                  onClick={() => navigate('/admin/data-upload')}
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-slate-600 to-slate-700 text-white rounded-lg hover:from-slate-700 hover:to-slate-800 transition-all shadow-md hover:shadow-lg"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span className="text-sm font-semibold">Upload Data</span>
+                </button>
               </div>
             </div>
 
