@@ -120,25 +120,8 @@ const EnhancedOrthopedicDashboard = () => {
       ];
     }
 
-    const topVendors = getTopVendors();
-    return Object.entries(realData.regions).map(([name, data]) => {
-      // Calculate preference percentages based on relative market share
-      const totalSpend = data.totalSpend;
-      const zimmerSpend = realData.vendors['ZIMMER BIOMET']?.totalSpend || 0;
-      const strykerSpend = realData.vendors['STRYKER']?.totalSpend || 0;
-      const jjSpend = realData.vendors['J&J']?.totalSpend || 0;
-
-      const totalTop3 = zimmerSpend + strykerSpend + jjSpend;
-
-      return {
-        region: name,
-        zimmer: Math.round((zimmerSpend / totalTop3) * 100),
-        stryker: Math.round((strykerSpend / totalTop3) * 100),
-        jj: Math.round((jjSpend / totalTop3) * 100),
-        surgeons: data.surgeons,
-        repQuality: data.surgeons > 100 ? 'Excellent' : data.surgeons > 50 ? 'Good' : 'Fair'
-      };
-    });
+    // Since we don't have regions data yet, return empty array
+    return [];
   };
 
   // Load scenarios from real data (12 scenarios from hip-knee-data.json)
@@ -2994,7 +2977,7 @@ const EnhancedOrthopedicDashboard = () => {
                 </p>
                 <p className="text-sm text-gray-500 mt-1">
                   {realData ? `${realData.metadata.totalCases.toLocaleString()} Procedures` : 'Loading...'} |
-                  {realData ? ` ${Object.values(realData.regions).reduce((sum, r) => sum + r.surgeons, 0)} Surgeons` : ' Loading...'} |
+                  {realData ? ` ${realData.regions ? Object.values(realData.regions).reduce((sum, r) => sum + r.surgeons, 0) : realData.surgeons?.length || 0} Surgeons` : ' Loading...'} |
                   Strategic Analysis
                 </p>
               </div>
@@ -3119,7 +3102,7 @@ const EnhancedOrthopedicDashboard = () => {
           )}
           <p className="text-xs text-gray-400 mt-1 text-center">
             Dashboard Version: {realData?.metadata.version || '1.0'} |
-            Regions: {realData ? Object.keys(realData.regions).join(', ') : 'Loading...'}
+            Regions: {realData?.regions ? Object.keys(realData.regions).join(', ') : 'Not yet configured'}
           </p>
 
           {/* Methodology Note */}
