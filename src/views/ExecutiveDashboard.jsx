@@ -43,6 +43,7 @@ const EnhancedOrthopedicDashboard = () => {
 
   // Surgeon analytics state
   const [surgeonSearchQuery, setSurgeonSearchQuery] = useState('');
+  const [showSurgeonAutocomplete, setShowSurgeonAutocomplete] = useState(false);
   const [selectedSurgeon, setSelectedSurgeon] = useState(null);
   const [surgeonFilter, setSurgeonFilter] = useState('all'); // all, loyalists, sherpas, high-volume, transitioning
 
@@ -2713,16 +2714,76 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
       };
     });
 
+    // Find appropriate sherpas for each surgeon (must be at same facility with high scenario vendor volume)
+    const surgeonAnalyticsWithSherpas = surgeonAnalytics.map(surgeon => {
+      if (!surgeon.facility) {
+        return { ...surgeon, recommendedSherpas: [] };
+      }
+
+      // Find potential sherpas at the same facility
+      const potentialSherpas = surgeonAnalytics.filter(s =>
+        s.facility === surgeon.facility &&
+        s.name !== surgeon.name &&
+        s.isSherpa && // Must be a sherpa
+        s.vendors
+      );
+
+      // Calculate scenario vendor volume for each potential sherpa
+      const sherpasWithScores = potentialSherpas.map(sherpa => {
+        let scenarioVendorCases = 0;
+        let primaryScenarioVendor = null;
+        let primaryScenarioVendorCases = 0;
+
+        // Count total cases with scenario vendors and find their primary scenario vendor
+        scenarioVendors.forEach(vendor => {
+          if (sherpa.vendors[vendor]) {
+            const cases = sherpa.vendors[vendor].cases || 0;
+            scenarioVendorCases += cases;
+
+            // Track which scenario vendor they use most
+            if (cases > primaryScenarioVendorCases) {
+              primaryScenarioVendorCases = cases;
+              primaryScenarioVendor = vendor;
+            }
+          }
+        });
+
+        const scenarioVendorPercent = sherpa.volume > 0 ? (scenarioVendorCases / sherpa.volume) * 100 : 0;
+
+        return {
+          name: sherpa.name,
+          volume: sherpa.volume,
+          scenarioVendorCases,
+          scenarioVendorPercent,
+          primaryVendor: sherpa.primaryVendor,
+          primaryScenarioVendor: primaryScenarioVendor,
+          primaryScenarioVendorCases: primaryScenarioVendorCases
+        };
+      });
+
+      // Filter sherpas who have at least 20 cases with scenario vendors
+      // and sort by scenario vendor volume (descending)
+      const qualifiedSherpas = sherpasWithScores
+        .filter(s => s.scenarioVendorCases >= 20)
+        .sort((a, b) => b.scenarioVendorCases - a.scenarioVendorCases)
+        .slice(0, 3); // Take top 3
+
+      return {
+        ...surgeon,
+        recommendedSherpas: qualifiedSherpas
+      };
+    });
+
     // Filter surgeons based on selected filter
-    let filteredSurgeons = surgeonAnalytics;
+    let filteredSurgeons = surgeonAnalyticsWithSherpas;
     if (surgeonFilter === 'loyalists') {
-      filteredSurgeons = surgeonAnalytics.filter(s => s.isLoyalist);
+      filteredSurgeons = surgeonAnalyticsWithSherpas.filter(s => s.isLoyalist);
     } else if (surgeonFilter === 'sherpas') {
-      filteredSurgeons = surgeonAnalytics.filter(s => s.isSherpa);
+      filteredSurgeons = surgeonAnalyticsWithSherpas.filter(s => s.isSherpa);
     } else if (surgeonFilter === 'high-volume') {
-      filteredSurgeons = surgeonAnalytics.filter(s => s.volumeCategory === 'high');
+      filteredSurgeons = surgeonAnalyticsWithSherpas.filter(s => s.volumeCategory === 'high');
     } else if (surgeonFilter === 'transitioning') {
-      filteredSurgeons = surgeonAnalytics.filter(s => s.mustTransition);
+      filteredSurgeons = surgeonAnalyticsWithSherpas.filter(s => s.mustTransition);
     }
 
     // Apply search filter
@@ -2745,7 +2806,7 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
       if (!surgeon) return null;
 
       // Find peers: same region, similar volume category
-      const peers = surgeonAnalytics.filter(s =>
+      const peers = surgeonAnalyticsWithSherpas.filter(s =>
         s.region === surgeon.region &&
         s.volumeCategory === surgeon.volumeCategory &&
         s.name !== surgeon.name
@@ -2785,14 +2846,54 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
         {/* Search and Filter Bar */}
         <div className="bg-white rounded-xl shadow-lg p-4">
           <div className="flex gap-4 items-center">
-            <div className="flex-1">
+            <div className="flex-1 relative">
               <input
                 type="text"
                 placeholder="Search surgeon by name..."
                 value={surgeonSearchQuery}
-                onChange={(e) => setSurgeonSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSurgeonSearchQuery(e.target.value);
+                  setShowSurgeonAutocomplete(e.target.value.length > 0);
+                }}
+                onFocus={() => setShowSurgeonAutocomplete(surgeonSearchQuery.length > 0)}
+                onBlur={() => setTimeout(() => setShowSurgeonAutocomplete(false), 200)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
+
+              {/* Autocomplete Dropdown */}
+              {showSurgeonAutocomplete && surgeonSearchQuery && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-96 overflow-y-auto">
+                  {(() => {
+                    const matchingSurgeons = surgeonAnalyticsWithSherpas
+                      .filter(s => s.name && s.name.toLowerCase().includes(surgeonSearchQuery.toLowerCase()))
+                      .slice(0, 10);
+
+                    if (matchingSurgeons.length === 0) {
+                      return (
+                        <div className="p-4 text-sm text-gray-500 text-center">
+                          No surgeons found
+                        </div>
+                      );
+                    }
+
+                    return matchingSurgeons.map((surgeon, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => {
+                          setSurgeonSearchQuery(surgeon.name);
+                          setShowSurgeonAutocomplete(false);
+                        }}
+                        className="p-3 hover:bg-purple-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                      >
+                        <div className="font-semibold text-gray-900">{surgeon.name}</div>
+                        <div className="text-xs text-gray-600 mt-1">
+                          {surgeon.facility} • {surgeon.volume} cases • Risk: {surgeon.surgeonRiskScore.toFixed(1)}
+                        </div>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              )}
             </div>
             <div>
               <select
@@ -2800,11 +2901,11 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
                 onChange={(e) => setSurgeonFilter(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
               >
-                <option value="all">All Surgeons ({surgeonAnalytics.length})</option>
-                <option value="loyalists">Loyalists ({surgeonAnalytics.filter(s => s.isLoyalist).length})</option>
-                <option value="sherpas">Sherpas ({surgeonAnalytics.filter(s => s.isSherpa).length})</option>
-                <option value="high-volume">High Volume ({surgeonAnalytics.filter(s => s.volumeCategory === 'high').length})</option>
-                <option value="transitioning">Needing Transition ({surgeonAnalytics.filter(s => s.mustTransition).length})</option>
+                <option value="all">All Surgeons ({surgeonAnalyticsWithSherpas.length})</option>
+                <option value="loyalists">Loyalists ({surgeonAnalyticsWithSherpas.filter(s => s.isLoyalist).length})</option>
+                <option value="sherpas">Sherpas ({surgeonAnalyticsWithSherpas.filter(s => s.isSherpa).length})</option>
+                <option value="high-volume">High Volume ({surgeonAnalyticsWithSherpas.filter(s => s.volumeCategory === 'high').length})</option>
+                <option value="transitioning">Needing Transition ({surgeonAnalyticsWithSherpas.filter(s => s.mustTransition).length})</option>
               </select>
             </div>
           </div>
@@ -3650,6 +3751,7 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
                   <th className="text-center p-3 font-bold text-purple-900">Robotic Cases</th>
                   <th className="text-center p-3 font-bold text-purple-900">Status</th>
                   <th className="text-center p-3 font-bold text-purple-900">Risk Score</th>
+                  <th className="text-left p-3 font-bold text-purple-900">Recommended Sherpas<br/><span className="text-xs font-normal">(at facility)</span></th>
                   <th className="text-center p-3 font-bold text-purple-900">Action</th>
                 </tr>
               </thead>
@@ -3658,7 +3760,7 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
                   // Calculate cumulative spend for threshold markers
                   const visibleSurgeons = filteredSurgeons.slice(0, 50);
                   // Calculate total system spend from ALL surgeons, not just filtered
-                  const totalSystemSpend = surgeonAnalytics
+                  const totalSystemSpend = surgeonAnalyticsWithSherpas
                     .filter(s => s.totalSpend > 0)
                     .reduce((sum, s) => sum + (s.totalSpend || 0), 0);
                   let cumulativeSpend = 0;
@@ -3686,7 +3788,7 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
                         {/* Threshold marker if this row crosses a threshold */}
                         {crossedHere.length > 0 && (
                           <tr key={`threshold-${idx}`} className="bg-purple-100">
-                            <td colSpan="9" className="p-2 text-center">
+                            <td colSpan="10" className="p-2 text-center">
                               <div className="flex items-center justify-center gap-2">
                                 <div className="h-0.5 flex-1 bg-purple-400"></div>
                                 <span className="text-sm font-bold text-purple-700">
@@ -3777,6 +3879,27 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
                       }`}>
                         {surgeon.surgeonRiskScore ? surgeon.surgeonRiskScore.toFixed(1) : '0.0'}
                       </span>
+                    </td>
+                    <td className="p-3">
+                      {surgeon.recommendedSherpas && surgeon.recommendedSherpas.length > 0 ? (
+                        <div className="space-y-1">
+                          {surgeon.recommendedSherpas.map((sherpa, idx) => (
+                            <div key={idx} className="text-xs">
+                              {sherpa.primaryScenarioVendor && (
+                                <span className="mr-1 px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-semibold">
+                                  {abbreviateVendor(sherpa.primaryScenarioVendor)}
+                                </span>
+                              )}
+                              <span className="font-semibold text-green-700">{sherpa.name}</span>
+                              <span className="text-gray-600 ml-1">
+                                ({sherpa.scenarioVendorCases} cases, {sherpa.scenarioVendorPercent.toFixed(0)}%)
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-xs">No sherpas available</span>
+                      )}
                     </td>
                     <td className="p-3 text-center">
                       <button
