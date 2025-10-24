@@ -1022,7 +1022,7 @@ const EnhancedOrthopedicDashboard = () => {
       }
 
       const isLoyalist = primaryVendorPercent >= LOYALTY_THRESHOLD;
-      const mustTransition = !scenarioVendors.includes(primaryVendor);
+      const mustTransition = isLoyalist && !scenarioVendors.includes(primaryVendor);
 
       return {
         ...surgeon,
@@ -1257,7 +1257,7 @@ const EnhancedOrthopedicDashboard = () => {
 
     // Top high-risk hospitals (sorted by risk score: high to low)
     const topRiskHospitals = Object.entries(hospitalImpact)
-      .filter(([_, data]) => data.highVolumeLoyalists > 0)
+      .filter(([_, data]) => data.needingTransition > 0)
       .map(([facility, data]) => {
         // Use the pre-calculated risk score (which includes volume adjustment)
         return { facility, ...data };
@@ -1967,7 +1967,7 @@ const EnhancedOrthopedicDashboard = () => {
       }
 
       const isLoyalist = primaryVendorPercent >= LOYALTY_THRESHOLD;
-      const mustTransition = !scenarioVendors.includes(primaryVendor);
+      const mustTransition = isLoyalist && !scenarioVendors.includes(primaryVendor);
       const isSherpa = !mustTransition && volume >= 30;
       const roboticCases = surgeon.roboticMetrics?.estimatedRoboticCases || 0;
 
@@ -2188,11 +2188,11 @@ const EnhancedOrthopedicDashboard = () => {
                         </p>
                       </div>
                       <div className="text-right">
-                        <div className="text-xs text-red-600 uppercase font-semibold mb-1">Top 10 Labeled</div>
+                        <div className="text-xs text-red-600 uppercase font-semibold mb-1">Top 10 Opportunities</div>
                         <div className="text-2xl font-bold text-red-600">
                           ${(topOpportunities.reduce((sum, s) => sum + s.savingsPotential, 0) / 1000000).toFixed(2)}M
                         </div>
-                        <div className="text-xs text-red-700">in top opportunities</div>
+                        <div className="text-xs text-red-700">savings potential</div>
                       </div>
                     </div>
                   </div>
@@ -2348,18 +2348,6 @@ const EnhancedOrthopedicDashboard = () => {
                         >
                           <title>{`${surgeon.name}\nVolume: ${surgeon.volume.toLocaleString()}\nCost/Case: $${surgeon.costPerCase.toFixed(0)}\nVendor: ${surgeon.primaryVendor}\nAnnual Spend: $${(surgeon.totalSpend / 1000000).toFixed(2)}M${surgeon.savingsPotential > 0 ? `\nSavings Potential: $${(surgeon.savingsPotential / 1000).toFixed(0)}K` : ''}\nStatus: ${surgeon.mustTransition ? 'Must Transition' : surgeon.isSherpa ? 'Sherpa' : surgeon.isLoyalist ? 'Loyalist' : 'Flexible'}`}</title>
                         </circle>
-                        {/* Label top opportunities */}
-                        {isTopOpportunity && (
-                          <text
-                            x={x}
-                            y={y - r - 5}
-                            textAnchor="middle"
-                            className="text-xs font-bold fill-red-600 pointer-events-none"
-                            style={{ textShadow: '0 0 3px white, 0 0 3px white' }}
-                          >
-                            {surgeon.name.split(' ').pop()}
-                          </text>
-                        )}
                       </g>
                     );
                   })}
