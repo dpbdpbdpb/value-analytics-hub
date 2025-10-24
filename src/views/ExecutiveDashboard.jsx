@@ -350,6 +350,15 @@ const EnhancedOrthopedicDashboard = () => {
       healthEquity: 80,
       missionBonus: 11,
       total: 80
+    },
+    'tri-vendor-premium': {
+      patientExperience: 83,
+      populationHealth: 79,
+      costReduction: 72,
+      providerExperience: 87,
+      healthEquity: 83,
+      missionBonus: 12,
+      total: 83
     }
   };
 
