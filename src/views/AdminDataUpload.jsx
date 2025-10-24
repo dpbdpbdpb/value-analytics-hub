@@ -42,7 +42,8 @@ const AdminDataUpload = () => {
     const columns = Object.keys(data[0]);
     const mapping = {
       vendor: findBestMatch(columns, ['vendor', 'vendor name', 'manufacturer', 'supplier', 'mfr']),
-      component: findBestMatch(columns, ['component', 'item', 'description', 'product', 'component description', 'item description']),
+      component: findBestMatch(columns, ['item_description', 'item description', 'component', 'item', 'description', 'product', 'component description', 'product description', 'product name']),
+      componentCategory: findBestMatch(columns, ['cpc_category', 'cpc category', 'category', 'component category', 'item category']),
       quantity: findBestMatch(columns, ['quantity', 'qty', 'count', 'units', 'volume']),
       price: findBestMatch(columns, ['price', 'unit price', 'cost', 'unit cost', 'avg price', 'average price']),
       surgeon: findBestMatch(columns, ['surgeon', 'doctor', 'physician', 'provider', 'surgeon name']),
@@ -391,14 +392,18 @@ const AdminDataUpload = () => {
     // Build components array
     const components = [];
     data.forEach(row => {
+      const componentName = getFieldValue(row, 'component', ['item_description', 'Item_Description', 'item description', 'Item Description', 'Component', 'component', 'COMPONENT', 'Description', 'Item', 'Product']) || 'Unknown';
+      const componentCategory = getFieldValue(row, 'componentCategory', ['cpc_category', 'CPC_Category', 'cpc category', 'CPC Category', 'Category', 'Item Category']) || null;
+
       components.push({
-        name: row.Component || row.component || row.COMPONENT || 'Unknown',
-        vendor: normalizeVendorName(row.Vendor || row.vendor || row.VENDOR),
-        quantity: parseFloat(row.Quantity || row.quantity || row.QTY || 1),
-        totalSpend: parseFloat(row.Quantity || 1) * parseFloat(row.Price || 0),
-        avgPrice: parseFloat(row.Price || row.price || row.PRICE || 0),
-        procedureType: row.ProcedureType || row.Type || 'PRIMARY',
-        bodyPart: productLine === 'shoulder' ? 'SHOULDER' : (row.BodyPart || 'HIP')
+        name: componentName,
+        category: componentCategory,
+        vendor: normalizeVendorName(getFieldValue(row, 'vendor', ['Vendor', 'vendor', 'VENDOR', 'Vendor Name', 'Manufacturer']) || 'UNKNOWN'),
+        quantity: parseFloat(getFieldValue(row, 'quantity', ['Quantity', 'quantity', 'QTY', 'Qty', 'Count', 'Units']) || 1),
+        totalSpend: parseFloat(getFieldValue(row, 'quantity', ['Quantity', 'quantity', 'QTY']) || 1) * parseFloat(getFieldValue(row, 'price', ['Price', 'price', 'PRICE', 'Unit Price', 'Cost']) || 0),
+        avgPrice: parseFloat(getFieldValue(row, 'price', ['Price', 'price', 'PRICE', 'Unit Price', 'Cost', 'Unit Cost']) || 0),
+        procedureType: getFieldValue(row, 'procedureType', ['Procedure Type', 'procedure type', 'Type', 'Procedure']) || 'PRIMARY',
+        bodyPart: productLine === 'shoulder' ? 'SHOULDER' : (getFieldValue(row, 'bodyPart', ['Body Part', 'body part', 'BodyPart', 'Anatomy']) || 'HIP')
       });
     });
 

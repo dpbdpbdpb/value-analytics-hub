@@ -1,0 +1,43 @@
+{
+  "timestamp": "2025-10-24T04:21:59.159Z",
+  "dataFile": "/Users/doug/CommonSpirit/orthopedic-dashboard/public/data/hip-knee-data.json",
+  "passed": false,
+  "errors": [
+    "CRITICAL: 100.0% of components are \"Unknown\". Component column not detected in CSV. Check column mapping."
+  ],
+  "warnings": [
+    "4 surgeons have cost/case outside normal range ($500-$50000)"
+  ],
+  "info": [
+    "✓ Metadata present (version 1.0)",
+    "✓ Surgeons array: 785 records"
+  ],
+  "metrics": {
+    "totalSurgeons": 785,
+    "surgeonsWithCases": 444,
+    "surgeonsWithZeroCases": 341,
+    "zeroCasePercent": "43.4%",
+    "costPerCase": {
+      "min": 52,
+      "median": 3852,
+      "average": 6397,
+      "max": 86520
+    },
+    "outliers": 4,
+    "regionalCoverage": "100.0%",
+    "regions": [
+      "MOUNTAIN",
+      "SOUTH",
+      "CENTRAL",
+      "CALIFORNIA",
+      "NORTHWEST"
+    ],
+    "totalComponents": 217839,
+    "unknownComponents": 217839,
+    "knownComponents": 0,
+    "unknownPercent": "100.0%",
+    "totalVendors": 42,
+    "totalScenarios": 7
+  },
+  "healthScore": 70
+}
