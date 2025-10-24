@@ -113,6 +113,7 @@ const EnhancedOrthopedicDashboard = () => {
   // Convert real data regions to regional preference format
   const convertToRegionalData = () => {
     if (!realData?.regions || !realData?.vendors) {
+      // Return sample data when regions aren't configured yet
       return [
         { region: 'Mountain', zimmer: 85, stryker: 75, jj: 45, surgeons: 52, repQuality: 'Excellent' },
         { region: 'Western', zimmer: 70, stryker: 82, jj: 60, surgeons: 68, repQuality: 'Good' },
@@ -120,8 +121,15 @@ const EnhancedOrthopedicDashboard = () => {
       ];
     }
 
-    // Since we don't have regions data yet, return empty array
-    return [];
+    // Process actual regions data when available
+    return Object.entries(realData.regions).map(([name, data]) => ({
+      region: name,
+      zimmer: data.vendorPreferences?.['ZIMMER BIOMET'] || 0,
+      stryker: data.vendorPreferences?.['STRYKER'] || 0,
+      jj: data.vendorPreferences?.['JOHNSON & JOHNSON'] || 0,
+      surgeons: data.surgeons || 0,
+      repQuality: data.repQuality || 'Good'
+    }));
   };
 
   // Load scenarios from real data (12 scenarios from hip-knee-data.json)
