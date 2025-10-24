@@ -952,21 +952,124 @@ const EnhancedOrthopedicDashboard = () => {
   // remain the same as before, but now use the dynamically loaded SCENARIOS data
   // For brevity, I'm including just the key parts that demonstrate real data usage
 
-  // CLINICAL ANALYSIS TAB - For clinical persona
+  // CLINICAL ANALYSIS TAB - Comprehensive Provider Impact Assessment
   const renderClinicalTab = () => {
-    const surgeonsByVendor = {};
-    const totalSurgeons = realData?.metadata?.totalSurgeons || 0;
-
-    // Aggregate surgeons by vendor
-    if (realData?.vendors) {
-      Object.entries(realData.vendors).forEach(([vendorName, vendorData]) => {
-        surgeonsByVendor[vendorName] = vendorData.uniqueSurgeons || 0;
-      });
+    const scenario = SCENARIOS[selectedScenario];
+    if (!scenario || !realData?.surgeons) {
+      return <div className="p-6 text-gray-500">Loading clinical impact data...</div>;
     }
 
-    // Sort vendors by surgeon count
-    const topVendorsBySurgeons = Object.entries(surgeonsByVendor)
-      .sort((a, b) => b[1] - a[1])
+    const scenarioVendors = scenario.vendors || [];
+    const totalSurgeons = realData.surgeons.length;
+    const totalCases = realData.metadata?.totalCases || 0;
+
+    // Categorize surgeons by volume
+    const HIGH_VOLUME_THRESHOLD = 200; // cases/year
+    const MEDIUM_VOLUME_THRESHOLD = 50;
+    const LOYALTY_THRESHOLD = 0.70; // 70%+ preference for single vendor
+
+    // Analyze each surgeon's impact
+    const surgeonImpact = realData.surgeons.map(surgeon => {
+      const volume = surgeon.totalCases || 0;
+      const volumeCategory = volume >= HIGH_VOLUME_THRESHOLD ? 'high' :
+                            volume >= MEDIUM_VOLUME_THRESHOLD ? 'medium' : 'low';
+      const primaryVendor = surgeon.primaryVendor || 'Unknown';
+      const primaryVendorPercent = surgeon.primaryVendorPercent || 0;
+      const isLoyalist = primaryVendorPercent >= LOYALTY_THRESHOLD;
+      const mustTransition = !scenarioVendors.includes(primaryVendor);
+
+      return {
+        ...surgeon,
+        volume,
+        volumeCategory,
+        primaryVendor,
+        primaryVendorPercent,
+        isLoyalist,
+        mustTransition,
+        impactScore: mustTransition ? (volume * (isLoyalist ? 2 : 1)) : 0
+      };
+    });
+
+    // Filter surgeons who must transition
+    const surgeonsNeedingTransition = surgeonImpact.filter(s => s.mustTransition);
+    const highVolumeLoyalists = surgeonsNeedingTransition.filter(s =>
+      s.volumeCategory === 'high' && s.isLoyalist
+    );
+
+    // Group by region
+    const regionalImpact = {};
+    surgeonImpact.forEach(surgeon => {
+      const region = surgeon.region || 'Unassigned';
+      if (!regionalImpact[region]) {
+        regionalImpact[region] = {
+          totalSurgeons: 0,
+          needingTransition: 0,
+          highVolumeLoyalists: 0,
+          casesAtRisk: 0
+        };
+      }
+      regionalImpact[region].totalSurgeons++;
+      if (surgeon.mustTransition) {
+        regionalImpact[region].needingTransition++;
+        regionalImpact[region].casesAtRisk += surgeon.volume;
+        if (surgeon.volumeCategory === 'high' && surgeon.isLoyalist) {
+          regionalImpact[region].highVolumeLoyalists++;
+        }
+      }
+    });
+
+    // Group by hospital
+    const hospitalImpact = {};
+    surgeonImpact.forEach(surgeon => {
+      const facility = surgeon.facility || 'Unassigned';
+      if (!hospitalImpact[facility]) {
+        hospitalImpact[facility] = {
+          region: surgeon.region || 'Unassigned',
+          totalSurgeons: 0,
+          needingTransition: 0,
+          highVolumeLoyalists: 0,
+          loyalistsNeedingTransition: 0,
+          casesAtRisk: 0,
+          vendorDiversity: new Set(),
+          transitioningVendors: new Set()
+        };
+      }
+      hospitalImpact[facility].totalSurgeons++;
+      hospitalImpact[facility].vendorDiversity.add(surgeon.primaryVendor);
+
+      if (surgeon.mustTransition) {
+        hospitalImpact[facility].needingTransition++;
+        hospitalImpact[facility].casesAtRisk += surgeon.volume;
+        hospitalImpact[facility].transitioningVendors.add(surgeon.primaryVendor);
+        if (surgeon.isLoyalist) {
+          hospitalImpact[facility].loyalistsNeedingTransition++;
+        }
+        if (surgeon.volumeCategory === 'high' && surgeon.isLoyalist) {
+          hospitalImpact[facility].highVolumeLoyalists++;
+        }
+      }
+    });
+
+    // Identify hospitals with "peer sherpa" opportunities (mixed vendor loyalists)
+    const hospitalsWithMixedLoyalists = Object.entries(hospitalImpact)
+      .filter(([_, data]) => {
+        // Hospital has surgeons transitioning AND surgeons staying (good peer sherpa opportunity)
+        const hasMix = data.loyalistsNeedingTransition > 0 &&
+                      (data.totalSurgeons - data.needingTransition) > 0;
+        return hasMix;
+      })
+      .map(([facility, data]) => ({
+        facility,
+        ...data,
+        peerSherpaScore: (data.totalSurgeons - data.needingTransition) / data.loyalistsNeedingTransition
+      }))
+      .sort((a, b) => b.loyalistsNeedingTransition - a.loyalistsNeedingTransition);
+
+    // Top high-risk hospitals (most high-volume loyalists needing transition)
+    const topRiskHospitals = Object.entries(hospitalImpact)
+      .filter(([_, data]) => data.highVolumeLoyalists > 0)
+      .map(([facility, data]) => ({ facility, ...data }))
+      .sort((a, b) => b.casesAtRisk - a.casesAtRisk)
       .slice(0, 10);
 
     // Quality metrics - using placeholder/dummy data for demonstration
@@ -990,23 +1093,239 @@ const EnhancedOrthopedicDashboard = () => {
 
     return (
       <div className="space-y-6">
-        {/* Data Availability Notice */}
-        {realData?.metadata?.syntheticDataSections?.includes('qualityMetrics') && (
-          <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-lg">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
-              <div>
-                <h4 className="font-bold text-amber-900 mb-1">⚠️ Synthetic Data - For Demo Only</h4>
-                <p className="text-sm text-amber-800">
-                  The quality metrics shown below use <strong>synthetic placeholder data</strong> for demonstration purposes.
-                  These values are NOT from your uploaded Excel file. This interface is ready to integrate with your EMR, surgical registry, or quality reporting systems.
-                </p>
-              </div>
+        {/* Scenario Context */}
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl p-6 shadow-lg">
+          <h2 className="text-2xl font-bold mb-2">Clinical Deep Dive: {scenario.shortName}</h2>
+          <p className="text-blue-100 text-sm">Comprehensive provider impact assessment for vendor consolidation</p>
+        </div>
+
+        {/* High-Level Impact Summary */}
+        <div className="grid grid-cols-4 gap-4">
+          <div className="bg-white p-6 rounded-xl shadow-lg border-l-4 border-red-500">
+            <div className="text-sm text-gray-600 mb-1">Surgeons Needing Transition</div>
+            <div className="text-4xl font-bold text-red-600">{surgeonsNeedingTransition.length}</div>
+            <div className="text-xs text-gray-500 mt-1">
+              {((surgeonsNeedingTransition.length / totalSurgeons) * 100).toFixed(1)}% of total
             </div>
           </div>
-        )}
 
-        {/* Quality Metrics Overview */}
+          <div className="bg-white p-6 rounded-xl shadow-lg border-l-4 border-orange-500">
+            <div className="text-sm text-gray-600 mb-1">High-Volume Loyalists</div>
+            <div className="text-4xl font-bold text-orange-600">{highVolumeLoyalists.length}</div>
+            <div className="text-xs text-gray-500 mt-1">
+              Require intensive support
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-lg border-l-4 border-purple-500">
+            <div className="text-sm text-gray-600 mb-1">Cases at Risk</div>
+            <div className="text-4xl font-bold text-purple-600">
+              {surgeonsNeedingTransition.reduce((sum, s) => sum + s.volume, 0).toLocaleString()}
+            </div>
+            <div className="text-xs text-gray-500 mt-1">
+              Annual procedures affected
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-lg border-l-4 border-green-500">
+            <div className="text-sm text-gray-600 mb-1">Peer Sherpa Sites</div>
+            <div className="text-4xl font-bold text-green-600">{hospitalsWithMixedLoyalists.length}</div>
+            <div className="text-xs text-gray-500 mt-1">
+              Hospitals with transition support
+            </div>
+          </div>
+        </div>
+
+        {/* Regional Impact Analysis */}
+        <div className="bg-white p-6 rounded-xl shadow-lg">
+          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <MapPin className="w-6 h-6 text-purple-600" />
+            Impact by Region
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-purple-100 border-b-2 border-purple-300">
+                  <th className="text-left p-4 font-bold text-purple-900">Region</th>
+                  <th className="text-center p-4 font-bold text-purple-900">Total Surgeons</th>
+                  <th className="text-center p-4 font-bold text-purple-900">Need Transition</th>
+                  <th className="text-center p-4 font-bold text-purple-900">High-Vol Loyalists</th>
+                  <th className="text-center p-4 font-bold text-purple-900">Cases at Risk</th>
+                  <th className="text-left p-4 font-bold text-purple-900">Impact Level</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(regionalImpact)
+                  .sort((a, b) => b[1].casesAtRisk - a[1].casesAtRisk)
+                  .map(([region, data]) => {
+                    const impactPercent = (data.needingTransition / data.totalSurgeons) * 100;
+                    return (
+                      <tr key={region} className="border-b border-gray-200 hover:bg-purple-50">
+                        <td className="p-4 font-semibold text-gray-900">{region}</td>
+                        <td className="p-4 text-center text-gray-900">{data.totalSurgeons}</td>
+                        <td className="p-4 text-center">
+                          <span className="font-bold text-red-600">{data.needingTransition}</span>
+                          <span className="text-xs text-gray-500 ml-2">({impactPercent.toFixed(0)}%)</span>
+                        </td>
+                        <td className="p-4 text-center font-bold text-orange-600">{data.highVolumeLoyalists}</td>
+                        <td className="p-4 text-center font-bold text-purple-600">{data.casesAtRisk.toLocaleString()}</td>
+                        <td className="p-4">
+                          <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                            impactPercent >= 40 ? 'bg-red-100 text-red-800' :
+                            impactPercent >= 25 ? 'bg-orange-100 text-orange-800' :
+                            impactPercent >= 10 ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-green-100 text-green-800'
+                          }`}>
+                            {impactPercent >= 40 ? 'High' :
+                             impactPercent >= 25 ? 'Moderate' :
+                             impactPercent >= 10 ? 'Low' : 'Minimal'}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* High-Risk Hospitals */}
+        <div className="bg-white p-6 rounded-xl shadow-lg">
+          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Building className="w-6 h-6 text-red-600" />
+            Hospitals with Highest Impact
+          </h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Facilities with the most high-volume vendor loyalists requiring transition
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-red-100 border-b-2 border-red-300">
+                  <th className="text-left p-4 font-bold text-red-900">Hospital</th>
+                  <th className="text-center p-4 font-bold text-red-900">Region</th>
+                  <th className="text-center p-4 font-bold text-red-900">High-Vol Loyalists</th>
+                  <th className="text-center p-4 font-bold text-red-900">Total Transitioning</th>
+                  <th className="text-center p-4 font-bold text-red-900">Cases at Risk</th>
+                </tr>
+              </thead>
+              <tbody>
+                {topRiskHospitals.map((hospital, idx) => (
+                  <tr key={idx} className="border-b border-gray-200 hover:bg-red-50">
+                    <td className="p-4 font-semibold text-gray-900">{hospital.facility}</td>
+                    <td className="p-4 text-center text-gray-700">{hospital.region}</td>
+                    <td className="p-4 text-center">
+                      <span className="font-bold text-2xl text-orange-600">{hospital.highVolumeLoyalists}</span>
+                    </td>
+                    <td className="p-4 text-center font-bold text-red-600">{hospital.needingTransition}</td>
+                    <td className="p-4 text-center font-bold text-purple-600">{hospital.casesAtRisk.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Peer Sherpa Opportunities */}
+        <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-green-300">
+          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Users className="w-6 h-6 text-green-600" />
+            Peer Sherpa Opportunities (Mixed Vendor Hospitals)
+          </h3>
+          <div className="bg-green-50 border-l-4 border-green-600 p-4 rounded-lg mb-4">
+            <p className="text-sm text-green-800">
+              <strong>Peer Sherpas:</strong> These hospitals have surgeons who are STAYING with their current vendors (aligned with scenario) who can mentor and support colleagues who need to transition. This peer-to-peer approach significantly increases adoption success rates.
+            </p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-green-100 border-b-2 border-green-300">
+                  <th className="text-left p-4 font-bold text-green-900">Hospital</th>
+                  <th className="text-center p-4 font-bold text-green-900">Region</th>
+                  <th className="text-center p-4 font-bold text-green-900">Loyalists Transitioning</th>
+                  <th className="text-center p-4 font-bold text-green-900">Potential Sherpas</th>
+                  <th className="text-center p-4 font-bold text-green-900">Sherpa Ratio</th>
+                  <th className="text-left p-4 font-bold text-green-900">Opportunity Level</th>
+                </tr>
+              </thead>
+              <tbody>
+                {hospitalsWithMixedLoyalists.slice(0, 15).map((hospital, idx) => {
+                  const potentialSherpas = hospital.totalSurgeons - hospital.needingTransition;
+                  const sherpaRatio = hospital.peerSherpaScore;
+                  return (
+                    <tr key={idx} className="border-b border-gray-200 hover:bg-green-50">
+                      <td className="p-4 font-semibold text-gray-900">{hospital.facility}</td>
+                      <td className="p-4 text-center text-gray-700">{hospital.region}</td>
+                      <td className="p-4 text-center font-bold text-orange-600">{hospital.loyalistsNeedingTransition}</td>
+                      <td className="p-4 text-center font-bold text-green-600">{potentialSherpas}</td>
+                      <td className="p-4 text-center">
+                        <span className="font-bold text-blue-600">{sherpaRatio.toFixed(1)}:1</span>
+                      </td>
+                      <td className="p-4">
+                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                          sherpaRatio >= 2 ? 'bg-green-100 text-green-800' :
+                          sherpaRatio >= 1 ? 'bg-blue-100 text-blue-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {sherpaRatio >= 2 ? 'Excellent' :
+                           sherpaRatio >= 1 ? 'Good' : 'Fair'}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Regional Heat Map */}
+        <div className="bg-white p-6 rounded-xl shadow-lg">
+          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Activity className="w-6 h-6 text-purple-600" />
+            Regional Transition Heat Map
+          </h3>
+          <div className="grid grid-cols-1 gap-4">
+            {Object.entries(regionalImpact)
+              .sort((a, b) => b[1].casesAtRisk - a[1].casesAtRisk)
+              .map(([region, data]) => {
+                const impactPercent = (data.needingTransition / data.totalSurgeons) * 100;
+                const maxCases = Math.max(...Object.values(regionalImpact).map(r => r.casesAtRisk));
+                const barWidth = (data.casesAtRisk / maxCases) * 100;
+
+                return (
+                  <div key={region} className="border-l-4 border-purple-500 pl-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="font-bold text-gray-900">{region}</div>
+                      <div className="flex items-center gap-4 text-sm">
+                        <span className="text-gray-600">
+                          <span className="font-bold text-red-600">{data.needingTransition}</span> / {data.totalSurgeons} surgeons
+                        </span>
+                        <span className="text-gray-600">
+                          <span className="font-bold text-purple-600">{data.casesAtRisk.toLocaleString()}</span> cases
+                        </span>
+                      </div>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-8 relative">
+                      <div
+                        className={`h-8 rounded-full flex items-center justify-end pr-3 text-white font-bold text-sm ${
+                          impactPercent >= 40 ? 'bg-red-500' :
+                          impactPercent >= 25 ? 'bg-orange-500' :
+                          impactPercent >= 10 ? 'bg-yellow-500' : 'bg-green-500'
+                        }`}
+                        style={{ width: `${barWidth}%` }}
+                      >
+                        {impactPercent.toFixed(0)}% Impact
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+
+        {/* Quality Metrics Overview - Moved to bottom */}
         <div className="bg-white p-6 rounded-xl shadow-lg">
           <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
             <Activity className="w-6 h-6 text-blue-600" />
@@ -1099,92 +1418,6 @@ const EnhancedOrthopedicDashboard = () => {
           </div>
         </div>
 
-        {/* Volume & Surgeon Overview */}
-        <div className="grid grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-green-200">
-            <div className="text-sm text-green-700 mb-1">Total Surgeons</div>
-            <div className="text-4xl font-bold text-green-900">{totalSurgeons}</div>
-            <div className="text-xs text-green-600 mt-1">Active orthopedic surgeons</div>
-          </div>
-          <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-blue-200">
-            <div className="text-sm text-blue-700 mb-1">Total Cases</div>
-            <div className="text-4xl font-bold text-blue-900">
-              {(realData?.metadata?.totalCases || 0).toLocaleString()}
-            </div>
-            <div className="text-xs text-blue-600 mt-1">Surgical procedures analyzed</div>
-          </div>
-          <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-purple-200">
-            <div className="text-sm text-purple-700 mb-1">Vendor Options</div>
-            <div className="text-4xl font-bold text-purple-900">
-              {Object.keys(realData?.vendors || {}).length}
-            </div>
-            <div className="text-xs text-purple-600 mt-1">Different vendors used</div>
-          </div>
-        </div>
-
-        {/* Surgeon Distribution by Vendor */}
-        <div className="bg-white p-6 rounded-xl shadow-lg">
-          <h3 className="text-xl font-bold text-gray-900 mb-4">Surgeon Distribution by Vendor</h3>
-          <p className="text-sm text-gray-600 mb-4">
-            Understanding surgeon preference patterns helps identify consolidation opportunities
-          </p>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-green-100 border-b-2 border-green-300">
-                  <th className="text-left p-4 font-bold text-green-900">Vendor</th>
-                  <th className="text-center p-4 font-bold text-green-900">Surgeons</th>
-                  <th className="text-center p-4 font-bold text-green-900">% of Total</th>
-                  <th className="text-center p-4 font-bold text-green-900">High-Volume Loyalists</th>
-                  <th className="text-left p-4 font-bold text-green-900">Adoption Level</th>
-                </tr>
-              </thead>
-              <tbody>
-                {topVendorsBySurgeons.map(([vendor, count], idx) => {
-                  const percentage = ((count / totalSurgeons) * 100).toFixed(1);
-                  const isHighAdoption = percentage >= 30;
-                  const isMediumAdoption = percentage >= 10 && percentage < 30;
-                  // Estimate high-volume loyalists: ~35% of surgeons are high-volume (>50 cases/year)
-                  // and ~70% of those using a vendor are vendor loyalists (strong preference)
-                  const highVolumeLoyalists = Math.round(count * 0.35 * 0.70);
-                  return (
-                    <tr key={idx} className="border-b border-gray-200 hover:bg-green-50">
-                      <td className="p-4 font-semibold text-gray-900">{vendor}</td>
-                      <td className="p-4 text-center text-gray-900">{count}</td>
-                      <td className="p-4 text-center font-bold text-green-900">{percentage}%</td>
-                      <td className="p-4 text-center">
-                        <div className="font-bold text-purple-900">{highVolumeLoyalists}</div>
-                        <div className="text-xs text-gray-600">({(highVolumeLoyalists / count * 100).toFixed(0)}% of vendor)</div>
-                      </td>
-                      <td className="p-4 text-sm">
-                        <span className={`px-3 py-1 rounded-full font-semibold ${
-                          isHighAdoption
-                            ? 'bg-green-100 text-green-800'
-                            : isMediumAdoption
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-gray-100 text-gray-700'
-                        }`}>
-                          {isHighAdoption ? 'High' : isMediumAdoption ? 'Medium' : 'Low'}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Clinical Insights */}
-        <div className="bg-green-50 border-l-4 border-green-600 p-6 rounded-lg">
-          <h3 className="font-bold text-green-900 mb-3">Clinical Perspective Insights</h3>
-          <ul className="space-y-2 text-sm text-green-800">
-            <li>• Vendor consolidation should prioritize surgeon preference and clinical outcomes</li>
-            <li>• High-volume surgeons switching vendors require extensive training and support</li>
-            <li>• Successful implementation depends on identifying clinical champions at each hospital</li>
-            <li>• Patient safety and outcomes must remain the top priority during transitions</li>
-          </ul>
-        </div>
       </div>
     );
   };
