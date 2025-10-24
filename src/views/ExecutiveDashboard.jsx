@@ -1124,11 +1124,12 @@ const EnhancedOrthopedicDashboard = () => {
       hospitalImpact[facility].vendorCaseCounts[vendor] += surgeon.volume;
 
       // Track robotic cases by vendor
-      if (surgeon.roboticCases && surgeon.roboticCases > 0) {
+      const roboticCases = surgeon.roboticMetrics?.estimatedRoboticCases || 0;
+      if (roboticCases > 0) {
         if (!hospitalImpact[facility].roboticVendors[vendor]) {
           hospitalImpact[facility].roboticVendors[vendor] = 0;
         }
-        hospitalImpact[facility].roboticVendors[vendor] += surgeon.roboticCases;
+        hospitalImpact[facility].roboticVendors[vendor] += roboticCases;
       }
 
       if (surgeon.mustTransition) {
