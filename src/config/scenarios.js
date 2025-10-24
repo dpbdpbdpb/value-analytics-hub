@@ -311,7 +311,8 @@ export const generateScenarios = (realData) => {
       quintupleMissionScore: dataScenario.quintupleMissionScore || 75,
       npv5Year: (dataScenario.npv5Year || 0) / 1000000, // Convert to millions
       vendorSplit: dataScenario.vendorSplit || {},
-      riskScore: dataScenario.riskScore || 5
+      riskScore: dataScenario.riskScore || 5,
+      roboticPlatformAlignment: dataScenario.roboticPlatformAlignment || null
     };
   });
 
@@ -329,8 +330,33 @@ export const generateScenarios = (realData) => {
     scenarios[scenarioId].volumeWeightedRisk = volumeWeightedRisk;
     scenarios[scenarioId].riskScore = volumeWeightedRisk.riskScore;
 
-    // Derive riskLevel from calculated riskScore for consistency
-    const score = volumeWeightedRisk.riskScore;
+    // Incorporate robotic platform alignment into risk score
+    // Robotic misalignment adds significant switching barriers
+    let adjustedRiskScore = volumeWeightedRisk.riskScore;
+
+    if (scenario.roboticPlatformAlignment) {
+      const alignment = scenario.roboticPlatformAlignment.alignmentScore;
+
+      // Robotic misalignment increases risk:
+      // <70% alignment: +2.0 risk points (critical stranded investment)
+      // 70-80%: +1.5 risk points (high impact)
+      // 80-90%: +0.5 risk points (moderate impact)
+      // >90%: no adjustment (minimal impact)
+      if (alignment < 70) {
+        adjustedRiskScore += 2.0;
+      } else if (alignment < 80) {
+        adjustedRiskScore += 1.5;
+      } else if (alignment < 90) {
+        adjustedRiskScore += 0.5;
+      }
+    }
+
+    // Cap at 10
+    adjustedRiskScore = Math.min(10, adjustedRiskScore);
+    scenarios[scenarioId].riskScore = adjustedRiskScore;
+
+    // Derive riskLevel from adjusted riskScore for consistency
+    const score = adjustedRiskScore;
     if (score <= 3) {
       scenarios[scenarioId].riskLevel = 'low';
     } else if (score <= 5) {

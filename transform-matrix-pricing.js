@@ -57,8 +57,19 @@ function transformMatrixPricing(filePath) {
     // Take top 4 vendors by volume
     const top4Vendors = vendorsWithVolume.slice(0, 4);
 
-    // Get lowest price among top 4
+    // Get lowest price among top 4 and identify the vendor
     const matrixPrice = Math.min(...top4Vendors.map(v => v.price));
+    const targetVendor = top4Vendors.find(v => v.price === matrixPrice)?.name || 'Unknown';
+
+    // Abbreviate vendor names for display
+    const abbreviateVendor = (name) => {
+      const upper = name.toUpperCase();
+      if (upper.includes('STRYKER')) return 'STR';
+      if (upper.includes('ZIMMER')) return 'ZIM';
+      if (upper.includes('J&J') || upper.includes('JOHNSON')) return 'J&J';
+      if (upper.includes('SMITH')) return 'S&N';
+      return name.substring(0, 3).toUpperCase();
+    };
 
     // Estimate total spend based on samples (rough estimate)
     const totalSamples = Object.values(vendors).reduce((sum, v) => sum + (v.samples || 0), 0);
@@ -74,6 +85,8 @@ function transformMatrixPricing(filePath) {
         totalSpend: totalSpend,
         currentAvgPrice: currentAvgPrice,
         matrixPrice: matrixPrice,
+        targetVendor: abbreviateVendor(targetVendor),
+        targetVendorFull: targetVendor,
         potentialSavings: potentialSavings
       });
     }

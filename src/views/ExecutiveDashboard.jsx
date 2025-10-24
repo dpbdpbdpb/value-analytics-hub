@@ -41,6 +41,11 @@ const EnhancedOrthopedicDashboard = () => {
   const [bookmarks, setBookmarks] = useState([]);
   const [visibleHospitalCount, setVisibleHospitalCount] = useState(10); // Show 10 hospitals initially
 
+  // Surgeon analytics state
+  const [surgeonSearchQuery, setSurgeonSearchQuery] = useState('');
+  const [selectedSurgeon, setSelectedSurgeon] = useState(null);
+  const [surgeonFilter, setSurgeonFilter] = useState('all'); // all, loyalists, sherpas, high-volume, transitioning
+
   // What-if scenario sliders
   const [whatIfParams, setWhatIfParams] = useState({
     adoptionModifier: 0, // -20 to +20
@@ -171,8 +176,10 @@ const EnhancedOrthopedicDashboard = () => {
     if (!filteredRealData?.scenarios) {
       return {}; // Return empty object if no data loaded yet
     }
-    // Use generateScenarios to ensure all scenarios have proper structure
-    // including savingsRange, volumeWeightedRisk, etc.
+    // Use generateScenarios to:
+    // 1. Filter out "pricing-cap" (it's a metric, not a scenario)
+    // 2. Convert units (dollars → millions, decimals → percentages)
+    // 3. Preserve pre-calculated risk levels from the data file
     return generateScenarios(filteredRealData);
   }, [filteredRealData]);
 
@@ -325,15 +332,6 @@ const EnhancedOrthopedicDashboard = () => {
     return scenarios;
   }, [SCENARIOS, sortBy, filterRisk, filterProcedureType]);
 
-  // Calculate probability-weighted savings
-  const getProbabilityWeighted = (scenario) => {
-    const s = SCENARIOS[scenario];
-    if (!s) return 0;
-    return (s.savingsRange.conservative * 0.25) +
-           (s.savingsRange.expected * 0.50) +
-           (s.savingsRange.optimistic * 0.25);
-  };
-
   // Bookmark current configuration
   const toggleBookmark = () => {
     const config = {
@@ -398,6 +396,7 @@ const EnhancedOrthopedicDashboard = () => {
       { id: 'overview', label: 'Overview', icon: Eye, personas: ['financial', 'operational', 'clinical', 'integrated'] },
       { id: 'financial', label: 'Financial Analysis', icon: DollarSign, personas: ['financial', 'operational', 'integrated'] },
       { id: 'clinical', label: 'Clinical Analysis', icon: Stethoscope, personas: ['clinical', 'integrated'] },
+      { id: 'surgeons', label: 'Surgeon Analytics', icon: Users2, personas: ['clinical', 'operational', 'integrated'] },
       { id: 'components', label: 'Component Analysis', icon: Package, personas: ['financial', 'operational', 'integrated'] }
     ];
 
@@ -445,7 +444,6 @@ const EnhancedOrthopedicDashboard = () => {
           <div className="bg-white rounded-lg p-4">
             <div className="text-sm text-gray-600">Annual Savings</div>
             <div className="text-2xl font-bold text-green-600">${s.annualSavings.toFixed(2)}M</div>
-            <div className="text-xs text-gray-500 mt-1">Probability-weighted: ${getProbabilityWeighted(scenario).toFixed(2)}M</div>
           </div>
 
           <div className="bg-white rounded-lg p-4">
@@ -590,12 +588,12 @@ const EnhancedOrthopedicDashboard = () => {
                 {filteredScenarios.map(scenario => (
                   <th
                     key={scenario.id}
-                    className={`px-4 py-3 text-center font-bold text-gray-900 min-w-[200px] cursor-pointer hover:bg-gray-200 ${
+                    className={`px-3 py-3 text-center font-bold text-gray-900 min-w-[160px] max-w-[200px] cursor-pointer hover:bg-gray-200 ${
                       selectedScenario === scenario.id ? 'bg-purple-100' : ''
                     }`}
                     onClick={() => setSelectedScenario(scenario.id)}
                   >
-                    <div className="font-bold text-base">{scenario.shortName}</div>
+                    <div className="font-bold text-sm break-words leading-tight">{scenario.shortName}</div>
                     <div className="text-xs text-gray-500 font-normal mt-1">{scenario.vendorCount} vendors</div>
                   </th>
                 ))}
@@ -613,24 +611,6 @@ const EnhancedOrthopedicDashboard = () => {
                     className={`px-4 py-4 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
                   >
                     <div className="font-bold text-green-600 text-lg">${scenario.annualSavings.toFixed(2)}M</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      ${scenario.savingsRange.conservative.toFixed(2)}M - ${scenario.savingsRange.optimistic.toFixed(2)}M
-                    </div>
-                  </td>
-                ))}
-              </tr>
-
-              {/* Expected Value Row */}
-              <tr className="border-b hover:bg-gray-50">
-                <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-white z-10">
-                  Probability-Weighted
-                </td>
-                {filteredScenarios.map(scenario => (
-                  <td
-                    key={scenario.id}
-                    className={`px-4 py-4 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
-                  >
-                    <div className="font-bold text-blue-600 text-lg">${getProbabilityWeighted(scenario.id).toFixed(2)}M</div>
                   </td>
                 ))}
               </tr>
@@ -683,6 +663,41 @@ const EnhancedOrthopedicDashboard = () => {
                 ))}
               </tr>
 
+              {/* Robotic Platform Alignment Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                  Robotic Platform Alignment
+                </td>
+                {filteredScenarios.map(scenario => (
+                  <td
+                    key={scenario.id}
+                    className={`px-4 py-4 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                  >
+                    {scenario.roboticPlatformAlignment ? (
+                      <>
+                        <div className={`font-bold text-lg ${
+                          scenario.roboticPlatformAlignment.alignmentScore >= 90 ? 'text-green-600' :
+                          scenario.roboticPlatformAlignment.alignmentScore >= 70 ? 'text-yellow-600' :
+                          'text-red-600'
+                        }`}>
+                          {scenario.roboticPlatformAlignment.alignmentScore.toFixed(1)}%
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {scenario.roboticPlatformAlignment.compatibleCases.toLocaleString()} / {scenario.roboticPlatformAlignment.totalRoboticCases.toLocaleString()} cases
+                        </div>
+                        {scenario.roboticPlatformAlignment.incompatibleCases > 0 && (
+                          <div className="text-xs text-red-600 font-semibold mt-1">
+                            {scenario.roboticPlatformAlignment.incompatibleCases.toLocaleString()} stranded
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-gray-400 text-sm">N/A</span>
+                    )}
+                  </td>
+                ))}
+              </tr>
+
               {/* NPV 5-Year Row */}
               <tr className="border-b hover:bg-gray-50">
                 <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-white z-10">
@@ -702,9 +717,18 @@ const EnhancedOrthopedicDashboard = () => {
 
               {/* Pricing Cap Section Header */}
               <tr className="bg-blue-50 border-t-2 border-blue-200">
-                <td colSpan={filteredScenarios.length + 1} className="px-4 py-2">
-                  <div className="font-bold text-blue-900 text-sm uppercase tracking-wide">
+                <td colSpan={filteredScenarios.length + 1} className="px-4 py-3">
+                  <div className="font-bold text-blue-900 text-sm uppercase tracking-wide mb-2">
                     + Pricing Cap Strategy (Additional Savings Potential)
+                  </div>
+                  <div className="text-xs text-blue-800 normal-case font-normal leading-relaxed">
+                    <strong>Methodology:</strong> Set a maximum allowed price per complete construct: <strong>$2,500 for knee procedures, $3,000 for hip procedures.</strong> This cap applies to the total cost of all implant components used in a single procedure. All spending above these caps represents savings opportunity.
+                    <br/>
+                    <strong className="mt-1 inline-block">Feasibility Model:</strong> Expected savings = Total potential × Feasibility%.
+                    Base feasibility by vendor count: 1 vendor (70%), 2 vendors (60%), 3 vendors (50%), 4+ vendors (30%).
+                    Adjustments: Stryker presence -10% (premium positioning), J&J/Zimmer +8% (competitive pricing), S&N +7% (market share hungry).
+                    <br/>
+                    <strong className="mt-1 inline-block">Implementation:</strong> Pricing caps are enforced through contract language requiring vendors to bundle implant components at or below the construct price cap ($2,500 knee / $3,000 hip).
                   </div>
                 </td>
               </tr>
@@ -1028,6 +1052,7 @@ const EnhancedOrthopedicDashboard = () => {
           totalSurgeons: 0,
           needingTransition: 0,
           highVolumeLoyalists: 0,
+          highVolLoyalistCases: 0, // Total cases performed by high-volume loyalists
           casesAtRisk: 0,
           totalCases: 0,
           hospitals: [],
@@ -1041,6 +1066,7 @@ const EnhancedOrthopedicDashboard = () => {
         regionalImpact[region].casesAtRisk += surgeon.volume;
         if (surgeon.volumeCategory === 'high' && surgeon.isLoyalist) {
           regionalImpact[region].highVolumeLoyalists++;
+          regionalImpact[region].highVolLoyalistCases += surgeon.volume; // Track total cases
         }
       }
     });
@@ -1055,6 +1081,7 @@ const EnhancedOrthopedicDashboard = () => {
           totalSurgeons: 0,
           needingTransition: 0,
           highVolumeLoyalists: 0,
+          highVolLoyalistCases: 0, // Total cases performed by high-volume loyalists
           loyalistsNeedingTransition: 0,
           casesAtRisk: 0,
           totalCases: 0,
@@ -1084,6 +1111,7 @@ const EnhancedOrthopedicDashboard = () => {
         }
         if (surgeon.volumeCategory === 'high' && surgeon.isLoyalist) {
           hospitalImpact[facility].highVolumeLoyalists++;
+          hospitalImpact[facility].highVolLoyalistCases += surgeon.volume; // Track total cases
           // Track which vendor this high-volume loyalist uses
           if (!hospitalImpact[facility].highVolLoyalistVendors[vendor]) {
             hospitalImpact[facility].highVolLoyalistVendors[vendor] = 0;
@@ -1098,20 +1126,26 @@ const EnhancedOrthopedicDashboard = () => {
       // Volume-weighted sherpa calculation:
       // Only count surgeons with ≥30 cases as potential sherpas
       // Weight their contribution by their case volume (normalized per 100 cases)
-      const sherpaCapacity = surgeonImpact
-        .filter(s => s.facility === facility && !s.mustTransition && s.volume >= 30)
-        .reduce((sum, s) => sum + (s.volume / 100), 0);
+      const sherpas = surgeonImpact.filter(s => s.facility === facility && !s.mustTransition && s.volume >= 30);
+
+      const sherpaCapacity = sherpas.reduce((sum, s) => sum + (s.volume / 100), 0);
 
       const loyalistCount = hospital.loyalistsNeedingTransition;
       const sherpaRatio = loyalistCount > 0 ? sherpaCapacity / loyalistCount : 0;
 
-      // Also calculate simple count for reference
-      const potentialSherpas = surgeonImpact.filter(s => s.facility === facility && !s.mustTransition && s.volume >= 30).length;
+      // Count sherpas and track their vendors
+      const potentialSherpas = sherpas.length;
+      const sherpaVendors = {};
+      sherpas.forEach(s => {
+        const vendor = s.primaryVendor || 'Unknown';
+        sherpaVendors[vendor] = (sherpaVendors[vendor] || 0) + 1;
+      });
 
       // Store sherpa metrics in hospital object for reuse
       hospital.sherpaRatio = sherpaRatio;
       hospital.sherpaCapacity = sherpaCapacity;
       hospital.potentialSherpas = potentialSherpas;
+      hospital.sherpaVendors = sherpaVendors;
 
       // Determine preferred vendor (vendor with most cases)
       let preferredVendor = 'Unknown';
@@ -1288,7 +1322,7 @@ const EnhancedOrthopedicDashboard = () => {
                   <th className="text-left p-4 font-bold text-purple-900">Region</th>
                   <th className="text-center p-4 font-bold text-purple-900">Total Surgeons</th>
                   <th className="text-center p-4 font-bold text-purple-900">Need Transition</th>
-                  <th className="text-center p-4 font-bold text-purple-900">High-Vol Loyalists</th>
+                  <th className="text-center p-4 font-bold text-purple-900" title="Surgeons with >200 cases/year who are ≥70% loyal to a vendor not in this scenario. These surgeons represent high-impact transition challenges.">High-Vol Loyalists</th>
                   <th className="text-center p-4 font-bold text-purple-900">Cases at Risk</th>
                 </tr>
               </thead>
@@ -1305,7 +1339,14 @@ const EnhancedOrthopedicDashboard = () => {
                           <span className="font-bold text-red-600">{data.needingTransition}</span>
                           <span className="text-xs text-gray-500 ml-2">({impactPercent.toFixed(0)}%)</span>
                         </td>
-                        <td className="p-4 text-center font-bold text-orange-600">{data.highVolumeLoyalists}</td>
+                        <td className="p-4 text-center font-bold text-orange-600">
+                          {data.highVolumeLoyalists}
+                          {data.highVolumeLoyalists > 0 && (
+                            <span className="text-xs text-gray-500 ml-2">
+                              ({data.highVolLoyalistCases.toLocaleString()})
+                            </span>
+                          )}
+                        </td>
                         <td className="p-4 text-center font-bold text-purple-600">{data.casesAtRisk.toLocaleString()}</td>
                       </tr>
                     );
@@ -1314,6 +1355,100 @@ const EnhancedOrthopedicDashboard = () => {
             </table>
           </div>
         </div>
+
+        {/* Robotic Platform Alignment */}
+        {scenario.roboticPlatformAlignment && (
+          <div className="bg-white p-6 rounded-xl shadow-lg">
+            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+              </svg>
+              Robotic Platform Alignment
+            </h3>
+
+            <div className="mb-4">
+              <div className={`border-l-4 p-4 rounded-lg ${
+                scenario.roboticPlatformAlignment.alignmentScore >= 90 ? 'bg-green-50 border-green-600' :
+                scenario.roboticPlatformAlignment.alignmentScore >= 70 ? 'bg-yellow-50 border-yellow-600' :
+                'bg-red-50 border-red-600'
+              }`}>
+                <p className={`text-sm ${
+                  scenario.roboticPlatformAlignment.alignmentScore >= 90 ? 'text-green-800' :
+                  scenario.roboticPlatformAlignment.alignmentScore >= 70 ? 'text-yellow-800' :
+                  'text-red-800'
+                }`}>
+                  <strong>Platform Compatibility:</strong> Robotic surgical systems represent significant capital investments and create vendor lock-in.
+                  This scenario's vendor mix {scenario.roboticPlatformAlignment.alignmentScore >= 90 ? 'strongly supports' :
+                    scenario.roboticPlatformAlignment.alignmentScore >= 70 ? 'moderately supports' : 'creates challenges for'} existing robotic platform investments.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-4 gap-4 mb-6">
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200">
+                <div className="text-xs text-purple-600 font-semibold mb-1">Alignment Score</div>
+                <div className={`text-3xl font-bold ${
+                  scenario.roboticPlatformAlignment.alignmentScore >= 90 ? 'text-green-600' :
+                  scenario.roboticPlatformAlignment.alignmentScore >= 70 ? 'text-yellow-600' :
+                  'text-red-600'
+                }`}>
+                  {scenario.roboticPlatformAlignment.alignmentScore.toFixed(1)}%
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+                <div className="text-xs text-blue-600 font-semibold mb-1">Total Robotic Cases</div>
+                <div className="text-3xl font-bold text-blue-600">
+                  {scenario.roboticPlatformAlignment.totalRoboticCases.toLocaleString()}
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
+                <div className="text-xs text-green-600 font-semibold mb-1">Compatible Cases</div>
+                <div className="text-3xl font-bold text-green-600">
+                  {scenario.roboticPlatformAlignment.compatibleCases.toLocaleString()}
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-red-50 to-red-100 p-4 rounded-lg border border-red-200">
+                <div className="text-xs text-red-600 font-semibold mb-1">Stranded Cases</div>
+                <div className="text-3xl font-bold text-red-600">
+                  {scenario.roboticPlatformAlignment.incompatibleCases.toLocaleString()}
+                </div>
+              </div>
+            </div>
+
+            {scenario.roboticPlatformAlignment.incompatiblePlatforms &&
+             scenario.roboticPlatformAlignment.incompatiblePlatforms.length > 0 && (
+              <div>
+                <h4 className="text-md font-semibold text-gray-800 mb-3">Stranded Robotic Investments</h4>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-red-100 border-b-2 border-red-300">
+                        <th className="text-left p-3 font-bold text-red-900">Platform</th>
+                        <th className="text-left p-3 font-bold text-red-900">Facility</th>
+                        <th className="text-right p-3 font-bold text-red-900">Stranded Cases</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {scenario.roboticPlatformAlignment.incompatiblePlatforms
+                        .sort((a, b) => b.cases - a.cases)
+                        .slice(0, 10)
+                        .map((item, idx) => (
+                          <tr key={idx} className="border-b border-gray-200 hover:bg-red-50">
+                            <td className="p-3 font-semibold text-gray-900">{item.platform}</td>
+                            <td className="p-3 text-gray-700">{item.facility}</td>
+                            <td className="p-3 text-right font-bold text-red-600">{item.cases.toLocaleString()}</td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Hospital Impact & Risk Assessment (Combined) */}
         <div className="bg-white p-6 rounded-xl shadow-lg">
@@ -1334,7 +1469,7 @@ const EnhancedOrthopedicDashboard = () => {
                   <th className="text-left p-4 font-bold text-purple-900">Hospital</th>
                   <th className="text-center p-4 font-bold text-purple-900">Region</th>
                   <th className="text-center p-4 font-bold text-purple-900">Preferred Vendor</th>
-                  <th className="text-center p-4 font-bold text-purple-900">High-Vol Loyalists</th>
+                  <th className="text-center p-4 font-bold text-purple-900" title="Surgeons with >200 cases/year who are ≥70% loyal to a vendor not in this scenario. These surgeons represent high-impact transition challenges.">High-Vol Loyalists</th>
                   <th className="text-center p-4 font-bold text-purple-900">Loyalist Vendors</th>
                   <th className="text-center p-4 font-bold text-purple-900">Total Transitioning</th>
                   <th className="text-center p-4 font-bold text-purple-900">Cases at Risk</th>
@@ -1388,7 +1523,14 @@ const EnhancedOrthopedicDashboard = () => {
                         </div>
                       </td>
                       <td className="p-4 text-center">
-                        <span className="font-bold text-xl text-orange-600">{hospital.highVolumeLoyalists}</span>
+                        <span className="font-bold text-xl text-orange-600">
+                          {hospital.highVolumeLoyalists}
+                          {hospital.highVolumeLoyalists > 0 && (
+                            <span className="text-sm text-gray-600 ml-1">
+                              ({hospital.highVolLoyalistCases.toLocaleString()})
+                            </span>
+                          )}
+                        </span>
                       </td>
                       <td className="p-4 text-center">
                         {hospital.highVolumeLoyalists > 0 ? (
@@ -1408,7 +1550,26 @@ const EnhancedOrthopedicDashboard = () => {
                       </td>
                       <td className="p-4 text-center font-bold text-red-600">{hospital.needingTransition}</td>
                       <td className="p-4 text-center font-bold text-purple-600">{hospital.casesAtRisk.toLocaleString()}</td>
-                      <td className="p-4 text-center font-bold text-green-600">{potentialSherpas}</td>
+                      <td className="p-4 text-center">
+                        {potentialSherpas > 0 ? (
+                          <div>
+                            <div className="font-bold text-xl text-green-600">{potentialSherpas}</div>
+                            {hospital.sherpaVendors && Object.keys(hospital.sherpaVendors).length > 0 && (
+                              <div className="text-xs text-gray-600 mt-1">
+                                {Object.entries(hospital.sherpaVendors)
+                                  .sort((a, b) => b[1] - a[1])
+                                  .map(([vendor, count]) => (
+                                    <div key={vendor}>
+                                      {vendor} ({count})
+                                    </div>
+                                  ))}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-xl">—</span>
+                        )}
+                      </td>
                       <td className="p-4 text-center">
                         <span className="font-bold text-blue-600">{sherpaRatio.toFixed(1)}:1</span>
                       </td>
@@ -1465,7 +1626,7 @@ const EnhancedOrthopedicDashboard = () => {
                   <th className="px-4 py-3 text-left font-bold text-gray-900">Region</th>
                   <th className="px-4 py-3 text-center font-bold text-gray-900">Hospitals</th>
                   <th className="px-4 py-3 text-center font-bold text-gray-900">Surgeons Needing Transition</th>
-                  <th className="px-4 py-3 text-center font-bold text-gray-900">High-Vol Loyalists</th>
+                  <th className="px-4 py-3 text-center font-bold text-gray-900" title="Surgeons with >200 cases/year who are ≥70% loyal to a vendor not in this scenario. These surgeons represent high-impact transition challenges.">High-Vol Loyalists</th>
                   <th className="px-4 py-3 text-center font-bold text-gray-900">Cases at Risk</th>
                   <th className="px-4 py-3 text-center font-bold text-gray-900">Support Ratio<br/><span className="text-xs font-normal">(higher = better)</span></th>
                   <th className="px-4 py-3 text-center font-bold text-gray-900">Implementation Risk</th>
@@ -1478,30 +1639,31 @@ const EnhancedOrthopedicDashboard = () => {
                     const impactPercent = (data.needingTransition / data.totalSurgeons) * 100;
 
                     // Helper functions to get color based on ABSOLUTE thresholds (not relative)
+                    // Using softer rose/amber/teal palette instead of harsh red/orange/green
                     const getSurgeonTransitionColor = (needingTransition, totalSurgeons) => {
                       const percent = (needingTransition / totalSurgeons) * 100;
-                      if (percent >= 50) return 'bg-red-600 text-white font-bold';
-                      if (percent >= 35) return 'bg-red-400 text-white font-semibold';
-                      if (percent >= 25) return 'bg-orange-400 text-white font-medium';
-                      if (percent >= 15) return 'bg-yellow-300 text-gray-900';
-                      return 'bg-green-100 text-gray-700';
+                      if (percent >= 50) return 'bg-rose-300 text-rose-900 font-bold';
+                      if (percent >= 35) return 'bg-rose-200 text-rose-900 font-semibold';
+                      if (percent >= 25) return 'bg-amber-200 text-amber-900 font-medium';
+                      if (percent >= 15) return 'bg-yellow-100 text-yellow-900';
+                      return 'bg-teal-50 text-teal-800';
                     };
 
                     const getLoyalistColor = (count) => {
-                      if (count >= 6) return 'bg-red-600 text-white font-bold';
-                      if (count >= 4) return 'bg-red-400 text-white font-semibold';
-                      if (count >= 3) return 'bg-orange-400 text-white font-medium';
-                      if (count >= 2) return 'bg-yellow-300 text-gray-900';
-                      if (count >= 1) return 'bg-green-200 text-green-900 font-medium';
-                      return 'bg-green-100 text-gray-700';
+                      if (count >= 6) return 'bg-rose-300 text-rose-900 font-bold';
+                      if (count >= 4) return 'bg-rose-200 text-rose-900 font-semibold';
+                      if (count >= 3) return 'bg-amber-200 text-amber-900 font-medium';
+                      if (count >= 2) return 'bg-yellow-100 text-yellow-900';
+                      if (count >= 1) return 'bg-teal-100 text-teal-800 font-medium';
+                      return 'bg-teal-50 text-teal-700';
                     };
 
                     const getCasesColor = (cases) => {
-                      if (cases >= 150) return 'bg-red-600 text-white font-bold';
-                      if (cases >= 100) return 'bg-red-400 text-white font-semibold';
-                      if (cases >= 60) return 'bg-orange-400 text-white font-medium';
-                      if (cases >= 30) return 'bg-yellow-300 text-gray-900';
-                      return 'bg-green-100 text-gray-700';
+                      if (cases >= 150) return 'bg-rose-300 text-rose-900 font-bold';
+                      if (cases >= 100) return 'bg-rose-200 text-rose-900 font-semibold';
+                      if (cases >= 60) return 'bg-amber-200 text-amber-900 font-medium';
+                      if (cases >= 30) return 'bg-yellow-100 text-yellow-900';
+                      return 'bg-teal-50 text-teal-800';
                     };
 
                     return (
@@ -1516,6 +1678,11 @@ const EnhancedOrthopedicDashboard = () => {
                         </td>
                         <td className={`px-4 py-3 text-center ${getLoyalistColor(data.highVolumeLoyalists)}`}>
                           {data.highVolumeLoyalists}
+                          {data.highVolumeLoyalists > 0 && (
+                            <span className="text-xs opacity-75 ml-1">
+                              ({data.highVolLoyalistCases.toLocaleString()})
+                            </span>
+                          )}
                         </td>
                         <td className={`px-4 py-3 text-center ${getCasesColor(data.casesAtRisk)}`}>
                           {data.casesAtRisk.toLocaleString()}
@@ -1524,12 +1691,12 @@ const EnhancedOrthopedicDashboard = () => {
                           </div>
                         </td>
                         <td className={`px-4 py-3 text-center ${
-                          data.avgSherpaRatio >= 2.5 ? 'bg-green-600 text-white font-bold' :
-                          data.avgSherpaRatio >= 2 ? 'bg-green-400 text-white font-semibold' :
-                          data.avgSherpaRatio >= 1.5 ? 'bg-green-200 text-green-900 font-medium' :
-                          data.avgSherpaRatio >= 1 ? 'bg-yellow-300 text-gray-900' :
-                          data.avgSherpaRatio >= 0.5 ? 'bg-orange-400 text-white font-medium' :
-                          'bg-red-600 text-white font-bold'
+                          data.avgSherpaRatio >= 2.5 ? 'bg-teal-400 text-teal-900 font-bold' :
+                          data.avgSherpaRatio >= 2 ? 'bg-teal-300 text-teal-900 font-semibold' :
+                          data.avgSherpaRatio >= 1.5 ? 'bg-teal-100 text-teal-800 font-medium' :
+                          data.avgSherpaRatio >= 1 ? 'bg-yellow-100 text-yellow-900' :
+                          data.avgSherpaRatio >= 0.5 ? 'bg-amber-200 text-amber-900 font-medium' :
+                          'bg-rose-300 text-rose-900 font-bold'
                         }`}>
                           <div className="font-bold">
                             {data.avgSherpaRatio.toFixed(2)}:1
@@ -1567,12 +1734,12 @@ const EnhancedOrthopedicDashboard = () => {
             <div className="flex items-center gap-4">
               <span className="text-gray-600 font-medium">← Favorable</span>
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-green-600 rounded border border-gray-400"></div>
-                <div className="w-6 h-6 bg-green-200 rounded border border-gray-400"></div>
-                <div className="w-6 h-6 bg-yellow-300 rounded border border-gray-400"></div>
-                <div className="w-6 h-6 bg-orange-400 rounded border border-gray-400"></div>
-                <div className="w-6 h-6 bg-red-400 rounded border border-gray-400"></div>
-                <div className="w-6 h-6 bg-red-600 rounded border border-gray-400"></div>
+                <div className="w-6 h-6 bg-teal-400 rounded border border-gray-400"></div>
+                <div className="w-6 h-6 bg-teal-100 rounded border border-gray-400"></div>
+                <div className="w-6 h-6 bg-yellow-100 rounded border border-gray-400"></div>
+                <div className="w-6 h-6 bg-amber-200 rounded border border-gray-400"></div>
+                <div className="w-6 h-6 bg-rose-200 rounded border border-gray-400"></div>
+                <div className="w-6 h-6 bg-rose-300 rounded border border-gray-400"></div>
               </div>
               <span className="text-gray-600 font-medium">Unfavorable →</span>
             </div>
@@ -1759,6 +1926,821 @@ const EnhancedOrthopedicDashboard = () => {
                 renderComponentTable(kneeRevision, 'Knee Revision', 'bg-orange-50', 'border-orange-200')}
             </div>
           </div>
+        </div>
+      </div>
+    );
+  };
+
+  // SURGEON ANALYTICS TAB
+  const renderSurgeonTab = () => {
+    const scenario = SCENARIOS[selectedScenario];
+    if (!scenario || !realData?.surgeons) {
+      return <div className="p-6 text-gray-500">Loading surgeon data...</div>;
+    }
+
+    const scenarioVendors = scenario.vendors || [];
+    const HIGH_VOLUME_THRESHOLD = 200;
+    const MEDIUM_VOLUME_THRESHOLD = 50;
+    const LOYALTY_THRESHOLD = 0.70;
+
+    // Analyze each surgeon
+    const surgeonAnalytics = realData.surgeons.map(surgeon => {
+      const volume = surgeon.totalCases || 0;
+      const volumeCategory = volume >= HIGH_VOLUME_THRESHOLD ? 'high' :
+                            volume >= MEDIUM_VOLUME_THRESHOLD ? 'medium' : 'low';
+
+      let primaryVendor = 'Unknown';
+      let primaryVendorCases = 0;
+      let primaryVendorPercent = 0;
+
+      if (surgeon.vendors && typeof surgeon.vendors === 'object') {
+        Object.entries(surgeon.vendors).forEach(([vendorName, vendorData]) => {
+          const cases = vendorData.cases || 0;
+          if (cases > primaryVendorCases) {
+            primaryVendorCases = cases;
+            primaryVendor = vendorName;
+          }
+        });
+        if (volume > 0) {
+          primaryVendorPercent = primaryVendorCases / volume;
+        }
+      }
+
+      const isLoyalist = primaryVendorPercent >= LOYALTY_THRESHOLD;
+      const mustTransition = !scenarioVendors.includes(primaryVendor);
+      const isSherpa = !mustTransition && volume >= 30;
+      const roboticCases = surgeon.roboticMetrics?.estimatedRoboticCases || 0;
+
+      return {
+        ...surgeon,
+        volume,
+        volumeCategory,
+        primaryVendor,
+        primaryVendorPercent,
+        primaryVendorCases,
+        isLoyalist,
+        mustTransition,
+        isSherpa,
+        roboticCases,
+        roboticPercent: volume > 0 ? (roboticCases / volume) * 100 : 0
+      };
+    });
+
+    // Filter surgeons based on selected filter
+    let filteredSurgeons = surgeonAnalytics;
+    if (surgeonFilter === 'loyalists') {
+      filteredSurgeons = surgeonAnalytics.filter(s => s.isLoyalist);
+    } else if (surgeonFilter === 'sherpas') {
+      filteredSurgeons = surgeonAnalytics.filter(s => s.isSherpa);
+    } else if (surgeonFilter === 'high-volume') {
+      filteredSurgeons = surgeonAnalytics.filter(s => s.volumeCategory === 'high');
+    } else if (surgeonFilter === 'transitioning') {
+      filteredSurgeons = surgeonAnalytics.filter(s => s.mustTransition);
+    }
+
+    // Apply search filter
+    if (surgeonSearchQuery) {
+      filteredSurgeons = filteredSurgeons.filter(s =>
+        s.name && s.name.toLowerCase().includes(surgeonSearchQuery.toLowerCase())
+      );
+    }
+
+    // Calculate peer benchmarks for selected surgeon
+    const getPeerBenchmarks = (surgeon) => {
+      if (!surgeon) return null;
+
+      // Find peers: same region, similar volume category
+      const peers = surgeonAnalytics.filter(s =>
+        s.region === surgeon.region &&
+        s.volumeCategory === surgeon.volumeCategory &&
+        s.name !== surgeon.name
+      );
+
+      if (peers.length === 0) return null;
+
+      const peerAvgCases = peers.reduce((sum, p) => sum + p.volume, 0) / peers.length;
+      const peerAvgSpend = peers.reduce((sum, p) => sum + (p.totalSpend || 0), 0) / peers.length;
+      const peerAvgCostPerCase = peerAvgSpend / peerAvgCases;
+      const surgeonCostPerCase = surgeon.totalSpend / surgeon.volume;
+
+      const peerRoboticPercent = peers.reduce((sum, p) => sum + p.roboticPercent, 0) / peers.length;
+
+      return {
+        peerCount: peers.length,
+        peerAvgCases: Math.round(peerAvgCases),
+        peerAvgSpend,
+        peerAvgCostPerCase,
+        surgeonCostPerCase,
+        costVariance: ((surgeonCostPerCase - peerAvgCostPerCase) / peerAvgCostPerCase) * 100,
+        caseVariance: ((surgeon.volume - peerAvgCases) / peerAvgCases) * 100,
+        peerRoboticPercent
+      };
+    };
+
+    const benchmarks = selectedSurgeon ? getPeerBenchmarks(selectedSurgeon) : null;
+
+    return (
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl p-6 shadow-lg">
+          <h2 className="text-2xl font-bold mb-2">Surgeon Level Analytics: {scenario.shortName}</h2>
+          <p className="text-purple-100 text-sm">Individual surgeon profiles, peer benchmarks, and transition planning</p>
+        </div>
+
+        {/* Search and Filter Bar */}
+        <div className="bg-white rounded-xl shadow-lg p-4">
+          <div className="flex gap-4 items-center">
+            <div className="flex-1">
+              <input
+                type="text"
+                placeholder="Search surgeon by name..."
+                value={surgeonSearchQuery}
+                onChange={(e) => setSurgeonSearchQuery(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <select
+                value={surgeonFilter}
+                onChange={(e) => setSurgeonFilter(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="all">All Surgeons ({surgeonAnalytics.length})</option>
+                <option value="loyalists">Loyalists ({surgeonAnalytics.filter(s => s.isLoyalist).length})</option>
+                <option value="sherpas">Sherpas ({surgeonAnalytics.filter(s => s.isSherpa).length})</option>
+                <option value="high-volume">High Volume ({surgeonAnalytics.filter(s => s.volumeCategory === 'high').length})</option>
+                <option value="transitioning">Needing Transition ({surgeonAnalytics.filter(s => s.mustTransition).length})</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Scatter Plot Visualization */}
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="mb-4">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Surgeon Cost & Volume Analysis</h3>
+            <p className="text-sm text-gray-600">Each bubble represents a surgeon. Size = Total Annual Spend. Border styles indicate surgeon status. Top opportunities are labeled.</p>
+          </div>
+
+          {(() => {
+            // Prepare data for scatter plot
+            const allData = filteredSurgeons.map(s => ({
+              ...s,
+              costPerCase: s.totalSpend / s.volume
+            })).filter(s => s.volume > 0 && s.totalSpend > 0);
+
+            if (allData.length === 0) {
+              return <div className="text-center text-gray-500 py-8">No data available for visualization</div>;
+            }
+
+            // Remove outliers using percentile method
+            const costs = allData.map(s => s.costPerCase).sort((a, b) => a - b);
+            const volumes = allData.map(s => s.volume).sort((a, b) => a - b);
+
+            // Calculate 95th percentile to filter extreme outliers
+            const costP95Index = Math.floor(costs.length * 0.95);
+            const volumeP95Index = Math.floor(volumes.length * 0.95);
+            const costP95 = costs[costP95Index];
+            const volumeP95 = volumes[volumeP95Index];
+
+            // Filter data to remove outliers
+            const plotData = allData.filter(s =>
+              s.costPerCase <= costP95 && s.volume <= volumeP95
+            );
+
+            const outlierCount = allData.length - plotData.length;
+
+            // Calculate scales
+            const maxVolume = Math.max(...plotData.map(s => s.volume));
+            const minVolume = Math.min(...plotData.map(s => s.volume));
+            const maxCost = Math.max(...plotData.map(s => s.costPerCase));
+            const minCost = Math.min(...plotData.map(s => s.costPerCase));
+            const maxSpend = Math.max(...plotData.map(s => s.totalSpend));
+
+            // Chart dimensions
+            const width = 1000;
+            const height = 500;
+            const padding = { top: 20, right: 20, bottom: 60, left: 80 };
+            const chartWidth = width - padding.left - padding.right;
+            const chartHeight = height - padding.top - padding.bottom;
+
+            // Vendor colors
+            const vendorColors = {
+              'STRYKER': '#3B82F6',
+              'ZIMMER BIOMET': '#10B981',
+              'JOHNSON & JOHNSON': '#EF4444',
+              'SMITH & NEPHEW': '#F59E0B',
+              'KYOCERA': '#8B5CF6',
+              'EXACTECH': '#EC4899',
+              'CORIN': '#6366F1',
+              'DEFAULT': '#6B7280'
+            };
+
+            const getVendorColor = (vendor) => {
+              const upperVendor = (vendor || '').toUpperCase();
+              for (const [key, color] of Object.entries(vendorColors)) {
+                if (upperVendor.includes(key)) return color;
+              }
+              return vendorColors.DEFAULT;
+            };
+
+            // Scale functions
+            const xScale = (volume) => padding.left + ((volume - minVolume) / (maxVolume - minVolume)) * chartWidth;
+            const yScale = (cost) => padding.top + chartHeight - ((cost - minCost) / (maxCost - minCost)) * chartHeight;
+            const rScale = (spend) => 4 + ((spend / maxSpend) * 16); // 4-20px radius
+
+            // Calculate peer average
+            const avgCost = plotData.reduce((sum, s) => sum + s.costPerCase, 0) / plotData.length;
+            const avgVolume = plotData.reduce((sum, s) => sum + s.volume, 0) / plotData.length;
+
+            // #1: Calculate opportunity scores and identify top opportunities
+            // Opportunity = volume * (cost - avgCost) - higher is more opportunity
+            const dataWithOpportunity = plotData.map(s => ({
+              ...s,
+              opportunityScore: s.costPerCase > avgCost ? s.volume * (s.costPerCase - avgCost) : 0,
+              savingsPotential: s.costPerCase > avgCost ? s.volume * (s.costPerCase - avgCost) : 0
+            }));
+
+            // Sort by opportunity and get top 10
+            const topOpportunities = [...dataWithOpportunity]
+              .sort((a, b) => b.opportunityScore - a.opportunityScore)
+              .slice(0, 10);
+
+            const totalOpportunity = dataWithOpportunity
+              .filter(s => s.savingsPotential > 0)
+              .reduce((sum, s) => sum + s.savingsPotential, 0);
+
+            const opportunityCount = dataWithOpportunity.filter(s => s.savingsPotential > 0).length;
+
+            return (
+              <div className="relative">
+                {/* Opportunity Summary Card */}
+                {opportunityCount > 0 && (
+                  <div className="mb-6 p-4 bg-gradient-to-r from-red-50 to-orange-50 border-l-4 border-red-500 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-lg font-bold text-red-900 mb-1">
+                          💰 Total Savings Opportunity
+                        </h4>
+                        <p className="text-sm text-red-700">
+                          <strong>{opportunityCount} surgeons</strong> operating above peer average cost represent{' '}
+                          <strong className="text-xl">${(totalOpportunity / 1000000).toFixed(2)}M</strong> in potential annual savings
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xs text-red-600 uppercase font-semibold mb-1">Top 10 Labeled</div>
+                        <div className="text-2xl font-bold text-red-600">
+                          ${(topOpportunities.reduce((sum, s) => sum + s.savingsPotential, 0) / 1000000).toFixed(2)}M
+                        </div>
+                        <div className="text-xs text-red-700">in top opportunities</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto border border-gray-200 rounded-lg bg-gray-50">
+                  {/* Grid lines */}
+                  <g className="grid-lines">
+                    {[0, 0.25, 0.5, 0.75, 1].map(ratio => (
+                      <g key={`grid-${ratio}`}>
+                        <line
+                          x1={padding.left}
+                          y1={padding.top + chartHeight * ratio}
+                          x2={padding.left + chartWidth}
+                          y2={padding.top + chartHeight * ratio}
+                          stroke="#E5E7EB"
+                          strokeWidth="1"
+                        />
+                        <line
+                          x1={padding.left + chartWidth * ratio}
+                          y1={padding.top}
+                          x2={padding.left + chartWidth * ratio}
+                          y2={padding.top + chartHeight}
+                          stroke="#E5E7EB"
+                          strokeWidth="1"
+                        />
+                      </g>
+                    ))}
+                  </g>
+
+                  {/* Average lines */}
+                  <line
+                    x1={xScale(avgVolume)}
+                    y1={padding.top}
+                    x2={xScale(avgVolume)}
+                    y2={padding.top + chartHeight}
+                    stroke="#9CA3AF"
+                    strokeWidth="2"
+                    strokeDasharray="5,5"
+                  />
+                  <line
+                    x1={padding.left}
+                    y1={yScale(avgCost)}
+                    x2={padding.left + chartWidth}
+                    y2={yScale(avgCost)}
+                    stroke="#9CA3AF"
+                    strokeWidth="2"
+                    strokeDasharray="5,5"
+                  />
+
+                  {/* Axes */}
+                  <line x1={padding.left} y1={padding.top} x2={padding.left} y2={padding.top + chartHeight} stroke="#374151" strokeWidth="2" />
+                  <line x1={padding.left} y1={padding.top + chartHeight} x2={padding.left + chartWidth} y2={padding.top + chartHeight} stroke="#374151" strokeWidth="2" />
+
+                  {/* Y-axis labels */}
+                  {[0, 0.25, 0.5, 0.75, 1].map(ratio => {
+                    const cost = minCost + (maxCost - minCost) * (1 - ratio);
+                    return (
+                      <text
+                        key={`y-label-${ratio}`}
+                        x={padding.left - 10}
+                        y={padding.top + chartHeight * ratio}
+                        textAnchor="end"
+                        alignmentBaseline="middle"
+                        className="text-xs fill-gray-600"
+                      >
+                        ${cost.toFixed(0)}
+                      </text>
+                    );
+                  })}
+
+                  {/* X-axis labels */}
+                  {[0, 0.25, 0.5, 0.75, 1].map(ratio => {
+                    const volume = minVolume + (maxVolume - minVolume) * ratio;
+                    return (
+                      <text
+                        key={`x-label-${ratio}`}
+                        x={padding.left + chartWidth * ratio}
+                        y={padding.top + chartHeight + 20}
+                        textAnchor="middle"
+                        className="text-xs fill-gray-600"
+                      >
+                        {volume.toFixed(0)}
+                      </text>
+                    );
+                  })}
+
+                  {/* Axis titles */}
+                  <text
+                    x={padding.left - 60}
+                    y={padding.top + chartHeight / 2}
+                    textAnchor="middle"
+                    transform={`rotate(-90, ${padding.left - 60}, ${padding.top + chartHeight / 2})`}
+                    className="text-sm font-semibold fill-gray-700"
+                  >
+                    Cost Per Case ($)
+                  </text>
+                  <text
+                    x={padding.left + chartWidth / 2}
+                    y={padding.top + chartHeight + 50}
+                    textAnchor="middle"
+                    className="text-sm font-semibold fill-gray-700"
+                  >
+                    Total Cases (Annual Volume)
+                  </text>
+
+                  {/* Data points with loyalty indicators */}
+                  {dataWithOpportunity.map((surgeon, idx) => {
+                    const x = xScale(surgeon.volume);
+                    const y = yScale(surgeon.costPerCase);
+                    const r = rScale(surgeon.totalSpend);
+                    const color = getVendorColor(surgeon.primaryVendor);
+                    const isSelected = selectedSurgeon && selectedSurgeon.name === surgeon.name;
+                    const isTopOpportunity = topOpportunities.some(t => t.name === surgeon.name);
+
+                    // #2: Visual Loyalty Indicators - different border styles
+                    let strokeDasharray = '0'; // Solid = default
+                    let strokeWidth = 2;
+                    let strokeColor = color;
+
+                    if (surgeon.mustTransition) {
+                      // Must transition = red double border
+                      strokeColor = '#EF4444';
+                      strokeWidth = 3;
+                    } else if (surgeon.isSherpa) {
+                      // Sherpa = gold/yellow border
+                      strokeColor = '#F59E0B';
+                      strokeWidth = 2.5;
+                    } else if (surgeon.isLoyalist) {
+                      // Loyalist = dashed border
+                      strokeDasharray = '4,2';
+                      strokeWidth = 2;
+                    }
+
+                    if (isSelected) {
+                      strokeColor = '#000';
+                      strokeWidth = 4;
+                    }
+
+                    return (
+                      <g key={idx}>
+                        <circle
+                          cx={x}
+                          cy={y}
+                          r={r}
+                          fill={color}
+                          fillOpacity={isSelected ? 1 : 0.6}
+                          stroke={strokeColor}
+                          strokeWidth={strokeWidth}
+                          strokeDasharray={strokeDasharray}
+                          className="cursor-pointer hover:opacity-100 transition-all"
+                          onClick={() => setSelectedSurgeon(surgeon)}
+                        >
+                          <title>{`${surgeon.name}\nVolume: ${surgeon.volume.toLocaleString()}\nCost/Case: $${surgeon.costPerCase.toFixed(0)}\nVendor: ${surgeon.primaryVendor}\nAnnual Spend: $${(surgeon.totalSpend / 1000000).toFixed(2)}M${surgeon.savingsPotential > 0 ? `\nSavings Potential: $${(surgeon.savingsPotential / 1000).toFixed(0)}K` : ''}\nStatus: ${surgeon.mustTransition ? 'Must Transition' : surgeon.isSherpa ? 'Sherpa' : surgeon.isLoyalist ? 'Loyalist' : 'Flexible'}`}</title>
+                        </circle>
+                        {/* Label top opportunities */}
+                        {isTopOpportunity && (
+                          <text
+                            x={x}
+                            y={y - r - 5}
+                            textAnchor="middle"
+                            className="text-xs font-bold fill-red-600 pointer-events-none"
+                            style={{ textShadow: '0 0 3px white, 0 0 3px white' }}
+                          >
+                            {surgeon.name.split(' ').pop()}
+                          </text>
+                        )}
+                      </g>
+                    );
+                  })}
+
+                  {/* Quadrant labels */}
+                  <text x={padding.left + chartWidth * 0.75} y={padding.top + 15} className="text-xs font-semibold fill-red-600" textAnchor="middle">
+                    HIGH OPPORTUNITY
+                  </text>
+                  <text x={padding.left + chartWidth * 0.25} y={padding.top + 15} className="text-xs font-semibold fill-orange-600" textAnchor="middle">
+                    LOW VOLUME
+                  </text>
+                  <text x={padding.left + chartWidth * 0.75} y={padding.top + chartHeight - 5} className="text-xs font-semibold fill-yellow-600" textAnchor="middle">
+                    HIGH VOLUME
+                  </text>
+                  <text x={padding.left + chartWidth * 0.25} y={padding.top + chartHeight - 5} className="text-xs font-semibold fill-green-600" textAnchor="middle">
+                    EFFICIENT
+                  </text>
+                </svg>
+
+                {/* Legend - Vendors */}
+                <div className="mt-4">
+                  <div className="text-xs font-semibold text-gray-700 mb-2 text-center">Vendor Colors</div>
+                  <div className="flex flex-wrap gap-4 justify-center mb-4">
+                    {Object.entries(vendorColors).filter(([k]) => k !== 'DEFAULT').map(([vendor, color]) => (
+                      <div key={vendor} className="flex items-center gap-2">
+                        <div className="w-4 h-4 rounded-full" style={{ backgroundColor: color }}></div>
+                        <span className="text-xs text-gray-700">{vendor}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Legend - Status Indicators */}
+                <div className="mt-2 border-t pt-3">
+                  <div className="text-xs font-semibold text-gray-700 mb-2 text-center">Surgeon Status (Border Style)</div>
+                  <div className="flex flex-wrap gap-6 justify-center">
+                    <div className="flex items-center gap-2">
+                      <svg width="20" height="20">
+                        <circle cx="10" cy="10" r="7" fill="#3B82F6" fillOpacity="0.6" stroke="#F59E0B" strokeWidth="2.5" />
+                      </svg>
+                      <span className="text-xs text-gray-700"><strong>Gold Border</strong> = Sherpa (≥30 cases, aligned)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <svg width="20" height="20">
+                        <circle cx="10" cy="10" r="7" fill="#3B82F6" fillOpacity="0.6" stroke="#3B82F6" strokeWidth="2" strokeDasharray="4,2" />
+                      </svg>
+                      <span className="text-xs text-gray-700"><strong>Dashed</strong> = Loyalist (≥70% single vendor)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <svg width="20" height="20">
+                        <circle cx="10" cy="10" r="7" fill="#3B82F6" fillOpacity="0.6" stroke="#EF4444" strokeWidth="3" />
+                      </svg>
+                      <span className="text-xs text-gray-700"><strong>Red Border</strong> = Must Transition</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <svg width="20" height="20">
+                        <circle cx="10" cy="10" r="7" fill="#3B82F6" fillOpacity="0.6" stroke="#3B82F6" strokeWidth="2" />
+                      </svg>
+                      <span className="text-xs text-gray-700"><strong>Solid</strong> = Flexible</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-3 text-center text-xs text-gray-500">
+                  Dashed lines = peer averages • Bubble size = Annual Spend • Red labels = Top 10 opportunities
+                  {outlierCount > 0 && ` • ${outlierCount} extreme outliers filtered for clarity`}
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+
+        {/* Selected Surgeon Profile */}
+        {selectedSurgeon && (
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">{selectedSurgeon.name}</h3>
+                <p className="text-gray-600">{selectedSurgeon.facility} • {selectedSurgeon.region}</p>
+              </div>
+              <button
+                onClick={() => setSelectedSurgeon(null)}
+                className="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 flex items-center gap-2"
+              >
+                <X className="w-4 h-4" />
+                Close
+              </button>
+            </div>
+
+            {/* Surgeon Metrics Grid */}
+            <div className="grid grid-cols-5 gap-4 mb-6">
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <div className="text-xs text-blue-600 font-semibold mb-1">Total Cases</div>
+                <div className="text-2xl font-bold text-blue-900">{selectedSurgeon.volume.toLocaleString()}</div>
+                <div className="text-xs text-blue-600 mt-1">{selectedSurgeon.volumeCategory.toUpperCase()} volume</div>
+              </div>
+
+              <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                <div className="text-xs text-purple-600 font-semibold mb-1">Primary Vendor</div>
+                <div className="text-lg font-bold text-purple-900">{selectedSurgeon.primaryVendor}</div>
+                <div className="text-xs text-purple-600 mt-1">{(selectedSurgeon.primaryVendorPercent * 100).toFixed(0)}% loyalty</div>
+              </div>
+
+              <div className={`p-4 rounded-lg border ${
+                selectedSurgeon.isLoyalist ? 'bg-orange-50 border-orange-200' : 'bg-gray-50 border-gray-200'
+              }`}>
+                <div className={`text-xs font-semibold mb-1 ${selectedSurgeon.isLoyalist ? 'text-orange-600' : 'text-gray-600'}`}>Status</div>
+                <div className={`text-lg font-bold ${selectedSurgeon.isLoyalist ? 'text-orange-900' : 'text-gray-700'}`}>
+                  {selectedSurgeon.isLoyalist ? 'LOYALIST' : 'FLEXIBLE'}
+                </div>
+                <div className={`text-xs mt-1 ${selectedSurgeon.isLoyalist ? 'text-orange-600' : 'text-gray-600'}`}>
+                  {selectedSurgeon.isSherpa ? 'Can mentor' : ''}
+                </div>
+              </div>
+
+              <div className={`p-4 rounded-lg border ${
+                selectedSurgeon.mustTransition ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'
+              }`}>
+                <div className={`text-xs font-semibold mb-1 ${selectedSurgeon.mustTransition ? 'text-red-600' : 'text-green-600'}`}>Transition</div>
+                <div className={`text-lg font-bold ${selectedSurgeon.mustTransition ? 'text-red-900' : 'text-green-900'}`}>
+                  {selectedSurgeon.mustTransition ? 'REQUIRED' : 'ALIGNED'}
+                </div>
+              </div>
+
+              <div className="bg-teal-50 p-4 rounded-lg border border-teal-200">
+                <div className="text-xs text-teal-600 font-semibold mb-1">Robotic Cases</div>
+                <div className="text-2xl font-bold text-teal-900">{selectedSurgeon.roboticCases}</div>
+                <div className="text-xs text-teal-600 mt-1">{selectedSurgeon.roboticPercent.toFixed(1)}% of cases</div>
+              </div>
+            </div>
+
+            {/* Peer Benchmarks */}
+            {benchmarks && (
+              <div>
+                <h4 className="text-lg font-bold text-gray-900 mb-4">Peer Benchmarks ({benchmarks.peerCount} similar surgeons in {selectedSurgeon.region})</h4>
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="text-xs text-gray-600 mb-2">Volume vs Peers</div>
+                    <div className="text-xl font-bold text-gray-900">{selectedSurgeon.volume.toLocaleString()}</div>
+                    <div className="text-sm text-gray-600">vs {benchmarks.peerAvgCases.toLocaleString()} avg</div>
+                    <div className={`text-xs mt-1 font-semibold ${
+                      benchmarks.caseVariance > 0 ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {benchmarks.caseVariance > 0 ? '+' : ''}{benchmarks.caseVariance.toFixed(0)}%
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="text-xs text-gray-600 mb-2">Cost Per Case</div>
+                    <div className="text-xl font-bold text-gray-900">${benchmarks.surgeonCostPerCase.toFixed(0)}</div>
+                    <div className="text-sm text-gray-600">vs ${benchmarks.peerAvgCostPerCase.toFixed(0)} avg</div>
+                    <div className={`text-xs mt-1 font-semibold ${
+                      benchmarks.costVariance < 0 ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {benchmarks.costVariance > 0 ? '+' : ''}{benchmarks.costVariance.toFixed(0)}%
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="text-xs text-gray-600 mb-2">Total Annual Spend</div>
+                    <div className="text-xl font-bold text-gray-900">${(selectedSurgeon.totalSpend / 1000000).toFixed(2)}M</div>
+                    <div className="text-sm text-gray-600">vs ${(benchmarks.peerAvgSpend / 1000000).toFixed(2)}M avg</div>
+                  </div>
+
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="text-xs text-gray-600 mb-2">Robotic Utilization</div>
+                    <div className="text-xl font-bold text-gray-900">{selectedSurgeon.roboticPercent.toFixed(1)}%</div>
+                    <div className="text-sm text-gray-600">vs {benchmarks.peerRoboticPercent.toFixed(1)}% avg</div>
+                    <div className={`text-xs mt-1 font-semibold ${
+                      selectedSurgeon.roboticPercent > benchmarks.peerRoboticPercent ? 'text-purple-600' : 'text-gray-600'
+                    }`}>
+                      {selectedSurgeon.roboticPercent > benchmarks.peerRoboticPercent ? 'Above peers' : 'Below peers'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cost Per Case Comparison - Visual */}
+                <div className="mt-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
+                  <h5 className="text-base font-bold text-gray-800 mb-5 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Cost Per Case Comparison
+                  </h5>
+
+                  <div className="grid grid-cols-2 gap-6 mb-6">
+                    {/* Surgeon Card */}
+                    <div className="bg-white rounded-lg p-5 shadow-md border-2 border-indigo-200">
+                      <div className="text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-2">This Surgeon</div>
+                      <div className="text-3xl font-bold text-gray-900 mb-1">${benchmarks.surgeonCostPerCase.toFixed(0)}</div>
+                      <div className="text-xs text-gray-500">per procedure</div>
+                      <div className={`mt-3 inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+                        benchmarks.costVariance < 0
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-orange-100 text-orange-700'
+                      }`}>
+                        {benchmarks.costVariance < 0 ? '↓' : '↑'} {Math.abs(benchmarks.costVariance).toFixed(0)}% vs peers
+                      </div>
+                    </div>
+
+                    {/* Peer Average Card */}
+                    <div className="bg-white rounded-lg p-5 shadow-md border-2 border-gray-200">
+                      <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Peer Average</div>
+                      <div className="text-3xl font-bold text-gray-700 mb-1">${benchmarks.peerAvgCostPerCase.toFixed(0)}</div>
+                      <div className="text-xs text-gray-500">{benchmarks.peerCount} similar surgeons</div>
+                      <div className="mt-3 inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">
+                        {selectedSurgeon.region} • {selectedSurgeon.volumeCategory} volume
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Visual Comparison Bar */}
+                  <div className="relative">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-gray-600">Lower Cost</span>
+                      <span className="text-xs font-medium text-gray-600">Higher Cost</span>
+                    </div>
+                    <div className="relative h-12 bg-gradient-to-r from-green-100 via-gray-100 to-red-100 rounded-full overflow-hidden shadow-inner">
+                      {/* Center line */}
+                      <div className="absolute top-0 left-1/2 w-0.5 h-full bg-gray-400 opacity-50"></div>
+
+                      {/* Surgeon position marker */}
+                      <div
+                        className="absolute top-1/2 transform -translate-y-1/2 transition-all duration-500"
+                        style={{
+                          left: `${Math.min(Math.max((benchmarks.surgeonCostPerCase / (benchmarks.peerAvgCostPerCase * 2)) * 100, 5), 95)}%`
+                        }}
+                      >
+                        <div className="relative">
+                          <div className={`w-8 h-8 rounded-full shadow-lg border-3 flex items-center justify-center transform -translate-x-1/2 ${
+                            benchmarks.costVariance < 0
+                              ? 'bg-green-500 border-green-600'
+                              : 'bg-orange-500 border-orange-600'
+                          }`}>
+                            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
+                            <div className="text-xs font-semibold text-gray-700">You</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Peer average marker */}
+                      <div
+                        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                      >
+                        <div className="relative">
+                          <div className="w-6 h-6 rounded-full bg-gray-400 border-2 border-gray-500 shadow-md"></div>
+                          <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
+                            <div className="text-xs font-medium text-gray-600">Avg</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Insight Message */}
+                  <div className={`mt-8 p-4 rounded-lg border-l-4 ${
+                    benchmarks.costVariance < 0
+                      ? 'bg-green-50 border-green-500'
+                      : 'bg-orange-50 border-orange-500'
+                  }`}>
+                    <div className="flex items-start gap-3">
+                      <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
+                        benchmarks.costVariance < 0 ? 'bg-green-500' : 'bg-orange-500'
+                      }`}>
+                        {benchmarks.costVariance < 0 ? (
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className={`text-sm font-semibold mb-1 ${
+                          benchmarks.costVariance < 0 ? 'text-green-800' : 'text-orange-800'
+                        }`}>
+                          {benchmarks.costVariance < 0
+                            ? `Cost Efficient Performance`
+                            : `Savings Opportunity Identified`
+                          }
+                        </p>
+                        <p className={`text-xs ${
+                          benchmarks.costVariance < 0 ? 'text-green-700' : 'text-orange-700'
+                        }`}>
+                          {benchmarks.costVariance < 0
+                            ? `This surgeon operates ${Math.abs(benchmarks.costVariance).toFixed(0)}% below peer average, demonstrating cost-effective practices while maintaining quality outcomes.`
+                            : `This surgeon's cost per case is ${Math.abs(benchmarks.costVariance).toFixed(0)}% above peer average, representing an opportunity for vendor optimization and cost reduction.`
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Surgeon Table */}
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h3 className="text-xl font-bold text-gray-900 mb-4">
+            {surgeonFilter === 'all' ? 'All Surgeons' :
+             surgeonFilter === 'loyalists' ? 'Loyalist Surgeons' :
+             surgeonFilter === 'sherpas' ? 'Potential Sherpa Surgeons' :
+             surgeonFilter === 'high-volume' ? 'High-Volume Surgeons' :
+             'Surgeons Needing Transition'}
+            <span className="ml-2 text-sm text-gray-500">({filteredSurgeons.length} surgeons)</span>
+          </h3>
+
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-purple-100 border-b-2 border-purple-300">
+                  <th className="text-left p-3 font-bold text-purple-900">Surgeon Name</th>
+                  <th className="text-left p-3 font-bold text-purple-900">Facility</th>
+                  <th className="text-center p-3 font-bold text-purple-900">Region</th>
+                  <th className="text-center p-3 font-bold text-purple-900">Total Cases</th>
+                  <th className="text-left p-3 font-bold text-purple-900">Primary Vendor</th>
+                  <th className="text-center p-3 font-bold text-purple-900">Loyalty %</th>
+                  <th className="text-center p-3 font-bold text-purple-900">Status</th>
+                  <th className="text-center p-3 font-bold text-purple-900">Robotic %</th>
+                  <th className="text-center p-3 font-bold text-purple-900">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredSurgeons.slice(0, 50).map((surgeon, idx) => (
+                  <tr key={idx} className="border-b border-gray-200 hover:bg-purple-50">
+                    <td className="p-3 font-semibold text-gray-900">{surgeon.name}</td>
+                    <td className="p-3 text-gray-700 text-sm">{surgeon.facility}</td>
+                    <td className="p-3 text-center text-gray-700">{surgeon.region}</td>
+                    <td className="p-3 text-center font-semibold text-blue-600">{surgeon.volume.toLocaleString()}</td>
+                    <td className="p-3 text-gray-900">{surgeon.primaryVendor}</td>
+                    <td className="p-3 text-center">
+                      <span className={`font-semibold ${surgeon.isLoyalist ? 'text-orange-600' : 'text-gray-600'}`}>
+                        {(surgeon.primaryVendorPercent * 100).toFixed(0)}%
+                      </span>
+                    </td>
+                    <td className="p-3 text-center">
+                      {surgeon.isLoyalist && (
+                        <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-semibold">
+                          LOYALIST
+                        </span>
+                      )}
+                      {surgeon.isSherpa && (
+                        <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold ml-1">
+                          SHERPA
+                        </span>
+                      )}
+                      {surgeon.mustTransition && (
+                        <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-semibold ml-1">
+                          TRANSITION
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-3 text-center text-teal-600 font-semibold">
+                      {surgeon.roboticPercent.toFixed(1)}%
+                    </td>
+                    <td className="p-3 text-center">
+                      <button
+                        onClick={() => setSelectedSurgeon(surgeon)}
+                        className="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 text-xs font-semibold"
+                      >
+                        View Profile
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {filteredSurgeons.length > 50 && (
+            <div className="mt-4 text-center text-sm text-gray-500">
+              Showing first 50 of {filteredSurgeons.length} surgeons. Use search to narrow results.
+            </div>
+          )}
         </div>
       </div>
     );
@@ -2298,6 +3280,7 @@ const EnhancedOrthopedicDashboard = () => {
           {activeTab === 'overview' && renderOverviewTab()}
           {activeTab === 'financial' && renderFinancialTab()}
           {activeTab === 'clinical' && renderClinicalTab()}
+          {activeTab === 'surgeons' && renderSurgeonTab()}
           {activeTab === 'components' && renderComponentTab()}
         </div>
 
