@@ -31,15 +31,15 @@ const EnhancedOrthopedicDashboard = () => {
 
   // State management
   const [activeTab, setActiveTab] = useState('overview');
-  const [selectedScenario, setSelectedScenario] = useState('dual-value'); // Default to Dual-Value scenario
+  const [selectedScenario, setSelectedScenario] = useState('dual-premium'); // Default to optimal scenario (Zimmer + Stryker)
   const [comparisonMode, setComparisonMode] = useState(false);
-  const [comparisonScenario, setComparisonScenario] = useState('dual-premium'); // Default comparison
+  const [comparisonScenario, setComparisonScenario] = useState('dual-value'); // Default comparison
   const [sortBy, setSortBy] = useState('savings');
   const [filterRisk, setFilterRisk] = useState('all');
   const [filterProcedureType, setFilterProcedureType] = useState('all'); // all, primary, revision
   const [showFilters, setShowFilters] = useState(false);
   const [bookmarks, setBookmarks] = useState([]);
-  const [visibleHospitalCount, setVisibleHospitalCount] = useState(10); // Show 10 hospitals initially
+  const [visibleHospitalCount, setVisibleHospitalCount] = useState(25); // Show 25 hospitals initially
 
   // Surgeon analytics state
   const [surgeonSearchQuery, setSurgeonSearchQuery] = useState('');
@@ -69,6 +69,21 @@ const EnhancedOrthopedicDashboard = () => {
     dark: '#1F2937',
     purple: '#9333EA',
     teal: '#14B8A6'
+  };
+
+  // Vendor to robotic platform mapping
+  const VENDOR_ROBOTS = {
+    'STRYKER': 'Mako',
+    'ZIMMER BIOMET': 'ROSA',
+    'JOHNSON & JOHNSON': 'VELYS',
+    'SMITH & NEPHEW': 'CORI',
+    'MEDACTA': 'MYMAKO',
+    'EXACTECH': 'ExactechGPS'
+  };
+
+  // Get robot name for vendor
+  const getRobotName = (vendor) => {
+    return VENDOR_ROBOTS[vendor] || null;
   };
 
   // Fetch real data from JSON
@@ -968,9 +983,6 @@ const EnhancedOrthopedicDashboard = () => {
           </div>
         </div>
       </div>
-
-      {/* Regional Switching Burden Heatmap */}
-      <RegionSwitchingHeatmap />
     </div>
   );
 
@@ -1083,17 +1095,26 @@ const EnhancedOrthopedicDashboard = () => {
           highVolumeLoyalists: 0,
           highVolLoyalistCases: 0, // Total cases performed by high-volume loyalists
           loyalistsNeedingTransition: 0,
+          totalLoyalists: 0, // All loyalists regardless of transition status
           casesAtRisk: 0,
           totalCases: 0,
+          totalSpend: 0, // Total spend for all surgeons at this hospital
           vendorDiversity: new Set(),
           transitioningVendors: new Set(),
           vendorCaseCounts: {}, // Track cases by vendor
-          highVolLoyalistVendors: {} // Track vendors for high-volume loyalists
+          highVolLoyalistVendors: {}, // Track vendors for high-volume loyalists
+          roboticVendors: {} // Track robotic cases by vendor
         };
       }
       hospitalImpact[facility].totalSurgeons++;
       hospitalImpact[facility].totalCases += surgeon.volume;
+      hospitalImpact[facility].totalSpend += surgeon.totalSpend || 0;
       hospitalImpact[facility].vendorDiversity.add(surgeon.primaryVendor);
+
+      // Count all loyalists (not just those needing transition)
+      if (surgeon.isLoyalist) {
+        hospitalImpact[facility].totalLoyalists++;
+      }
 
       // Track vendor case counts
       const vendor = surgeon.primaryVendor || 'Unknown';
@@ -1101,6 +1122,14 @@ const EnhancedOrthopedicDashboard = () => {
         hospitalImpact[facility].vendorCaseCounts[vendor] = 0;
       }
       hospitalImpact[facility].vendorCaseCounts[vendor] += surgeon.volume;
+
+      // Track robotic cases by vendor
+      if (surgeon.roboticCases && surgeon.roboticCases > 0) {
+        if (!hospitalImpact[facility].roboticVendors[vendor]) {
+          hospitalImpact[facility].roboticVendors[vendor] = 0;
+        }
+        hospitalImpact[facility].roboticVendors[vendor] += surgeon.roboticCases;
+      }
 
       if (surgeon.mustTransition) {
         hospitalImpact[facility].needingTransition++;
@@ -1211,6 +1240,27 @@ const EnhancedOrthopedicDashboard = () => {
       // Store risk score in hospital object for reuse
       hospital.riskScore = riskScore;
 
+      // Calculate risk level based on high-volume loyalists and sherpa ratio
+      let riskLevel = 'Low';
+      if (hospital.highVolumeLoyalists >= 3) {
+        if (sherpaRatio < 1.5) {
+          riskLevel = 'High';
+        } else if (sherpaRatio < 2.5) {
+          riskLevel = 'Medium';
+        }
+      } else if (hospital.highVolumeLoyalists === 2) {
+        if (sherpaRatio < 0.8) {
+          riskLevel = 'High';
+        } else if (sherpaRatio < 2) {
+          riskLevel = 'Medium';
+        }
+      } else if (hospital.highVolumeLoyalists === 1) {
+        if (sherpaRatio < 1) {
+          riskLevel = 'Medium';
+        }
+      }
+      hospital.riskLevel = riskLevel;
+
       // Weight the risk score by cases at risk (hospital with more cases has bigger impact on regional risk)
       const weightedRisk = riskScore * hospital.casesAtRisk;
 
@@ -1240,6 +1290,29 @@ const EnhancedOrthopedicDashboard = () => {
       }
     });
 
+    // Calculate risk scores for surgeons based on hospital risk, loyalty, and vendor
+    surgeonImpact.forEach(surgeon => {
+      const facility = surgeon.facility || 'Unassigned';
+      const hospitalData = hospitalImpact[facility];
+
+      // Base risk from hospital (inherit hospital's risk score, default to 0 if hospital not found)
+      const hospitalRiskScore = hospitalData ? (hospitalData.riskScore || 0) : 0;
+
+      // Loyalty factor: Higher loyalty = higher risk (0-10 scale)
+      // Map loyalty from 0-100% to 0-3 points
+      const loyaltyRisk = (surgeon.primaryVendorPercent || 0) * 3;
+
+      // Transition penalty: If must transition, add extra risk
+      const transitionRisk = surgeon.mustTransition ? 2 : 0;
+
+      // Calculate final risk score (capped at 10)
+      let surgeonRiskScore = hospitalRiskScore * 0.6 + loyaltyRisk + transitionRisk;
+      surgeonRiskScore = Math.min(10, Math.max(0, surgeonRiskScore));
+
+      // Store risk score on surgeon object
+      surgeon.surgeonRiskScore = surgeonRiskScore;
+    });
+
     // Identify hospitals with "peer sherpa" opportunities (mixed vendor loyalists)
     const hospitalsWithMixedLoyalists = Object.entries(hospitalImpact)
       .filter(([_, data]) => {
@@ -1256,13 +1329,20 @@ const EnhancedOrthopedicDashboard = () => {
       .sort((a, b) => b.loyalistsNeedingTransition - a.loyalistsNeedingTransition);
 
     // Top high-risk hospitals (sorted by risk score: high to low)
+    // Show ALL hospitals regardless of cases at risk (for complete system view)
     const topRiskHospitals = Object.entries(hospitalImpact)
-      .filter(([_, data]) => data.needingTransition > 0)
       .map(([facility, data]) => {
         // Use the pre-calculated risk score (which includes volume adjustment)
         return { facility, ...data };
       })
-      .sort((a, b) => b.riskScore - a.riskScore); // Sort by risk score descending (high risk first)
+      .sort((a, b) => {
+        // Sort by risk score descending (highest risk first)
+        if (b.riskScore !== a.riskScore) {
+          return b.riskScore - a.riskScore;
+        }
+        // If tied, sort by cases at risk descending (more cases = higher priority)
+        return b.casesAtRisk - a.casesAtRisk;
+      });
 
     return (
       <div className="space-y-6">
@@ -1354,6 +1434,646 @@ const EnhancedOrthopedicDashboard = () => {
               </tbody>
             </table>
           </div>
+        </div>
+
+        {/* Cumulative Compliance Pareto Chart */}
+        <div className="bg-white p-6 rounded-xl shadow-lg">
+          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            Cumulative Compliance Pareto Chart
+          </h3>
+
+          <div className="mb-4 bg-blue-50 border-l-4 border-blue-600 p-4 rounded-lg">
+            <p className="text-sm text-blue-800 mb-2">
+              <strong>Strategic Decision Tool:</strong> Each bar represents a hospital with cases at risk (sorted by risk score: low → high). The purple line shows cumulative % of total system spend captured.
+              Markers show where you reach 70%, 80%, and 90% of system spend - helping you prioritize which hospitals to focus on for maximum impact.
+            </p>
+            <p className="text-sm text-blue-800">
+              <strong>Risk Score Calculation (0-10):</strong> Base risk is determined by the number of high-volume loyalists (surgeons with >200 cases/year loyal to non-scenario vendors)
+              and available sherpa support ratio (experienced aligned surgeons who can mentor). This base risk is then adjusted by a volume multiplier based on total cases at risk:
+              ×1.4 for ≥300 cases, ×1.3 for ≥200 cases, ×1.2 for ≥150 cases, ×1.1 for ≥100 cases, and ×0.8 for ≤30 cases. Higher scores indicate more challenging transitions requiring focused resources.
+            </p>
+          </div>
+
+          {(() => {
+            // Abbreviate common hospital words for labels
+            const abbreviateHospitalName = (name) => {
+              return name
+                .replace(/Medical/gi, 'Med')
+                .replace(/Hospital/gi, 'Hosp')
+                .replace(/Center/gi, 'Ctr')
+                .replace(/Regional/gi, 'Reg')
+                .replace(/Community/gi, 'Comm')
+                .replace(/Memorial/gi, 'Mem')
+                .replace(/General/gi, 'Gen')
+                .replace(/Healthcare/gi, 'HC')
+                .replace(/Health/gi, 'Hlth')
+                .replace(/Saint/gi, 'St')
+                .replace(/University/gi, 'Univ')
+                .replace(/Presbyterian/gi, 'Presb')
+                .replace(/Catholic/gi, 'Cath')
+                .replace(/Lutheran/gi, 'Luth')
+                .replace(/Baptist/gi, 'Bapt')
+                .replace(/Children's/gi, 'Child')
+                .replace(/Surgery/gi, 'Surg')
+                .replace(/Surgical/gi, 'Surg')
+                .replace(/Institute/gi, 'Inst');
+            };
+
+            // Calculate compliance for ALL hospitals
+            const hospitalsWithCompliance = topRiskHospitals.map(hospital => {
+              // Calculate spend on scenario vendors for this hospital by summing from surgeons
+              let scenarioSpend = 0;
+              let totalHospitalSpend = 0;
+
+              surgeonImpact.forEach(surgeon => {
+                if (surgeon.facility === hospital.facility && surgeon.vendors) {
+                  // Add up spend on scenario vendors
+                  scenarioVendors.forEach(vendor => {
+                    if (surgeon.vendors[vendor]) {
+                      scenarioSpend += (surgeon.vendors[vendor].spend || 0);
+                    }
+                  });
+
+                  // Calculate total spend for this surgeon
+                  Object.values(surgeon.vendors).forEach(v => {
+                    totalHospitalSpend += (v.spend || 0);
+                  });
+                }
+              });
+
+              const compliancePercent = totalHospitalSpend > 0 ? (scenarioSpend / totalHospitalSpend) * 100 : 0;
+
+              return {
+                ...hospital,
+                scenarioSpend: scenarioSpend || 0,
+                totalSpend: totalHospitalSpend || 0,
+                compliancePercent: compliancePercent || 0
+              };
+            }).filter(h => h.totalSpend > 0); // Only include hospitals with spend data
+
+            // Sort by risk score (ascending - lowest to highest risk), with tiebreaker
+            const sortedByRisk = [...hospitalsWithCompliance].sort((a, b) => {
+              // Primary sort: risk score ascending
+              if ((a.riskScore || 0) !== (b.riskScore || 0)) {
+                return (a.riskScore || 0) - (b.riskScore || 0);
+              }
+              // If tied, sort by cases at risk ascending (more cases = higher priority, appears rightmost)
+              return (a.casesAtRisk || 0) - (b.casesAtRisk || 0);
+            });
+
+            // Calculate total system spend for percentage calculation
+            const totalSystemSpend = hospitalsWithCompliance.reduce((sum, h) => sum + h.totalSpend, 0);
+
+            // Calculate cumulative metrics
+            let cumulativeScenarioSpend = 0;
+            let cumulativeTotalSpend = 0;
+            const cumulativeData = sortedByRisk.map((hospital, idx) => {
+              cumulativeScenarioSpend += hospital.scenarioSpend;
+              cumulativeTotalSpend += hospital.totalSpend;
+              const cumulativeCompliance = cumulativeTotalSpend > 0 ? (cumulativeScenarioSpend / cumulativeTotalSpend) * 100 : 0;
+              const cumulativeSpendPercent = totalSystemSpend > 0 ? (cumulativeTotalSpend / totalSystemSpend) * 100 : 0;
+
+              return {
+                ...hospital,
+                hospitalIndex: idx,
+                cumulativeCompliance,
+                cumulativeSpendPercent,
+                cumulativeScenarioSpend,
+                cumulativeTotalSpend
+              };
+            });
+
+            // Find hospitals at key spend thresholds (70%, 80%, 90% of total system spend)
+            const spendThresholds = [70, 80, 90];
+            const thresholdHospitals = spendThresholds.map(threshold => {
+              const idx = cumulativeData.findIndex(h => h.cumulativeSpendPercent >= threshold);
+              return { threshold, hospitalIndex: idx, reached: idx !== -1 };
+            });
+
+            const maxSpend = Math.max(...cumulativeData.map(h => h.totalSpend));
+
+            // SVG dimensions
+            const width = 1200;
+            const height = 500;
+            const padding = { top: 40, right: 80, bottom: 60, left: 80 };
+            const chartWidth = width - padding.left - padding.right;
+            const chartHeight = height - padding.top - padding.bottom;
+
+            // Scales
+            const barWidth = chartWidth / Math.max(cumulativeData.length, 1);
+
+            return (
+              <div>
+                {/* Pareto Chart */}
+                <div className="mb-6 overflow-x-auto">
+                  <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto border border-gray-200 rounded-lg bg-white">
+                    {/* Y-axis labels and grid lines (left - spend) */}
+                    {[0, 0.25, 0.5, 0.75, 1].map(ratio => {
+                      const y = padding.top + chartHeight - (ratio * chartHeight);
+                      const value = maxSpend * ratio;
+                      return (
+                        <g key={`spend-${ratio}`}>
+                          <line
+                            x1={padding.left}
+                            y1={y}
+                            x2={padding.left + chartWidth}
+                            y2={y}
+                            stroke="#E5E7EB"
+                            strokeWidth={1}
+                          />
+                          <text
+                            x={padding.left - 10}
+                            y={y}
+                            textAnchor="end"
+                            alignmentBaseline="middle"
+                            className="text-xs fill-gray-600"
+                          >
+                            ${(value/1000000).toFixed(0)}M
+                          </text>
+                        </g>
+                      );
+                    })}
+
+                    {/* Y-axis label (left) */}
+                    <text
+                      x={20}
+                      y={padding.top + chartHeight / 2}
+                      textAnchor="middle"
+                      className="text-xs font-semibold fill-gray-700"
+                      transform={`rotate(-90, 20, ${padding.top + chartHeight / 2})`}
+                    >
+                      Hospital Spend
+                    </text>
+
+                    {/* Y-axis grid lines (right - compliance %) */}
+                    {[0, 25, 50, 75, 100].map(percent => {
+                      const y = padding.top + chartHeight - ((percent / 100) * chartHeight);
+                      return (
+                        <g key={`compliance-${percent}`}>
+                          <text
+                            x={padding.left + chartWidth + 10}
+                            y={y}
+                            textAnchor="start"
+                            alignmentBaseline="middle"
+                            className="text-xs fill-purple-600 font-semibold"
+                          >
+                            {percent}%
+                          </text>
+                        </g>
+                      );
+                    })}
+
+                    {/* Y-axis label (right) */}
+                    <text
+                      x={width - 20}
+                      y={padding.top + chartHeight / 2}
+                      textAnchor="middle"
+                      className="text-xs font-semibold fill-purple-600"
+                      transform={`rotate(90, ${width - 20}, ${padding.top + chartHeight / 2})`}
+                    >
+                      Cumulative % of Total System Spend
+                    </text>
+
+                    {/* Threshold lines */}
+                    {thresholdHospitals.filter(t => t.reached).map(threshold => {
+                      const hospital = cumulativeData[threshold.hospitalIndex];
+                      const x = padding.left + (threshold.hospitalIndex * barWidth) + barWidth / 2;
+                      const y = padding.top + chartHeight - (hospital.cumulativeSpendPercent / 100 * chartHeight);
+
+                      return (
+                        <g key={threshold.threshold}>
+                          {/* Vertical line dropping from marker to x-axis */}
+                          <line
+                            x1={x}
+                            y1={y}
+                            x2={x}
+                            y2={padding.top + chartHeight}
+                            stroke="#7C3AED"
+                            strokeWidth={2}
+                            strokeDasharray="4,4"
+                            opacity={0.5}
+                          />
+                          <circle
+                            cx={x}
+                            cy={y}
+                            r={6}
+                            fill="#7C3AED"
+                            stroke="white"
+                            strokeWidth={2}
+                          />
+                          <text
+                            x={x}
+                            y={y - 15}
+                            textAnchor="middle"
+                            className="text-xs font-bold fill-purple-600"
+                          >
+                            {threshold.threshold}% spend
+                          </text>
+                        </g>
+                      );
+                    })}
+
+                    {/* Bars (hospitals) */}
+                    {cumulativeData.map((hospital, idx) => {
+                      const x = padding.left + (idx * barWidth);
+                      const barHeight = (hospital.totalSpend / maxSpend) * chartHeight;
+                      const y = padding.top + chartHeight - barHeight;
+
+                      const riskColors = {
+                        'Low': '#10B981',
+                        'Medium': '#F59E0B',
+                        'High': '#EF4444'
+                      };
+                      const color = riskColors[hospital.riskLevel || 'Low'];
+                      const riskLevel = hospital.riskLevel || 'Low';
+                      const shouldLabel = riskLevel === 'Medium' || riskLevel === 'High';
+
+                      return (
+                        <g key={idx}>
+                          <rect
+                            x={x}
+                            y={y}
+                            width={barWidth - 1}
+                            height={barHeight}
+                            fill={color}
+                            opacity={0.7}
+                            className="hover:opacity-100 transition-opacity cursor-pointer"
+                          >
+                            <title>
+                              {hospital.facility}
+{`
+Risk: ${riskLevel}
+Spend: $${(hospital.totalSpend/1000000).toFixed(2)}M
+Compliance: ${hospital.compliancePercent.toFixed(1)}%
+Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
+                            </title>
+                          </rect>
+                          {/* Label for Medium and High risk hospitals */}
+                          {shouldLabel && barWidth > 3 && (
+                            <text
+                              x={x + barWidth / 2}
+                              y={y - 10}
+                              textAnchor="start"
+                              transform={`rotate(-90, ${x + barWidth / 2}, ${y - 10})`}
+                              className="fill-gray-700"
+                              style={{ fontSize: '9px' }}
+                            >
+                              {(() => {
+                                const abbreviated = abbreviateHospitalName(hospital.facility);
+                                return abbreviated.length > 25 ? abbreviated.substring(0, 25) + '...' : abbreviated;
+                              })()}
+                            </text>
+                          )}
+                        </g>
+                      );
+                    })}
+
+                    {/* Cumulative spend percentage line */}
+                    <polyline
+                      points={cumulativeData.map((hospital, idx) => {
+                        const x = padding.left + (idx * barWidth) + barWidth / 2;
+                        const y = padding.top + chartHeight - (hospital.cumulativeSpendPercent / 100 * chartHeight);
+                        return `${x},${y}`;
+                      }).join(' ')}
+                      fill="none"
+                      stroke="#7C3AED"
+                      strokeWidth={3}
+                    />
+
+                    {/* X-axis */}
+                    <line
+                      x1={padding.left}
+                      y1={padding.top + chartHeight}
+                      x2={padding.left + chartWidth}
+                      y2={padding.top + chartHeight}
+                      stroke="#374151"
+                      strokeWidth={2}
+                    />
+
+                    {/* X-axis label */}
+                    <text
+                      x={padding.left + chartWidth / 2}
+                      y={height - 20}
+                      textAnchor="middle"
+                      className="text-sm font-semibold fill-gray-700"
+                    >
+                      Hospitals (sorted by risk score: low → high)
+                    </text>
+                  </svg>
+                </div>
+
+                {/* Legend */}
+                <div className="flex justify-center gap-8 mb-6">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-green-500 rounded"></div>
+                    <span className="text-sm text-gray-700">Low Risk</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-yellow-500 rounded"></div>
+                    <span className="text-sm text-gray-700">Medium Risk</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-red-500 rounded"></div>
+                    <span className="text-sm text-gray-700">High Risk</span>
+                  </div>
+                  <div className="flex items-center gap-2 ml-6">
+                    <svg width="20" height="4">
+                      <line x1="0" y1="2" x2="20" y2="2" stroke="#7C3AED" strokeWidth="3" />
+                    </svg>
+                    <span className="text-sm text-purple-600 font-semibold">Cumulative % of System Spend</span>
+                  </div>
+                </div>
+
+                {/* Summary insights */}
+                <div className="grid grid-cols-3 gap-4">
+                  {thresholdHospitals.map((threshold, idx) => {
+                    if (!threshold.reached) return null;
+
+                    const hospital = cumulativeData[threshold.hospitalIndex];
+                    const hospitalsUpToHere = cumulativeData.slice(0, threshold.hospitalIndex + 1);
+                    const lowRiskCount = hospitalsUpToHere.filter(h => (h.riskLevel || 'Low') === 'Low').length;
+                    const mediumRiskCount = hospitalsUpToHere.filter(h => (h.riskLevel || 'Low') === 'Medium').length;
+                    const highRiskCount = hospitalsUpToHere.filter(h => (h.riskLevel || 'Low') === 'High').length;
+                    const includesHighRisk = highRiskCount > 0;
+
+                    return (
+                      <div key={idx} className={`p-4 rounded-lg border-l-4 ${
+                        includesHighRisk ? 'bg-yellow-50 border-yellow-500' : 'bg-green-50 border-green-500'
+                      }`}>
+                        <h4 className={`font-bold mb-2 ${
+                          includesHighRisk ? 'text-yellow-800' : 'text-green-800'
+                        }`}>
+                          {threshold.threshold}% of System Spend
+                        </h4>
+                        <div className="text-sm">
+                          <p className={includesHighRisk ? 'text-yellow-700' : 'text-green-700'}>
+                            <strong>Requires {threshold.hospitalIndex + 1} hospitals:</strong>
+                          </p>
+                          <ul className="text-xs mt-1 space-y-1">
+                            {lowRiskCount > 0 && (
+                              <li className="text-gray-700">• {lowRiskCount} Low Risk</li>
+                            )}
+                            {mediumRiskCount > 0 && (
+                              <li className="text-gray-700">• {mediumRiskCount} Medium Risk</li>
+                            )}
+                            {highRiskCount > 0 && (
+                              <li className="text-gray-700">• {highRiskCount} High Risk</li>
+                            )}
+                          </ul>
+                          <p className="text-xs mt-2 font-semibold text-gray-600">
+                            Captures: {hospital.cumulativeSpendPercent.toFixed(1)}% of system spend
+                          </p>
+                          <p className="text-xs text-gray-600">
+                            Compliance: {hospital.cumulativeCompliance.toFixed(1)}% | ${(hospital.cumulativeTotalSpend/1000000).toFixed(1)}M spend
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+
+
+        {/* Hospital Impact & Risk Assessment (Combined) */}
+        <div className="bg-white p-6 rounded-xl shadow-lg">
+          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Building2 className="w-6 h-6 text-purple-600" />
+            Hospital Impact & Risk Assessment
+          </h3>
+          <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-lg mb-4">
+            <p className="text-sm text-blue-800 mb-2">
+              <strong>Risk Score (0-10 scale):</strong> Measures transition difficulty based on high-volume loyalists and available sherpa support. Higher scores indicate more challenging transitions requiring additional resources and planning.
+            </p>
+            <p className="text-sm text-blue-800 mb-2">
+              <strong>Risk Assessment:</strong> Hospitals with high-volume loyalists needing transition but good peer sherpa ratios (aligned surgeons who can mentor) have lower implementation risk.
+            </p>
+            <p className="text-sm text-blue-800">
+              <strong>Sherpa Ratio:</strong> Volume-weighted capacity of experienced surgeons (≥30 cases/year) available to support each transitioning loyalist. A surgeon doing 100 cases/year = 1.0 unit of capacity, 200 cases/year = 2.0 units, etc.
+            </p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-purple-100 border-b-2 border-purple-300">
+                  <th className="text-left p-4 font-bold text-purple-900">Hospital</th>
+                  <th className="text-center p-4 font-bold text-purple-900">Region</th>
+                  <th className="text-center p-4 font-bold text-purple-900">Preferred Vendor</th>
+                  <th className="text-center p-4 font-bold text-purple-900">Robots Available</th>
+                  <th className="text-center p-4 font-bold text-purple-900" title="Surgeons with >200 cases/year who are ≥70% loyal to non-preferred vendors. These surgeons represent high-impact transition challenges.">High-Vol Loyalists<br/><span className="text-xs font-normal">(to non-preferred)</span></th>
+                  <th className="text-center p-4 font-bold text-purple-900">Non-Preferred Vendors</th>
+                  <th className="text-center p-4 font-bold text-purple-900">Cases at Risk</th>
+                  <th className="text-center p-4 font-bold text-purple-900">% of Overall Spend</th>
+                  <th className="text-center p-4 font-bold text-purple-900">Experienced Sherpas<br/><span className="text-xs font-normal">(≥30 cases/yr)</span></th>
+                  <th className="text-center p-4 font-bold text-purple-900">Sherpa Capacity<br/><span className="text-xs font-normal">(volume-weighted)</span></th>
+                  <th className="text-center p-4 font-bold text-purple-900">Risk Score<br/><span className="text-xs font-normal">(0-10)</span></th>
+                  <th className="text-left p-4 font-bold text-purple-900">Implementation Risk</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(() => {
+                  // Calculate cumulative spend for threshold markers
+                  const visibleHospitals = topRiskHospitals.slice(0, visibleHospitalCount);
+                  const totalSystemSpend = topRiskHospitals.reduce((sum, h) => sum + (h.totalSpend || 0), 0);
+                  let cumulativeSpend = 0;
+                  // Thresholds show remaining spend: 90% marker at 10% cumulative, 80% at 20%, 70% at 30%
+                  const thresholds = [
+                    { label: '90%', cumulativeTarget: 10 },
+                    { label: '80%', cumulativeTarget: 20 },
+                    { label: '70%', cumulativeTarget: 30 }
+                  ];
+                  const crossedThresholds = new Set();
+
+                  return visibleHospitals.map((hospital, idx) => {
+                    const prevCumulativePercent = totalSystemSpend > 0 ? (cumulativeSpend / totalSystemSpend) * 100 : 0;
+                    cumulativeSpend += hospital.totalSpend || 0;
+                    const cumulativePercent = totalSystemSpend > 0 ? (cumulativeSpend / totalSystemSpend) * 100 : 0;
+
+                    // Check if this row crosses any thresholds (90% marker at 10% cumulative, etc.)
+                    const crossedHere = thresholds.filter(t =>
+                      prevCumulativePercent < t.cumulativeTarget && cumulativePercent >= t.cumulativeTarget && !crossedThresholds.has(t.label)
+                    );
+                    crossedHere.forEach(t => crossedThresholds.add(t.label));
+
+                    // Use the pre-calculated volume-weighted sherpa metrics
+                    const potentialSherpas = hospital.potentialSherpas;
+                    const sherpaRatio = hospital.sherpaRatio;
+
+                  // More realistic risk assessment with lower thresholds
+                  let riskLevel = 'Low';
+                  let riskColor = 'bg-green-100 text-green-800';
+
+                  // High Risk: Multiple high-volume loyalists with insufficient sherpa support
+                  if (hospital.highVolumeLoyalists >= 3) {
+                    if (sherpaRatio < 1.5) {
+                      riskLevel = 'High';
+                      riskColor = 'bg-red-100 text-red-800';
+                    } else if (sherpaRatio < 2.5) {
+                      riskLevel = 'Medium';
+                      riskColor = 'bg-orange-100 text-orange-800';
+                    }
+                  } else if (hospital.highVolumeLoyalists === 2) {
+                    if (sherpaRatio < 0.8) {
+                      riskLevel = 'High';
+                      riskColor = 'bg-red-100 text-red-800';
+                    } else if (sherpaRatio < 2) {
+                      riskLevel = 'Medium';
+                      riskColor = 'bg-orange-100 text-orange-800';
+                    }
+                  } else if (hospital.highVolumeLoyalists === 1) {
+                    if (sherpaRatio < 1) {
+                      riskLevel = 'Medium';
+                      riskColor = 'bg-orange-100 text-orange-800';
+                    }
+                  }
+
+                  return (
+                    <>
+                      {/* Threshold marker if this row crosses a threshold */}
+                      {crossedHere.length > 0 && (
+                        <tr key={`threshold-${idx}`} className="bg-purple-100">
+                          <td colSpan="12" className="p-2 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <div className="h-0.5 flex-1 bg-purple-400"></div>
+                              <span className="text-sm font-bold text-purple-700">
+                                {crossedHere.map(t => `${t.label} Remaining Spend Below`).join(' & ')}
+                              </span>
+                              <div className="h-0.5 flex-1 bg-purple-400"></div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                      <tr key={idx} className="border-b border-gray-200 hover:bg-purple-50">
+                      <td className="p-4 font-semibold text-gray-900">{hospital.facility}</td>
+                      <td className="p-4 text-center text-gray-700">{hospital.region}</td>
+                      <td className="p-4 text-center">
+                        <div className="font-semibold text-gray-900">{hospital.preferredVendor}</div>
+                        <div className="text-xs text-gray-600 mt-1">
+                          {hospital.preferredVendorPercent.toFixed(0)}% of cases
+                        </div>
+                      </td>
+                      <td className="p-4 text-center">
+                        {hospital.roboticVendors && Object.keys(hospital.roboticVendors).length > 0 ? (
+                          <div className="text-sm">
+                            {Object.keys(hospital.roboticVendors)
+                              .map((vendor) => getRobotName(vendor))
+                              .filter(robot => robot !== null)
+                              .sort()
+                              .map((robot) => (
+                                <div key={robot} className="text-gray-900 font-semibold">
+                                  {robot}
+                                </div>
+                              ))}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-xs">—</span>
+                        )}
+                      </td>
+                      <td className="p-4 text-center">
+                        <span className="font-bold text-xl text-orange-600">
+                          {hospital.highVolumeLoyalists}
+                          {hospital.highVolumeLoyalists > 0 && (
+                            <span className="text-sm text-gray-600 ml-1">
+                              ({hospital.highVolLoyalistCases.toLocaleString()})
+                            </span>
+                          )}
+                        </span>
+                      </td>
+                      <td className="p-4 text-center">
+                        {hospital.highVolumeLoyalists > 0 ? (
+                          <div className="text-sm">
+                            {Object.entries(hospital.highVolLoyalistVendors || {})
+                              .sort((a, b) => b[1] - a[1])
+                              .map(([vendor, count]) => (
+                                <div key={vendor} className="text-gray-900">
+                                  <span className="font-semibold">{vendor}</span>
+                                  <span className="text-gray-600 ml-1">({count})</span>
+                                </div>
+                              ))}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-xs">—</span>
+                        )}
+                      </td>
+                      <td className="p-4 text-center font-bold text-purple-600">{hospital.casesAtRisk.toLocaleString()}</td>
+                      <td className="p-4 text-center">
+                        <span className="font-semibold text-gray-900">
+                          {totalSystemSpend > 0 ? ((hospital.totalSpend || 0) / totalSystemSpend * 100).toFixed(1) : '0.0'}%
+                        </span>
+                      </td>
+                      <td className="p-4 text-center">
+                        {potentialSherpas > 0 ? (
+                          <div>
+                            <div className="font-bold text-xl text-green-600">{potentialSherpas}</div>
+                            {hospital.sherpaVendors && Object.keys(hospital.sherpaVendors).length > 0 && (
+                              <div className="text-xs text-gray-600 mt-1">
+                                {Object.entries(hospital.sherpaVendors)
+                                  .sort((a, b) => b[1] - a[1])
+                                  .map(([vendor, count]) => (
+                                    <div key={vendor}>
+                                      {vendor} ({count})
+                                    </div>
+                                  ))}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-xl">—</span>
+                        )}
+                      </td>
+                      <td className="p-4 text-center">
+                        <span className="font-bold text-blue-600">{sherpaRatio.toFixed(1)}:1</span>
+                      </td>
+                      <td className="p-4 text-center">
+                        <span className={`font-bold text-lg ${
+                          hospital.riskScore >= 7 ? 'text-red-600' :
+                          hospital.riskScore >= 4 ? 'text-orange-600' :
+                          'text-green-600'
+                        }`}>
+                          {hospital.riskScore ? hospital.riskScore.toFixed(1) : '0.0'}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${riskColor}`}>
+                          {riskLevel}
+                        </span>
+                      </td>
+                    </tr>
+                    </>
+                  );
+                });
+                })()}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Show More / Show Less Button */}
+          {topRiskHospitals.length > 25 && (
+            <div className="mt-4 text-center">
+              <button
+                onClick={() => {
+                  if (visibleHospitalCount < topRiskHospitals.length) {
+                    setVisibleHospitalCount(prev => Math.min(prev + 25, topRiskHospitals.length));
+                  } else {
+                    setVisibleHospitalCount(25);
+                  }
+                }}
+                className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
+              >
+                {visibleHospitalCount < topRiskHospitals.length
+                  ? `Show More (${topRiskHospitals.length - visibleHospitalCount} remaining)`
+                  : 'Show Less'}
+              </button>
+              <div className="text-sm text-gray-600 mt-2">
+                Showing {visibleHospitalCount} of {topRiskHospitals.length} hospitals
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Robotic Platform Alignment */}
@@ -1449,165 +2169,6 @@ const EnhancedOrthopedicDashboard = () => {
             )}
           </div>
         )}
-
-        {/* Hospital Impact & Risk Assessment (Combined) */}
-        <div className="bg-white p-6 rounded-xl shadow-lg">
-          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Building2 className="w-6 h-6 text-purple-600" />
-            Hospital Impact & Risk Assessment
-          </h3>
-          <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-lg mb-4">
-            <p className="text-sm text-blue-800">
-              <strong>Risk Assessment:</strong> Hospitals with high-volume loyalists needing transition but good peer sherpa ratios (aligned surgeons who can mentor) have lower implementation risk.
-              <strong className="ml-2">Sherpa Ratio:</strong> Volume-weighted capacity of experienced surgeons (≥30 cases/year) available to support each transitioning loyalist. A surgeon doing 100 cases/year = 1.0 unit of capacity, 200 cases/year = 2.0 units, etc.
-            </p>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-purple-100 border-b-2 border-purple-300">
-                  <th className="text-left p-4 font-bold text-purple-900">Hospital</th>
-                  <th className="text-center p-4 font-bold text-purple-900">Region</th>
-                  <th className="text-center p-4 font-bold text-purple-900">Preferred Vendor</th>
-                  <th className="text-center p-4 font-bold text-purple-900" title="Surgeons with >200 cases/year who are ≥70% loyal to a vendor not in this scenario. These surgeons represent high-impact transition challenges.">High-Vol Loyalists</th>
-                  <th className="text-center p-4 font-bold text-purple-900">Loyalist Vendors</th>
-                  <th className="text-center p-4 font-bold text-purple-900">Total Transitioning</th>
-                  <th className="text-center p-4 font-bold text-purple-900">Cases at Risk</th>
-                  <th className="text-center p-4 font-bold text-purple-900">Experienced Sherpas<br/><span className="text-xs font-normal">(≥30 cases/yr)</span></th>
-                  <th className="text-center p-4 font-bold text-purple-900">Sherpa Capacity<br/><span className="text-xs font-normal">(volume-weighted)</span></th>
-                  <th className="text-left p-4 font-bold text-purple-900">Implementation Risk</th>
-                </tr>
-              </thead>
-              <tbody>
-                {topRiskHospitals.slice(0, visibleHospitalCount).map((hospital, idx) => {
-                  // Use the pre-calculated volume-weighted sherpa metrics
-                  const potentialSherpas = hospital.potentialSherpas;
-                  const sherpaRatio = hospital.sherpaRatio;
-
-                  // More realistic risk assessment with lower thresholds
-                  let riskLevel = 'Low';
-                  let riskColor = 'bg-green-100 text-green-800';
-
-                  // High Risk: Multiple high-volume loyalists with insufficient sherpa support
-                  if (hospital.highVolumeLoyalists >= 3) {
-                    if (sherpaRatio < 1.5) {
-                      riskLevel = 'High';
-                      riskColor = 'bg-red-100 text-red-800';
-                    } else if (sherpaRatio < 2.5) {
-                      riskLevel = 'Medium';
-                      riskColor = 'bg-orange-100 text-orange-800';
-                    }
-                  } else if (hospital.highVolumeLoyalists === 2) {
-                    if (sherpaRatio < 0.8) {
-                      riskLevel = 'High';
-                      riskColor = 'bg-red-100 text-red-800';
-                    } else if (sherpaRatio < 2) {
-                      riskLevel = 'Medium';
-                      riskColor = 'bg-orange-100 text-orange-800';
-                    }
-                  } else if (hospital.highVolumeLoyalists === 1) {
-                    if (sherpaRatio < 1) {
-                      riskLevel = 'Medium';
-                      riskColor = 'bg-orange-100 text-orange-800';
-                    }
-                  }
-
-                  return (
-                    <tr key={idx} className="border-b border-gray-200 hover:bg-purple-50">
-                      <td className="p-4 font-semibold text-gray-900">{hospital.facility}</td>
-                      <td className="p-4 text-center text-gray-700">{hospital.region}</td>
-                      <td className="p-4 text-center">
-                        <div className="font-semibold text-gray-900">{hospital.preferredVendor}</div>
-                        <div className="text-xs text-gray-600 mt-1">
-                          {hospital.preferredVendorPercent.toFixed(0)}% of cases
-                        </div>
-                      </td>
-                      <td className="p-4 text-center">
-                        <span className="font-bold text-xl text-orange-600">
-                          {hospital.highVolumeLoyalists}
-                          {hospital.highVolumeLoyalists > 0 && (
-                            <span className="text-sm text-gray-600 ml-1">
-                              ({hospital.highVolLoyalistCases.toLocaleString()})
-                            </span>
-                          )}
-                        </span>
-                      </td>
-                      <td className="p-4 text-center">
-                        {hospital.highVolumeLoyalists > 0 ? (
-                          <div className="text-sm">
-                            {Object.entries(hospital.highVolLoyalistVendors || {})
-                              .sort((a, b) => b[1] - a[1])
-                              .map(([vendor, count]) => (
-                                <div key={vendor} className="text-gray-900">
-                                  <span className="font-semibold">{vendor}</span>
-                                  <span className="text-gray-600 ml-1">({count})</span>
-                                </div>
-                              ))}
-                          </div>
-                        ) : (
-                          <span className="text-gray-400 text-xs">—</span>
-                        )}
-                      </td>
-                      <td className="p-4 text-center font-bold text-red-600">{hospital.needingTransition}</td>
-                      <td className="p-4 text-center font-bold text-purple-600">{hospital.casesAtRisk.toLocaleString()}</td>
-                      <td className="p-4 text-center">
-                        {potentialSherpas > 0 ? (
-                          <div>
-                            <div className="font-bold text-xl text-green-600">{potentialSherpas}</div>
-                            {hospital.sherpaVendors && Object.keys(hospital.sherpaVendors).length > 0 && (
-                              <div className="text-xs text-gray-600 mt-1">
-                                {Object.entries(hospital.sherpaVendors)
-                                  .sort((a, b) => b[1] - a[1])
-                                  .map(([vendor, count]) => (
-                                    <div key={vendor}>
-                                      {vendor} ({count})
-                                    </div>
-                                  ))}
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-gray-400 text-xl">—</span>
-                        )}
-                      </td>
-                      <td className="p-4 text-center">
-                        <span className="font-bold text-blue-600">{sherpaRatio.toFixed(1)}:1</span>
-                      </td>
-                      <td className="p-4">
-                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${riskColor}`}>
-                          {riskLevel}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Show More / Show Less Button */}
-          {topRiskHospitals.length > 10 && (
-            <div className="mt-4 text-center">
-              <button
-                onClick={() => {
-                  if (visibleHospitalCount < topRiskHospitals.length) {
-                    setVisibleHospitalCount(prev => Math.min(prev + 10, topRiskHospitals.length));
-                  } else {
-                    setVisibleHospitalCount(10);
-                  }
-                }}
-                className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
-              >
-                {visibleHospitalCount < topRiskHospitals.length
-                  ? `Show More (${topRiskHospitals.length - visibleHospitalCount} remaining)`
-                  : 'Show Less'}
-              </button>
-              <div className="text-sm text-gray-600 mt-2">
-                Showing {visibleHospitalCount} of {topRiskHospitals.length} hospitals
-              </div>
-            </div>
-          )}
-        </div>
 
         {/* Regional Transition Heat Map */}
         <div className="bg-white p-6 rounded-xl shadow-lg">
@@ -1943,6 +2504,76 @@ const EnhancedOrthopedicDashboard = () => {
     const MEDIUM_VOLUME_THRESHOLD = 50;
     const LOYALTY_THRESHOLD = 0.70;
 
+    // First, calculate hospital risk scores (needed for surgeon risk calculation)
+    const hospitalRiskScores = {};
+
+    // Group surgeons by hospital to calculate hospital metrics
+    const hospitalData = {};
+    realData.surgeons.forEach(surgeon => {
+      const facility = surgeon.facility || 'Unassigned';
+      if (!hospitalData[facility]) {
+        hospitalData[facility] = {
+          surgeons: [],
+          loyalistsNeedingTransition: 0,
+          potentialSherpas: []
+        };
+      }
+
+      const volume = surgeon.totalCases || 0;
+      let primaryVendor = 'Unknown';
+      let primaryVendorCases = 0;
+
+      if (surgeon.vendors && typeof surgeon.vendors === 'object') {
+        Object.entries(surgeon.vendors).forEach(([vendorName, vendorData]) => {
+          const cases = vendorData.cases || 0;
+          if (cases > primaryVendorCases) {
+            primaryVendorCases = cases;
+            primaryVendor = vendorName;
+          }
+        });
+      }
+
+      const primaryVendorPercent = volume > 0 ? primaryVendorCases / volume : 0;
+      const isLoyalist = primaryVendorPercent >= LOYALTY_THRESHOLD;
+      const mustTransition = isLoyalist && !scenarioVendors.includes(primaryVendor);
+
+      hospitalData[facility].surgeons.push({ volume, isLoyalist, mustTransition, isHighVolume: volume >= HIGH_VOLUME_THRESHOLD });
+
+      if (mustTransition && isLoyalist) {
+        hospitalData[facility].loyalistsNeedingTransition++;
+      }
+      if (!mustTransition && volume >= 30) {
+        hospitalData[facility].potentialSherpas.push({ volume });
+      }
+    });
+
+    // Calculate risk score for each hospital
+    Object.entries(hospitalData).forEach(([facility, data]) => {
+      const highVolumeLoyalists = data.surgeons.filter(s => s.isHighVolume && s.mustTransition && s.isLoyalist).length;
+      const sherpaCapacity = data.potentialSherpas.reduce((sum, s) => sum + (s.volume / 100), 0);
+      const sherpaRatio = data.loyalistsNeedingTransition > 0 ? sherpaCapacity / data.loyalistsNeedingTransition : 0;
+
+      // Calculate base risk (same formula as in renderClinicalTab)
+      let baseRisk = 0;
+      if (highVolumeLoyalists >= 3) {
+        baseRisk = sherpaRatio < 1.5 ? 8 : sherpaRatio < 2.5 ? 5 : 2;
+      } else if (highVolumeLoyalists === 2) {
+        baseRisk = sherpaRatio < 0.8 ? 7 : sherpaRatio < 2 ? 4 : 2;
+      } else if (highVolumeLoyalists === 1) {
+        baseRisk = sherpaRatio < 1 ? 3 : 1;
+      }
+
+      const casesAtRisk = data.surgeons.filter(s => s.mustTransition).reduce((sum, s) => sum + s.volume, 0);
+      let volumeMultiplier = 1.0;
+      if (casesAtRisk >= 300) volumeMultiplier = 1.4;
+      else if (casesAtRisk >= 200) volumeMultiplier = 1.3;
+      else if (casesAtRisk >= 150) volumeMultiplier = 1.2;
+      else if (casesAtRisk >= 100) volumeMultiplier = 1.1;
+      else if (casesAtRisk <= 30) volumeMultiplier = 0.8;
+
+      hospitalRiskScores[facility] = Math.min(10, baseRisk * volumeMultiplier);
+    });
+
     // Analyze each surgeon
     const surgeonAnalytics = realData.surgeons.map(surgeon => {
       const volume = surgeon.totalCases || 0;
@@ -1971,6 +2602,27 @@ const EnhancedOrthopedicDashboard = () => {
       const isSherpa = !mustTransition && volume >= 30;
       const roboticCases = surgeon.roboticMetrics?.estimatedRoboticCases || 0;
 
+      // Calculate surgeon risk score based on transition need
+      const facility = surgeon.facility || 'Unassigned';
+      const hospitalRiskScore = hospitalRiskScores[facility] || 0;
+      let surgeonRiskScore;
+
+      if (mustTransition) {
+        // High risk: Must transition - based on hospital risk, loyalty, and transition difficulty
+        const loyaltyRisk = primaryVendorPercent * 3; // Higher loyalty = harder transition
+        const transitionPenalty = 2;
+        surgeonRiskScore = Math.min(10, Math.max(0, hospitalRiskScore * 0.6 + loyaltyRisk + transitionPenalty));
+      } else if (isLoyalist) {
+        // No risk: Aligned to scenario vendor (no transition needed)
+        surgeonRiskScore = 0;
+      } else if (isSherpa) {
+        // Low risk: Sherpa - stable and can help others
+        surgeonRiskScore = 1.0;
+      } else {
+        // Low risk: Flexible - no strong vendor preference
+        surgeonRiskScore = 0.5;
+      }
+
       return {
         ...surgeon,
         volume,
@@ -1982,7 +2634,8 @@ const EnhancedOrthopedicDashboard = () => {
         mustTransition,
         isSherpa,
         roboticCases,
-        roboticPercent: volume > 0 ? (roboticCases / volume) * 100 : 0
+        roboticPercent: volume > 0 ? (roboticCases / volume) * 100 : 0,
+        surgeonRiskScore
       };
     });
 
@@ -2004,6 +2657,14 @@ const EnhancedOrthopedicDashboard = () => {
         s.name && s.name.toLowerCase().includes(surgeonSearchQuery.toLowerCase())
       );
     }
+
+    // Filter to only surgeons with cases (show all surgeons, not just transitioning)
+    filteredSurgeons = filteredSurgeons.filter(s => s.volume > 0);
+
+    // Sort by risk score descending (highest risk first)
+    filteredSurgeons = filteredSurgeons.sort((a, b) => {
+      return (b.surgeonRiskScore || 0) - (a.surgeonRiskScore || 0);
+    });
 
     // Calculate peer benchmarks for selected surgeon
     const getPeerBenchmarks = (surgeon) => {
@@ -2308,23 +2969,14 @@ const EnhancedOrthopedicDashboard = () => {
                     const isSelected = selectedSurgeon && selectedSurgeon.name === surgeon.name;
                     const isTopOpportunity = topOpportunities.some(t => t.name === surgeon.name);
 
-                    // #2: Visual Loyalty Indicators - different border styles
-                    let strokeDasharray = '0'; // Solid = default
+                    // Border styling - only highlight Must Transition surgeons
                     let strokeWidth = 2;
                     let strokeColor = color;
 
                     if (surgeon.mustTransition) {
-                      // Must transition = red double border
+                      // Must transition = red thick border
                       strokeColor = '#EF4444';
                       strokeWidth = 3;
-                    } else if (surgeon.isSherpa) {
-                      // Sherpa = gold/yellow border
-                      strokeColor = '#F59E0B';
-                      strokeWidth = 2.5;
-                    } else if (surgeon.isLoyalist) {
-                      // Loyalist = dashed border
-                      strokeDasharray = '4,2';
-                      strokeWidth = 2;
                     }
 
                     if (isSelected) {
@@ -2342,7 +2994,6 @@ const EnhancedOrthopedicDashboard = () => {
                           fillOpacity={isSelected ? 1 : 0.6}
                           stroke={strokeColor}
                           strokeWidth={strokeWidth}
-                          strokeDasharray={strokeDasharray}
                           className="cursor-pointer hover:opacity-100 transition-all"
                           onClick={() => setSelectedSurgeon(surgeon)}
                         >
@@ -2383,30 +3034,12 @@ const EnhancedOrthopedicDashboard = () => {
                 {/* Legend - Status Indicators */}
                 <div className="mt-2 border-t pt-3">
                   <div className="text-xs font-semibold text-gray-700 mb-2 text-center">Surgeon Status (Border Style)</div>
-                  <div className="flex flex-wrap gap-6 justify-center">
-                    <div className="flex items-center gap-2">
-                      <svg width="20" height="20">
-                        <circle cx="10" cy="10" r="7" fill="#3B82F6" fillOpacity="0.6" stroke="#F59E0B" strokeWidth="2.5" />
-                      </svg>
-                      <span className="text-xs text-gray-700"><strong>Gold Border</strong> = Sherpa (≥30 cases, aligned)</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <svg width="20" height="20">
-                        <circle cx="10" cy="10" r="7" fill="#3B82F6" fillOpacity="0.6" stroke="#3B82F6" strokeWidth="2" strokeDasharray="4,2" />
-                      </svg>
-                      <span className="text-xs text-gray-700"><strong>Dashed</strong> = Loyalist (≥70% single vendor)</span>
-                    </div>
+                  <div className="flex justify-center">
                     <div className="flex items-center gap-2">
                       <svg width="20" height="20">
                         <circle cx="10" cy="10" r="7" fill="#3B82F6" fillOpacity="0.6" stroke="#EF4444" strokeWidth="3" />
                       </svg>
                       <span className="text-xs text-gray-700"><strong>Red Border</strong> = Must Transition</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <svg width="20" height="20">
-                        <circle cx="10" cy="10" r="7" fill="#3B82F6" fillOpacity="0.6" stroke="#3B82F6" strokeWidth="2" />
-                      </svg>
-                      <span className="text-xs text-gray-700"><strong>Solid</strong> = Flexible</span>
                     </div>
                   </div>
                 </div>
@@ -2652,6 +3285,262 @@ const EnhancedOrthopedicDashboard = () => {
           </div>
         )}
 
+        {/* Surgeon Pareto Chart */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+          <h3 className="text-xl font-bold text-gray-900 mb-2">
+            Surgeon Risk & Spend Analysis - Pareto Chart
+          </h3>
+          <p className="text-sm text-gray-600 mb-4">
+            <strong>Strategic Decision Tool:</strong> Each bar represents a surgeon with cases (sorted by risk score: low → high, then by spend within each risk tier). Colors indicate status - red = transition, amber = sherpa, green = aligned.
+            The purple line shows cumulative % of total system spend. Markers show where you reach 70%, 80%, and 90% thresholds.
+          </p>
+
+          {(() => {
+            // Calculate total system spend from ALL surgeons (not just filtered)
+            const totalSystemSpend = surgeonAnalytics
+              .filter(s => s.totalSpend > 0)
+              .reduce((sum, s) => sum + s.totalSpend, 0);
+
+            // Include all surgeons with spend (not just transitioning)
+            // Sort by risk score ascending (lowest to highest), then by spend descending as tiebreaker
+            const sortedSurgeons = [...surgeonAnalytics]
+              .filter(s => s.totalSpend > 0)
+              .sort((a, b) => {
+                // Primary sort: risk score ascending (low to high)
+                const riskDiff = (a.surgeonRiskScore || 0) - (b.surgeonRiskScore || 0);
+                if (riskDiff !== 0) return riskDiff;
+                // Secondary sort: spend descending (high to low) for smoother Pareto progression
+                return (b.totalSpend || 0) - (a.totalSpend || 0);
+              });
+
+            // Calculate cumulative metrics
+            let cumulativeTotalSpend = 0;
+            const cumulativeData = sortedSurgeons.map((surgeon, idx) => {
+              cumulativeTotalSpend += surgeon.totalSpend;
+              const cumulativeSpendPercent = totalSystemSpend > 0 ? (cumulativeTotalSpend / totalSystemSpend) * 100 : 0;
+
+              return {
+                ...surgeon,
+                surgeonIndex: idx,
+                cumulativeSpendPercent,
+                cumulativeTotalSpend
+              };
+            });
+
+            // Find surgeons at key spend thresholds (70%, 80%, 90% of total system spend)
+            const spendThresholds = [70, 80, 90];
+            const thresholdSurgeons = spendThresholds.map(threshold => {
+              const idx = cumulativeData.findIndex(s => s.cumulativeSpendPercent >= threshold);
+              return { threshold, surgeonIndex: idx, reached: idx !== -1 };
+            });
+
+            const maxSpend = Math.max(...cumulativeData.map(s => s.totalSpend));
+
+            // SVG dimensions
+            const width = 1200;
+            const height = 500;
+            const padding = { top: 150, right: 80, bottom: 60, left: 80 };
+            const chartWidth = width - padding.left - padding.right;
+            const chartHeight = height - padding.top - padding.bottom;
+
+            // Scales
+            const barWidth = chartWidth / Math.max(cumulativeData.length, 1);
+
+            return (
+              <div>
+                {/* Pareto Chart */}
+                <div className="mb-6 overflow-x-auto">
+                  <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto border border-gray-200 rounded-lg bg-white">
+                    {/* Y-axis labels and grid lines (left - spend) */}
+                    {[0, 0.25, 0.5, 0.75, 1].map(ratio => {
+                      const y = padding.top + chartHeight - (ratio * chartHeight);
+                      const value = maxSpend * ratio;
+                      return (
+                        <g key={`spend-${ratio}`}>
+                          <line
+                            x1={padding.left}
+                            y1={y}
+                            x2={padding.left + chartWidth}
+                            y2={y}
+                            stroke="#E5E7EB"
+                            strokeWidth={1}
+                          />
+                          <text
+                            x={padding.left - 10}
+                            y={y}
+                            textAnchor="end"
+                            alignmentBaseline="middle"
+                            className="text-xs fill-gray-600"
+                          >
+                            ${(value/1000000).toFixed(1)}M
+                          </text>
+                        </g>
+                      );
+                    })}
+
+                    {/* Y-axis label (left) */}
+                    <text
+                      x={20}
+                      y={padding.top + chartHeight / 2}
+                      textAnchor="middle"
+                      className="text-xs font-semibold fill-gray-700"
+                      transform={`rotate(-90, 20, ${padding.top + chartHeight / 2})`}
+                    >
+                      Surgeon Spend
+                    </text>
+
+                    {/* Y-axis grid lines (right - compliance %) */}
+                    {[0, 25, 50, 75, 100].map(percent => {
+                      const y = padding.top + chartHeight - ((percent / 100) * chartHeight);
+                      return (
+                        <g key={`compliance-${percent}`}>
+                          <text
+                            x={padding.left + chartWidth + 10}
+                            y={y}
+                            textAnchor="start"
+                            alignmentBaseline="middle"
+                            className="text-xs fill-purple-600 font-semibold"
+                          >
+                            {percent}%
+                          </text>
+                        </g>
+                      );
+                    })}
+
+                    {/* Y-axis label (right) */}
+                    <text
+                      x={width - 20}
+                      y={padding.top + chartHeight / 2}
+                      textAnchor="middle"
+                      className="text-xs font-semibold fill-purple-600"
+                      transform={`rotate(90, ${width - 20}, ${padding.top + chartHeight / 2})`}
+                    >
+                      Cumulative % of Total System Spend
+                    </text>
+
+                    {/* Threshold lines */}
+                    {thresholdSurgeons.filter(t => t.reached).map(threshold => {
+                      const surgeon = cumulativeData[threshold.surgeonIndex];
+                      const x = padding.left + (threshold.surgeonIndex * barWidth) + barWidth / 2;
+                      const y = padding.top + chartHeight - (surgeon.cumulativeSpendPercent / 100 * chartHeight);
+
+                      return (
+                        <g key={threshold.threshold}>
+                          {/* Vertical line dropping from marker to x-axis */}
+                          <line
+                            x1={x}
+                            y1={y}
+                            x2={x}
+                            y2={padding.top + chartHeight}
+                            stroke="#7C3AED"
+                            strokeWidth={2}
+                            strokeDasharray="4,4"
+                            opacity={0.5}
+                          />
+                          <circle
+                            cx={x}
+                            cy={y}
+                            r={6}
+                            fill="#7C3AED"
+                            stroke="white"
+                            strokeWidth={2}
+                          />
+                          <text
+                            x={x}
+                            y={y - 15}
+                            textAnchor="middle"
+                            className="text-xs font-bold fill-purple-600"
+                          >
+                            {threshold.threshold}% spend
+                          </text>
+                        </g>
+                      );
+                    })}
+
+                    {/* Bars (surgeons) */}
+                    {cumulativeData.map((surgeon, idx) => {
+                      const x = padding.left + (idx * barWidth);
+                      const barHeight = (surgeon.totalSpend / maxSpend) * chartHeight;
+                      const y = padding.top + chartHeight - barHeight;
+
+                      // Color by status
+                      const color = surgeon.mustTransition ? '#EF4444' :  // red = transition
+                                    surgeon.isSherpa ? '#F59E0B' :          // amber = sherpa
+                                    surgeon.isLoyalist ? '#059669' :        // green = aligned
+                                    '#9CA3AF';                              // gray = flexible
+
+                      return (
+                        <g key={idx}>
+                          <rect
+                            x={x}
+                            y={y}
+                            width={barWidth - 1}
+                            height={barHeight}
+                            fill={color}
+                            opacity={0.7}
+                          />
+                        </g>
+                      );
+                    })}
+
+                    {/* Cumulative spend percentage line */}
+                    <polyline
+                      points={cumulativeData.map((surgeon, idx) => {
+                        const x = padding.left + (idx * barWidth) + barWidth / 2;
+                        const y = padding.top + chartHeight - (surgeon.cumulativeSpendPercent / 100 * chartHeight);
+                        return `${x},${y}`;
+                      }).join(' ')}
+                      fill="none"
+                      stroke="#7C3AED"
+                      strokeWidth={3}
+                    />
+
+                    {/* X-axis */}
+                    <line
+                      x1={padding.left}
+                      y1={padding.top + chartHeight}
+                      x2={padding.left + chartWidth}
+                      y2={padding.top + chartHeight}
+                      stroke="#374151"
+                      strokeWidth={2}
+                    />
+
+                    {/* X-axis label */}
+                    <text
+                      x={padding.left + chartWidth / 2}
+                      y={padding.top + chartHeight + 40}
+                      textAnchor="middle"
+                      className="text-sm font-semibold fill-gray-700"
+                    >
+                      Surgeons (sorted by risk score: low → high)
+                    </text>
+                  </svg>
+                </div>
+
+                {/* Summary Cards */}
+                <div className="grid grid-cols-3 gap-4">
+                  {thresholdSurgeons.filter(t => t.reached).map(threshold => {
+                    const surgeon = cumulativeData[threshold.surgeonIndex];
+                    return (
+                      <div key={threshold.threshold} className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                        <div className="text-2xl font-bold text-purple-900">
+                          {threshold.surgeonIndex + 1} surgeons
+                        </div>
+                        <div className="text-sm text-purple-700">
+                          To reach {threshold.threshold}% of system spend
+                        </div>
+                        <div className="text-xs text-purple-600 mt-1">
+                          ${(surgeon.cumulativeTotalSpend / 1000000).toFixed(2)}M cumulative
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+
         {/* Surgeon Table */}
         <div className="bg-white rounded-xl shadow-lg p-6">
           <h3 className="text-xl font-bold text-gray-900 mb-4">
@@ -2663,6 +3552,17 @@ const EnhancedOrthopedicDashboard = () => {
             <span className="ml-2 text-sm text-gray-500">({filteredSurgeons.length} surgeons)</span>
           </h3>
 
+          <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-lg mb-4">
+            <p className="text-sm text-blue-800 mb-2">
+              <strong>Status:</strong>
+              <span className="ml-2 text-red-700 font-semibold">TRANSITION</span> badge (red border) indicates surgeons who must change vendors.
+            </p>
+            <p className="text-sm text-blue-800">
+              <strong>Risk Score (0-10):</strong> Based on hospital risk, loyalty %, and transition need.
+              Aligned surgeons = 0 risk (no action needed). Higher scores = more challenging transitions requiring focused support.
+            </p>
+          </div>
+
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
@@ -2673,14 +3573,57 @@ const EnhancedOrthopedicDashboard = () => {
                   <th className="text-center p-3 font-bold text-purple-900">Total Cases</th>
                   <th className="text-left p-3 font-bold text-purple-900">Primary Vendor</th>
                   <th className="text-center p-3 font-bold text-purple-900">Loyalty %</th>
+                  <th className="text-center p-3 font-bold text-purple-900">Risk Score</th>
                   <th className="text-center p-3 font-bold text-purple-900">Status</th>
                   <th className="text-center p-3 font-bold text-purple-900">Robotic %</th>
                   <th className="text-center p-3 font-bold text-purple-900">Action</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredSurgeons.slice(0, 50).map((surgeon, idx) => (
-                  <tr key={idx} className="border-b border-gray-200 hover:bg-purple-50">
+                {(() => {
+                  // Calculate cumulative spend for threshold markers
+                  const visibleSurgeons = filteredSurgeons.slice(0, 50);
+                  // Calculate total system spend from ALL surgeons, not just filtered
+                  const totalSystemSpend = surgeonAnalytics
+                    .filter(s => s.totalSpend > 0)
+                    .reduce((sum, s) => sum + (s.totalSpend || 0), 0);
+                  let cumulativeSpend = 0;
+                  // Thresholds show remaining spend: 90% marker at 10% cumulative, 80% at 20%, 70% at 30%
+                  const thresholds = [
+                    { label: '90%', cumulativeTarget: 10 },
+                    { label: '80%', cumulativeTarget: 20 },
+                    { label: '70%', cumulativeTarget: 30 }
+                  ];
+                  const crossedThresholds = new Set();
+
+                  return visibleSurgeons.map((surgeon, idx) => {
+                    const prevCumulativePercent = totalSystemSpend > 0 ? (cumulativeSpend / totalSystemSpend) * 100 : 0;
+                    cumulativeSpend += surgeon.totalSpend || 0;
+                    const cumulativePercent = totalSystemSpend > 0 ? (cumulativeSpend / totalSystemSpend) * 100 : 0;
+
+                    // Check if this row crosses any thresholds (90% marker at 10% cumulative, etc.)
+                    const crossedHere = thresholds.filter(t =>
+                      prevCumulativePercent < t.cumulativeTarget && cumulativePercent >= t.cumulativeTarget && !crossedThresholds.has(t.label)
+                    );
+                    crossedHere.forEach(t => crossedThresholds.add(t.label));
+
+                    return (
+                      <>
+                        {/* Threshold marker if this row crosses a threshold */}
+                        {crossedHere.length > 0 && (
+                          <tr key={`threshold-${idx}`} className="bg-purple-100">
+                            <td colSpan="10" className="p-2 text-center">
+                              <div className="flex items-center justify-center gap-2">
+                                <div className="h-0.5 flex-1 bg-purple-400"></div>
+                                <span className="text-sm font-bold text-purple-700">
+                                  {crossedHere.map(t => `${t.label} Remaining Spend Below`).join(' & ')}
+                                </span>
+                                <div className="h-0.5 flex-1 bg-purple-400"></div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                        <tr key={idx} className="border-b border-gray-200 hover:bg-purple-50">
                     <td className="p-3 font-semibold text-gray-900">{surgeon.name}</td>
                     <td className="p-3 text-gray-700 text-sm">{surgeon.facility}</td>
                     <td className="p-3 text-center text-gray-700">{surgeon.region}</td>
@@ -2692,18 +3635,17 @@ const EnhancedOrthopedicDashboard = () => {
                       </span>
                     </td>
                     <td className="p-3 text-center">
-                      {surgeon.isLoyalist && (
-                        <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-semibold">
-                          LOYALIST
-                        </span>
-                      )}
-                      {surgeon.isSherpa && (
-                        <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-semibold ml-1">
-                          SHERPA
-                        </span>
-                      )}
+                      <span className={`font-bold ${
+                        surgeon.surgeonRiskScore >= 7 ? 'text-red-600' :
+                        surgeon.surgeonRiskScore >= 4 ? 'text-orange-600' :
+                        'text-green-600'
+                      }`}>
+                        {surgeon.surgeonRiskScore ? surgeon.surgeonRiskScore.toFixed(1) : '0.0'}
+                      </span>
+                    </td>
+                    <td className="p-3 text-center">
                       {surgeon.mustTransition && (
-                        <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-semibold ml-1">
+                        <span className="px-2 py-1 border-2 border-red-500 text-red-700 rounded text-xs font-semibold">
                           TRANSITION
                         </span>
                       )}
@@ -2720,7 +3662,10 @@ const EnhancedOrthopedicDashboard = () => {
                       </button>
                     </td>
                   </tr>
-                ))}
+                  </>
+                );
+              });
+              })()}
               </tbody>
             </table>
           </div>
