@@ -137,15 +137,9 @@ const EnhancedOrthopedicDashboard = () => {
     if (!realData?.scenarios) {
       return {}; // Return empty object if no data loaded yet
     }
-    // Convert scenarios object to have proper IDs as keys
-    const scenariosWithIds = {};
-    Object.entries(realData.scenarios).forEach(([key, scenario]) => {
-      scenariosWithIds[key] = {
-        id: key,
-        ...scenario
-      };
-    });
-    return scenariosWithIds;
+    // Use generateScenarios to ensure all scenarios have proper structure
+    // including savingsRange, volumeWeightedRisk, etc.
+    return generateScenarios(realData);
   }, [realData]);
 
   // Matrix Pricing Component Details from real data
