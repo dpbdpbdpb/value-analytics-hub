@@ -434,23 +434,33 @@ const AdminDataUpload = () => {
       .sort((a, b) => b[1].totalSpend - a[1].totalSpend)
       .map(([name, data]) => ({ name, ...data }));
 
+    const top4Vendors = vendorsBySpend.slice(0, 4);
     const top3Vendors = vendorsBySpend.slice(0, 3);
     const top2Vendors = vendorsBySpend.slice(0, 2);
     const vendors_2_3 = vendorsBySpend.slice(1, 3); // 2nd and 3rd vendors
     const vendors_1_3 = [vendorsBySpend[0], vendorsBySpend[2]]; // 1st and 3rd vendors
 
-    // Calculate pricing cap scenario savings
+    // Calculate pricing cap scenario savings (IMPLANTS ONLY)
+    // Note: Total spend includes implants (~30%) + accessories/disposables (~70%)
+    // Pricing caps apply to IMPLANT constructs only, not total spend
+
+    // Estimate implant-only spend (typically 30-35% of total orthopedic spend)
+    // This includes: acetabular cups/shells, femoral heads/stems, tibial trays/inserts, etc.
+    const estimatedImplantPercent = 0.31; // Based on typical orthopedic spend breakdown
+    const estimatedImplantSpend = totalSpend * estimatedImplantPercent;
+    const currentImplantCostPerCase = estimatedImplantSpend / totalCases;
+
+    // Cap pricing: $2500 for knee implants, $3000 for hip implants
     // Assume roughly 50/50 split between hip and knee cases
     const kneeCases = Math.round(totalCases * 0.5);
     const hipCases = Math.round(totalCases * 0.5);
-    const currentAvgCostPerCase = totalSpend / totalCases;
-
-    // Cap pricing: $2500 for knee, $3000 for hip
     const cappedKneeSpend = kneeCases * 2500;
     const cappedHipSpend = hipCases * 3000;
-    const cappedTotalSpend = cappedKneeSpend + cappedHipSpend;
-    const pricingCapSavings = Math.max(0, totalSpend - cappedTotalSpend);
-    const pricingCapPercent = totalSpend > 0 ? pricingCapSavings / totalSpend : 0;
+    const cappedImplantSpend = cappedKneeSpend + cappedHipSpend;
+
+    // Savings = reduction in implant spend only
+    const pricingCapSavings = Math.max(0, estimatedImplantSpend - cappedImplantSpend);
+    const pricingCapPercent = estimatedImplantSpend > 0 ? pricingCapSavings / estimatedImplantSpend : 0;
 
     // Scenario generation with proper field names for generateScenarios() function
     const scenarios = {
@@ -470,6 +480,24 @@ const AdminDataUpload = () => {
           complexity: 'Low',
           timeline: 0,
           costMillions: 0
+        }
+      },
+      'quad-source': {
+        name: 'Quad-Source Consolidation',
+        shortName: `${top4Vendors.map(v => v.name.split(' ')[0]).join('+')}`,
+        description: `Focus on top 4 vendors: ${top4Vendors.map(v => v.name).join(', ')}`,
+        vendors: top4Vendors.map(v => v.name),
+        annualSavings: totalSpend * 0.10,
+        savingsPercent: 0.10,
+        adoptionRate: 0.90, // 90%
+        riskLevel: 'low',
+        riskScore: 2.5,
+        quintupleMissionScore: 75,
+        npv5Year: (totalSpend * 0.10 * 5) - 2000000,
+        implementation: {
+          complexity: 'Medium',
+          timeline: 10,
+          costMillions: 2.0
         }
       },
       'tri-source': {
@@ -547,7 +575,7 @@ const AdminDataUpload = () => {
       'pricing-cap': {
         name: 'Pricing Cap by Construct',
         shortName: 'Pricing Cap',
-        description: `Cap pricing at $2,500 per knee and $3,000 per hip across all vendors`,
+        description: `Cap implant pricing at $2,500 per knee construct and $3,000 per hip construct across all vendors. Current avg: $${Math.round(currentImplantCostPerCase).toLocaleString()}/case.`,
         vendors: vendorsBySpend.map(v => v.name), // Keep all vendors, just cap pricing
         annualSavings: pricingCapSavings,
         savingsPercent: pricingCapPercent,
