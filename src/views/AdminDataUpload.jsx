@@ -436,6 +436,21 @@ const AdminDataUpload = () => {
 
     const top3Vendors = vendorsBySpend.slice(0, 3);
     const top2Vendors = vendorsBySpend.slice(0, 2);
+    const vendors_2_3 = vendorsBySpend.slice(1, 3); // 2nd and 3rd vendors
+    const vendors_1_3 = [vendorsBySpend[0], vendorsBySpend[2]]; // 1st and 3rd vendors
+
+    // Calculate pricing cap scenario savings
+    // Assume roughly 50/50 split between hip and knee cases
+    const kneeCases = Math.round(totalCases * 0.5);
+    const hipCases = Math.round(totalCases * 0.5);
+    const currentAvgCostPerCase = totalSpend / totalCases;
+
+    // Cap pricing: $2500 for knee, $3000 for hip
+    const cappedKneeSpend = kneeCases * 2500;
+    const cappedHipSpend = hipCases * 3000;
+    const cappedTotalSpend = cappedKneeSpend + cappedHipSpend;
+    const pricingCapSavings = Math.max(0, totalSpend - cappedTotalSpend);
+    const pricingCapPercent = totalSpend > 0 ? pricingCapSavings / totalSpend : 0;
 
     // Scenario generation with proper field names for generateScenarios() function
     const scenarios = {
@@ -475,10 +490,10 @@ const AdminDataUpload = () => {
           costMillions: 2.5
         }
       },
-      'premium-dual': {
-        name: 'Premium Dual-Source',
+      'dual-premium': {
+        name: 'Dual Premium',
         shortName: `${top2Vendors.map(v => v.name.split(' ')[0]).join('+')}`,
-        description: `Partner with ${top2Vendors.map(v => v.name).join(' + ')}`,
+        description: `Partner with top 2 vendors: ${top2Vendors.map(v => v.name).join(' + ')}`,
         vendors: top2Vendors.map(v => v.name),
         annualSavings: totalSpend * 0.18,
         savingsPercent: 0.18,
@@ -491,6 +506,60 @@ const AdminDataUpload = () => {
           complexity: 'Medium',
           timeline: 15,
           costMillions: 3.5
+        }
+      },
+      'dual-value': {
+        name: 'Dual Value',
+        shortName: `${vendors_2_3.map(v => v.name.split(' ')[0]).join('+')}`,
+        description: `Partner with 2nd and 3rd vendors: ${vendors_2_3.map(v => v.name).join(' + ')}`,
+        vendors: vendors_2_3.map(v => v.name),
+        annualSavings: totalSpend * 0.16,
+        savingsPercent: 0.16,
+        adoptionRate: 0.70, // 70%
+        riskLevel: 'medium',
+        riskScore: 6,
+        quintupleMissionScore: 80,
+        npv5Year: (totalSpend * 0.16 * 5) - 3200000,
+        implementation: {
+          complexity: 'Medium-High',
+          timeline: 18,
+          costMillions: 3.2
+        }
+      },
+      'dual-innovation': {
+        name: 'Dual Innovation',
+        shortName: `${vendors_1_3.map(v => v.name.split(' ')[0]).join('+')}`,
+        description: `Partner with 1st and 3rd vendors: ${vendors_1_3.map(v => v.name).join(' + ')}`,
+        vendors: vendors_1_3.map(v => v.name),
+        annualSavings: totalSpend * 0.20,
+        savingsPercent: 0.20,
+        adoptionRate: 0.68, // 68%
+        riskLevel: 'medium-high',
+        riskScore: 6.5,
+        quintupleMissionScore: 84,
+        npv5Year: (totalSpend * 0.20 * 5) - 4000000,
+        implementation: {
+          complexity: 'High',
+          timeline: 18,
+          costMillions: 4.0
+        }
+      },
+      'pricing-cap': {
+        name: 'Pricing Cap by Construct',
+        shortName: 'Pricing Cap',
+        description: `Cap pricing at $2,500 per knee and $3,000 per hip across all vendors`,
+        vendors: vendorsBySpend.map(v => v.name), // Keep all vendors, just cap pricing
+        annualSavings: pricingCapSavings,
+        savingsPercent: pricingCapPercent,
+        adoptionRate: 0.95, // 95% - easier adoption since vendors stay the same
+        riskLevel: 'low',
+        riskScore: 2,
+        quintupleMissionScore: 88,
+        npv5Year: (pricingCapSavings * 5) - 1000000,
+        implementation: {
+          complexity: 'Low',
+          timeline: 6,
+          costMillions: 1.0
         }
       }
     };

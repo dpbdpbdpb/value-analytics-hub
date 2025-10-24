@@ -699,7 +699,7 @@ const EnhancedOrthopedicDashboard = () => {
                       { min: 22, max: 100 }
                     ].map((savingsCol, colIdx) => {
                       const scenariosInCell = Object.values(SCENARIOS).filter(s => {
-                        const savingsPercent = s.savingsPercent || 0;
+                        const savingsPercent = (s.savingsPercent || 0) * 100; // Convert to percentage
                         const risk = s.riskScore || 0;
                         return savingsPercent >= savingsCol.min && savingsPercent < savingsCol.max &&
                                risk >= riskRow.min && risk < riskRow.max;
@@ -734,7 +734,7 @@ const EnhancedOrthopedicDashboard = () => {
                                     {s.shortName}
                                   </div>
                                   <div className="text-xs text-gray-700 font-medium">
-                                    {s.savingsPercent.toFixed(0)}% / {s.riskScore.toFixed(1)}
+                                    {(s.savingsPercent * 100).toFixed(0)}% / {s.riskScore.toFixed(1)}
                                   </div>
                                 </div>
                               ))}
