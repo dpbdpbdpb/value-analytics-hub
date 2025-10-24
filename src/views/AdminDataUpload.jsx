@@ -1307,6 +1307,111 @@ const AdminDataUpload = () => {
 
             {validationResults.isValid ? (
               <div className="space-y-4">
+                {/* Data Health Score Badge */}
+                {validationResults.healthScore !== undefined && (
+                  <div className={`border-2 rounded-xl p-6 ${
+                    validationResults.healthColor === 'green' ? 'bg-green-50 border-green-300' :
+                    validationResults.healthColor === 'blue' ? 'bg-blue-50 border-blue-300' :
+                    validationResults.healthColor === 'yellow' ? 'bg-yellow-50 border-yellow-300' :
+                    'bg-red-50 border-red-300'
+                  }`}>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`text-6xl font-bold ${
+                          validationResults.healthColor === 'green' ? 'text-green-700' :
+                          validationResults.healthColor === 'blue' ? 'text-blue-700' :
+                          validationResults.healthColor === 'yellow' ? 'text-yellow-700' :
+                          'text-red-700'
+                        }`}>
+                          {validationResults.healthScore}
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-gray-900">Data Health Score</div>
+                          <div className={`text-sm font-semibold ${
+                            validationResults.healthColor === 'green' ? 'text-green-700' :
+                            validationResults.healthColor === 'blue' ? 'text-blue-700' :
+                            validationResults.healthColor === 'yellow' ? 'text-yellow-700' :
+                            'text-red-700'
+                          }`}>
+                            {validationResults.healthStatus}
+                          </div>
+                        </div>
+                      </div>
+                      <div className={`text-7xl ${
+                        validationResults.healthScore >= 90 ? '✅' :
+                        validationResults.healthScore >= 75 ? '✅' :
+                        validationResults.healthScore >= 60 ? '⚠️' : '🚨'
+                      }`}>
+                        {validationResults.healthScore >= 90 ? '✅' :
+                         validationResults.healthScore >= 75 ? '✅' :
+                         validationResults.healthScore >= 60 ? '⚠️' : '🚨'}
+                      </div>
+                    </div>
+
+                    {/* Quick Quality Metrics */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 pt-4 border-t border-gray-200">
+                      <div className="text-center">
+                        <div className="text-xs text-gray-600 mb-1">Surgeons w/ Cases</div>
+                        <div className="text-xl font-bold text-gray-900">
+                          {validationResults.summary.surgeonsWithCases || 0}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {validationResults.summary.totalSurgeons ?
+                            ((validationResults.summary.surgeonsWithCases / validationResults.summary.totalSurgeons) * 100).toFixed(0) : 0}%
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-gray-600 mb-1">Avg Cost/Case</div>
+                        <div className="text-xl font-bold text-gray-900">
+                          ${(validationResults.summary.avgCostPerCase || 0).toLocaleString()}
+                        </div>
+                        <div className="text-xs text-gray-500">median: ${(validationResults.summary.medianCostPerCase || 0).toLocaleString()}</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-gray-600 mb-1">Components</div>
+                        <div className="text-xl font-bold text-gray-900">
+                          {(validationResults.summary.knownComponents || 0).toLocaleString()}
+                        </div>
+                        <div className="text-xs text-gray-500">{validationResults.summary.unknownPercent || '0%'} unknown</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs text-gray-600 mb-1">Regional Coverage</div>
+                        <div className="text-xl font-bold text-gray-900">
+                          {validationResults.summary.regionalCoverage || '0%'}
+                        </div>
+                        <div className="text-xs text-gray-500">of surgeons</div>
+                      </div>
+                    </div>
+
+                    {/* Outliers Warning */}
+                    {validationResults.summary.outliers > 0 && (
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <div className="flex items-center gap-2 text-sm text-orange-700">
+                          <AlertCircle className="w-4 h-4" />
+                          <span className="font-semibold">{validationResults.summary.outliers} outlier{validationResults.summary.outliers > 1 ? 's' : ''} detected</span>
+                          <span className="text-gray-600">
+                            (cost/case outside $500-$50K range)
+                          </span>
+                        </div>
+                        {validationResults.outlierDetails && validationResults.outlierDetails.length > 0 && (
+                          <details className="mt-2">
+                            <summary className="text-xs text-gray-600 cursor-pointer hover:text-gray-900">
+                              View outliers
+                            </summary>
+                            <div className="mt-2 space-y-1 text-xs">
+                              {validationResults.outlierDetails.map((outlier, idx) => (
+                                <div key={idx} className="bg-white rounded px-2 py-1">
+                                  {outlier.name}: {outlier.cases} cases, ${Math.round(outlier.costPerCase).toLocaleString()}/case
+                                </div>
+                              ))}
+                            </div>
+                          </details>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                   <p className="text-green-800 font-semibold">✅ Data validated successfully!</p>
                 </div>

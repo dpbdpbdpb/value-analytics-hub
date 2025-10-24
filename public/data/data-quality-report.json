@@ -1,10 +1,10 @@
 {
-  "timestamp": "2025-10-24T04:27:47.515Z",
+  "timestamp": "2025-10-24T04:33:42.585Z",
   "dataFile": "/Users/doug/CommonSpirit/orthopedic-dashboard/public/data/hip-knee-data.json",
   "passed": true,
   "errors": [],
   "warnings": [
-    "4 surgeons have cost/case outside normal range ($500-$50000)"
+    "2 surgeons have cost/case outside normal range ($500-$50000)"
   ],
   "info": [
     "✓ Metadata present (version 1.0)",
@@ -12,16 +12,16 @@
   ],
   "metrics": {
     "totalSurgeons": 785,
-    "surgeonsWithCases": 444,
-    "surgeonsWithZeroCases": 341,
-    "zeroCasePercent": "43.4%",
+    "surgeonsWithCases": 487,
+    "surgeonsWithZeroCases": 298,
+    "zeroCasePercent": "38.0%",
     "costPerCase": {
-      "min": 52,
-      "median": 3852,
-      "average": 6397,
-      "max": 86520
+      "min": 17,
+      "median": 2245,
+      "average": 2737,
+      "max": 48935
     },
-    "outliers": 4,
+    "outliers": 2,
     "regionalCoverage": "100.0%",
     "regions": [
       "MOUNTAIN",
