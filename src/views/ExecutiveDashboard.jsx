@@ -877,7 +877,7 @@ const EnhancedOrthopedicDashboard = () => {
                     <button
                       onClick={() => {
                         setSelectedScenario(scenario.id);
-                        setActiveTab('financial');
+                        setActiveTab('overview');
                       }}
                       className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-semibold hover:bg-purple-700 transition-colors"
                     >
@@ -2879,6 +2879,7 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
                         onClick={() => {
                           setSurgeonSearchQuery(surgeon.name);
                           setShowSurgeonAutocomplete(false);
+                          setSelectedSurgeon(surgeon);
                         }}
                         className="p-3 hover:bg-purple-50 cursor-pointer border-b border-gray-100 last:border-b-0"
                       >
@@ -2916,8 +2917,8 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
           </div>
 
           {(() => {
-            // Prepare data for scatter plot
-            const allData = filteredSurgeons.map(s => ({
+            // Prepare data for scatter plot (use all surgeons, not filtered)
+            const allData = surgeonAnalyticsWithSherpas.map(s => ({
               ...s,
               costPerCase: s.totalSpend / s.volume
             })).filter(s => s.volume > 0 && s.totalSpend > 0);
