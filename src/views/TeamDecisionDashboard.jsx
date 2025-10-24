@@ -143,12 +143,6 @@ const TeamDecisionDashboard = () => {
                         {formatCurrency(scenario.npv5Year || 0, { millions: true })}
                       </div>
                     </div>
-                    <div className="bg-white rounded-lg border border-amber-200 p-2">
-                      <div className="text-xs text-amber-700 mb-0.5">ROI</div>
-                      <div className="text-base font-bold text-amber-900">
-                        {(((scenario.npv5Year || 0) / 1000000) / (scenario.implementation?.costMillions || 1)).toFixed(1)}x
-                      </div>
-                    </div>
                   </div>
                 </>
               )}
@@ -829,40 +823,19 @@ const TeamDecisionDashboard = () => {
                         );
                       })}
                     </tr>
-                    <tr className="border-b border-gray-200 hover:bg-green-50">
-                      <td className="p-4 font-semibold text-gray-700">Implementation Cost</td>
-                      {Object.values(SCENARIOS).map((scenario, idx) => (
-                        <td key={idx} className="text-center p-4 text-green-900">
-                          {formatCurrency(scenario.implementation?.costMillions || 0, { millions: true })}
-                        </td>
-                      ))}
-                    </tr>
-                    <tr className="border-b border-gray-200 hover:bg-green-50">
-                      <td className="p-4 font-semibold text-gray-700">Vendor Coordination</td>
-                      {Object.values(SCENARIOS).map((scenario, idx) => (
-                        <td key={idx} className="text-center p-4 text-green-900">
-                          {scenario.vendors?.length || 0} vendors
-                        </td>
-                      ))}
-                    </tr>
                     <tr className="bg-blue-50 border-b border-blue-200">
-                      <td className="p-4 font-semibold text-blue-900">Surgeons to Train</td>
-                      {Object.values(SCENARIOS).map((scenario, idx) => (
-                        <td key={idx} className="text-center p-4 text-blue-900 text-sm">
-                          {Math.round(totalSurgeons * (1 - scenario.adoptionRate))} surgeons
-                        </td>
-                      ))}
-                    </tr>
-                    <tr className="bg-amber-50">
-                      <td className="p-4 font-semibold text-amber-900">ROI (5-Year NPV / Cost)</td>
+                      <td className="p-4 font-semibold text-blue-900">Surgeons to Transition</td>
                       {Object.values(SCENARIOS).map((scenario, idx) => {
-                        const npvInMillions = (scenario.npv5Year || 0) / 1000000;
-                        const roi = scenario.implementation?.costMillions > 0
-                          ? (npvInMillions / scenario.implementation.costMillions).toFixed(1)
-                          : 'N/A';
+                        const totalAffected = Math.round(totalSurgeons * (1 - scenario.adoptionRate));
+                        // Estimate high-volume loyalists: ~30% of affected are high volume (>50 cases/year)
+                        // and ~60% of those have >75% vendor loyalty
+                        const highVolumeLoyalists = Math.round(totalAffected * 0.30 * 0.60);
                         return (
-                          <td key={idx} className="text-center p-4 text-amber-900 text-sm font-bold">
-                            {roi}x
+                          <td key={idx} className="text-center p-4 text-blue-900 text-sm">
+                            <div className="font-bold">{totalAffected} total</div>
+                            <div className="text-xs text-blue-700 mt-1">
+                              ({highVolumeLoyalists} high-volume loyalists)
+                            </div>
                           </td>
                         );
                       })}
@@ -914,26 +887,83 @@ const TeamDecisionDashboard = () => {
                 </div>
               </div>
 
-              {/* Operational Insights */}
+              {/* Change Management Resource Requirements */}
+              <div className="mb-8">
+                <h3 className="font-bold text-green-900 mb-4 text-lg">Change Management Resource Requirements by Scenario</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  {Object.entries(SCENARIOS).filter(([id]) => id !== 'status-quo').slice(0, 6).map(([id, scenario]) => {
+                    const totalAffected = Math.round(totalSurgeons * (1 - scenario.adoptionRate));
+                    const complexity = scenario.implementation?.complexity || 'Medium';
+                    const timeline = scenario.implementation?.timeline || 12;
+
+                    // Calculate resource intensity
+                    const resourceLevel = complexity === 'Low' ? 'Light' :
+                                        complexity === 'Medium' ? 'Moderate' :
+                                        'Intensive';
+                    const pmFTE = complexity === 'Low' ? '0.5-1' :
+                                 complexity === 'Medium' ? '1-2' :
+                                 '2-3';
+
+                    return (
+                      <div key={id} className="bg-white border-2 border-green-200 rounded-lg p-4 hover:shadow-lg transition-shadow">
+                        <h4 className="font-bold text-gray-900 mb-3 text-sm">{scenario.shortName || scenario.name}</h4>
+                        <div className="space-y-2 text-xs">
+                          <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                            <span className="text-gray-600">Surgeons to Transition:</span>
+                            <span className="font-bold text-blue-900">{totalAffected}</span>
+                          </div>
+                          <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                            <span className="text-gray-600">Resource Intensity:</span>
+                            <span className={`font-bold ${
+                              resourceLevel === 'Light' ? 'text-green-700' :
+                              resourceLevel === 'Moderate' ? 'text-amber-700' :
+                              'text-red-700'
+                            }`}>{resourceLevel}</span>
+                          </div>
+                          <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                            <span className="text-gray-600">Project Manager:</span>
+                            <span className="font-bold text-gray-900">{pmFTE} FTE</span>
+                          </div>
+                          <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                            <span className="text-gray-600">Duration:</span>
+                            <span className="font-bold text-gray-900">{timeline} months</span>
+                          </div>
+                          <div className="pt-2">
+                            <div className="text-gray-600 mb-1">Key Resources:</div>
+                            <ul className="text-gray-700 space-y-0.5">
+                              <li>• Clinical champions</li>
+                              <li>• Training coordinators</li>
+                              <li>• Vendor liaisons</li>
+                              {complexity !== 'Low' && <li>• Change mgmt specialists</li>}
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Key Success Factors */}
               <div className="grid grid-cols-2 gap-6">
                 <div className="bg-green-50 border-l-4 border-green-600 p-6 rounded">
-                  <h3 className="font-bold text-green-900 mb-3">Operational Considerations</h3>
+                  <h3 className="font-bold text-green-900 mb-3">Operational Success Factors</h3>
                   <ul className="space-y-2 text-sm text-green-800">
-                    <li>• Timeline varies based on vendor count and surgeon adoption rates</li>
-                    <li>• Higher complexity requires more dedicated project management resources</li>
-                    <li>• Risk mitigation through phased rollout and strong communication</li>
-                    <li>• Success depends on coordination across Finance, Clinical, and Operations</li>
+                    <li>• <strong>Executive Sponsorship:</strong> C-suite visibility and support</li>
+                    <li>• <strong>Clinical Champions:</strong> Respected surgeons at each facility</li>
+                    <li>• <strong>Dedicated PM:</strong> Full-time focus during implementation</li>
+                    <li>• <strong>Communication Cadence:</strong> Weekly updates to all stakeholders</li>
+                    <li>• <strong>Phased Rollout:</strong> Start with aligned sites, then expand</li>
                   </ul>
                 </div>
                 <div className="bg-purple-50 border-l-4 border-purple-600 p-6 rounded">
-                  <h3 className="font-bold text-purple-900 mb-3">Mission Alignment</h3>
-                  <p className="text-sm text-purple-800 mb-3">
-                    Operational efficiency enables our Quintuple Aim:
-                  </p>
+                  <h3 className="font-bold text-purple-900 mb-3">Risk Mitigation Strategies</h3>
                   <ul className="space-y-2 text-sm text-purple-800">
-                    <li>• Efficient implementation minimizes disruption to patient care</li>
-                    <li>• Strong project management reduces provider burden</li>
-                    <li>• Successful execution captures financial benefits for mission</li>
+                    <li>• <strong>Parallel Run:</strong> Allow dual vendors during transition</li>
+                    <li>• <strong>Hotline Support:</strong> 24/7 vendor support during rollout</li>
+                    <li>• <strong>Feedback Loops:</strong> Weekly surgeon surveys and issue tracking</li>
+                    <li>• <strong>Contingency Plans:</strong> Pre-approved exceptions process</li>
+                    <li>• <strong>Quick Wins:</strong> Start with already-aligned hospitals</li>
                   </ul>
                 </div>
               </div>
@@ -973,7 +1003,7 @@ const TeamDecisionDashboard = () => {
                     >
                       <div className="font-bold">{scenario.name}</div>
                       <div className="text-xs opacity-90 mt-1">
-                        {scenario.vendors?.join(' + ') || 'N/A'}
+                        {scenario.preferredVendors?.join(' + ') || 'N/A'}
                       </div>
                     </button>
                   ))}
@@ -1003,7 +1033,7 @@ const TeamDecisionDashboard = () => {
               {/* Hospital Summary Stats */}
               <div className="grid grid-cols-4 gap-4 mb-8">
                 {(() => {
-                  const targetVendors = SCENARIOS[hospitalScenarioFilter]?.vendors || [];
+                  const targetVendors = SCENARIOS[hospitalScenarioFilter]?.preferredVendors || [];
                   const hospitals = Object.values(realData.hospitals || {});
 
                   // Calculate alignment: % of cases using target vendors
@@ -1069,7 +1099,7 @@ const TeamDecisionDashboard = () => {
               <div className="mb-8">
                 <h3 className="text-xl font-bold text-slate-900 mb-4">Hospital Alignment with {SCENARIOS[hospitalScenarioFilter]?.name}</h3>
                 <p className="text-sm text-gray-600 mb-4">
-                  Hospitals sorted by alignment (low to high) with target vendors: {SCENARIOS[hospitalScenarioFilter]?.vendors?.join(' + ')}.
+                  Hospitals sorted by alignment (low to high) with target vendors: {SCENARIOS[hospitalScenarioFilter]?.preferredVendors?.join(' + ')}.
                   Red rows = need most support, Green rows = already aligned. Target vendors highlighted in blue.
                 </p>
                 <div className="overflow-x-auto max-h-[600px] overflow-y-auto border border-gray-200 rounded-lg">
@@ -1088,13 +1118,13 @@ const TeamDecisionDashboard = () => {
                     <tbody>
                       {Object.entries(realData.hospitals || {})
                         .sort((a, b) => {
-                          const targetVendors = SCENARIOS[hospitalScenarioFilter]?.vendors || [];
+                          const targetVendors = SCENARIOS[hospitalScenarioFilter]?.preferredVendors || [];
                           const aAlignment = targetVendors.reduce((sum, vendor) => sum + (a[1].vendors?.[vendor]?.cases || 0), 0) / (a[1].totalCases || 1);
                           const bAlignment = targetVendors.reduce((sum, vendor) => sum + (b[1].vendors?.[vendor]?.cases || 0), 0) / (b[1].totalCases || 1);
                           return aAlignment - bAlignment;
                         })
                         .map(([hospitalName, hospital], idx) => {
-                          const targetVendors = SCENARIOS[hospitalScenarioFilter]?.vendors || [];
+                          const targetVendors = SCENARIOS[hospitalScenarioFilter]?.preferredVendors || [];
                           const targetCases = targetVendors.reduce((sum, vendor) => {
                             return sum + (hospital.vendors?.[vendor]?.cases || 0);
                           }, 0);

@@ -3,6 +3,7 @@ import { Search, X, TrendingUp, TrendingDown, AlertCircle, DollarSign, Package, 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, ComposedChart, ScatterChart, Scatter, ZAxis, AreaChart, Area, ReferenceLine, Label } from 'recharts';
 import NavigationHeader from '../components/shared/NavigationHeader';
 import ComponentComparisonView from '../components/ComponentComparisonView';
+import ComingSoonBadge from '../components/shared/ComingSoonBadge';
 
 const SurgeonTool = () => {
   const [surgeonData, setSurgeonData] = useState([]);
@@ -593,17 +594,20 @@ const SurgeonTool = () => {
 
   // Helper Functions for Peer Comparison
   const calculatePercentiles = (surgeon, allSurgeons) => {
-    const sortedByCases = [...allSurgeons].sort((a, b) => (a.totalCases || 0) - (b.totalCases || 0));
-    const sortedByCost = [...allSurgeons].sort((a, b) => (a.avgSpendPerCase || 0) - (b.avgSpendPerCase || 0));
-    const sortedBySpend = [...allSurgeons].sort((a, b) => (a.totalSpend || 0) - (b.totalSpend || 0));
+    // Sort descending (high to low) so rank #1 = highest
+    const sortedByCases = [...allSurgeons].sort((a, b) => (b.totalCases || 0) - (a.totalCases || 0));
+    const sortedByCost = [...allSurgeons].sort((a, b) => (b.avgSpendPerCase || 0) - (a.avgSpendPerCase || 0));
+    const sortedBySpend = [...allSurgeons].sort((a, b) => (b.totalSpend || 0) - (a.totalSpend || 0));
 
     const caseRank = sortedByCases.findIndex(s => s.id === surgeon.id) + 1;
     const costRank = sortedByCost.findIndex(s => s.id === surgeon.id) + 1;
     const spendRank = sortedBySpend.findIndex(s => s.id === surgeon.id) + 1;
 
-    const volumePercentile = (caseRank / allSurgeons.length) * 100;
-    const costPercentile = (costRank / allSurgeons.length) * 100;
-    const spendPercentile = (spendRank / allSurgeons.length) * 100;
+    // Percentile = % of surgeons you rank ABOVE
+    // Rank 1 (highest) = 100th percentile, Rank 785 (lowest) = 0th percentile
+    const volumePercentile = ((allSurgeons.length - caseRank) / allSurgeons.length) * 100;
+    const costPercentile = ((allSurgeons.length - costRank) / allSurgeons.length) * 100;
+    const spendPercentile = ((allSurgeons.length - spendRank) / allSurgeons.length) * 100;
 
     return {
       volumePercentile: Math.round(volumePercentile),
@@ -673,7 +677,7 @@ const SurgeonTool = () => {
       insights.push({
         icon: '🏆',
         title: 'Excellent Performance',
-        description: `You're in the top ${100 - percentiles.volumePercentile}% for both volume and cost efficiency.`,
+        description: `You have higher volume than ${percentiles.volumePercentile}% of surgeons with better cost efficiency.`,
         type: 'positive'
       });
 
@@ -1655,48 +1659,9 @@ const SurgeonTool = () => {
                     </div>
                   )}
 
-                  {/* 8-Agent Framework Overview Cards */}
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-                    {/* Clinical Evidence Score */}
-                    <div className="bg-white rounded-xl shadow-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <Heart className="text-red-500" size={24} />
-                        <span className="text-xs text-gray-500">Clinical Evidence</span>
-                      </div>
-                      <div className="text-xl font-bold text-gray-900">4.2/5.0</div>
-                      <div className="text-sm text-gray-600 mt-1">Evidence Quality</div>
-                      <div className="text-xs text-green-600 mt-2 font-semibold">
-                        ✓ Peer-reviewed outcomes
-                      </div>
-                    </div>
-
-                    {/* Patient Experience Score */}
-                    <div className="bg-white rounded-xl shadow-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <Star className="text-amber-500" size={24} />
-                        <span className="text-xs text-gray-500">Patient Experience</span>
-                      </div>
-                      <div className="text-xl font-bold text-gray-900">86/100</div>
-                      <div className="text-sm text-gray-600 mt-1">Device Reliability</div>
-                      <div className="text-xs text-gray-500 mt-2">
-                        Registry outcomes tracked
-                      </div>
-                    </div>
-
-                    {/* Provider Experience Score */}
-                    <div className="bg-white rounded-xl shadow-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <Users className="text-purple-600" size={24} />
-                        <span className="text-xs text-gray-500">Provider Experience</span>
-                      </div>
-                      <div className="text-xl font-bold text-gray-900">78/100</div>
-                      <div className="text-sm text-gray-600 mt-1">Workflow Efficiency</div>
-                      <div className="text-xs text-gray-500 mt-2">
-                        Vendor support quality
-                      </div>
-                    </div>
-
-                    {/* Annual Volume (kept for context) */}
+                  {/* Key Metrics - Real Data Only */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {/* Annual Volume - REAL DATA */}
                     <div className="bg-white rounded-xl shadow-lg p-4">
                       <div className="flex items-center justify-between mb-2">
                         <Activity className="text-blue-600" size={24} />
@@ -1713,6 +1678,34 @@ const SurgeonTool = () => {
                         </div>
                       )}
                     </div>
+
+                    {/* Total Spend - REAL DATA */}
+                    <div className="bg-white rounded-xl shadow-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <DollarSign className="text-green-600" size={24} />
+                        <span className="text-xs text-gray-500">Annual Spend</span>
+                      </div>
+                      <div className="text-xl font-bold text-gray-900">
+                        ${(displayData.totalSpend / 1000).toFixed(0)}K
+                      </div>
+                      <div className="text-sm text-gray-600 mt-1">
+                        ${displayData.avgSpendPerCase.toFixed(0)} per case
+                      </div>
+                      <div className="text-xs text-gray-600 mt-2">
+                        Implant & accessories
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Clinical Outcomes - Coming Soon */}
+                  <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold text-gray-900">Clinical Outcomes & Quality Metrics</h4>
+                      <ComingSoonBadge message="Data Integration Required" />
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      Clinical evidence scores, patient satisfaction metrics, and registry outcomes will be available when integrated with your quality tracking systems.
+                    </p>
                   </div>
                 </>
               );
@@ -1813,25 +1806,25 @@ const SurgeonTool = () => {
                           <div className="text-sm text-gray-600 mb-2">Volume Percentile</div>
                           <div className="text-2xl font-bold text-purple-600 mb-2">{percentiles.volumePercentile}%</div>
                           <div className="text-sm text-gray-700">
-                            You rank in top {100 - percentiles.volumePercentile}% by case volume
+                            Higher volume than {percentiles.volumePercentile}% of surgeons
                           </div>
                           <div className="text-xs text-gray-600 mt-2">Rank #{percentiles.volumeRank} of {surgeonData.length}</div>
                         </div>
 
                         <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 border-2 border-purple-100">
-                          <div className="text-sm text-gray-600 mb-2">Implant Cost Efficiency Percentile</div>
-                          <div className="text-2xl font-bold text-purple-600 mb-2">{percentiles.costPercentile}%</div>
+                          <div className="text-sm text-gray-600 mb-2">Cost Efficiency Percentile</div>
+                          <div className="text-2xl font-bold text-purple-600 mb-2">{100 - percentiles.costPercentile}%</div>
                           <div className="text-sm text-gray-700">
-                            You rank in top {100 - percentiles.costPercentile}% for implant cost per case
+                            Lower cost per case than {100 - percentiles.costPercentile}% of surgeons
                           </div>
-                          <div className="text-xs text-gray-600 mt-2">Rank #{percentiles.costRank} of {surgeonData.length}</div>
+                          <div className="text-xs text-gray-600 mt-2">Rank #{percentiles.costRank} of {surgeonData.length} (lower is better)</div>
                         </div>
 
                         <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 border-2 border-purple-100">
                           <div className="text-sm text-gray-600 mb-2">Total Spend Percentile</div>
                           <div className="text-2xl font-bold text-purple-600 mb-2">{percentiles.spendPercentile}%</div>
                           <div className="text-sm text-gray-700">
-                            You rank in top {100 - percentiles.spendPercentile}% by total spend
+                            Higher total spend than {percentiles.spendPercentile}% of surgeons
                           </div>
                           <div className="text-xs text-gray-600 mt-2">Rank #{percentiles.spendRank} of {surgeonData.length}</div>
                         </div>
@@ -2054,9 +2047,9 @@ const SurgeonTool = () => {
                           Surgeons Similar to Your Profile
                         </h4>
                         <p className="text-sm text-gray-600 mb-2">
-                          {percentiles.volumePercentile > 75
-                            ? 'Connect with these high performers:'
-                            : 'Learn from these similar surgeons who optimize costs:'}
+                          {percentiles.volumePercentile >= 75
+                            ? 'Connect with these high-volume peers:'
+                            : 'Learn from these similar surgeons:'}
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-2">
                           {similarSurgeons.map((sim, idx) => (
@@ -2477,7 +2470,7 @@ const SurgeonTool = () => {
                               const isSelected = s.key === selectedScenario;
                               const allScenarios = calculateAllScenarios(selectedSurgeon);
                               const maxNet = Math.max(...allScenarios.map(x => x.total3YearNet));
-                              const isBestROI = s.total3YearNet === maxNet && maxNet > 0;
+                              const isBestValue = s.total3YearNet === maxNet && maxNet > 0;
                               const isEasiest = !s.mustSwitch;
 
                               return (
@@ -2489,7 +2482,7 @@ const SurgeonTool = () => {
                                   <td className="px-3 py-2">
                                     <div className="flex items-center gap-2">
                                       <span>{s.key}: {s.name}</span>
-                                      {isBestROI && <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded">🏆 Best ROI</span>}
+                                      {isBestValue && <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded">🏆 Best Value</span>}
                                       {isEasiest && <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded">✅ Easy</span>}
                                     </div>
                                   </td>

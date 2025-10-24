@@ -2833,18 +2833,10 @@ const EnhancedOrthopedicDashboard = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-amber-50 rounded-lg p-3">
-                  <div className="text-xs text-amber-700 mb-1">5-Year NPV</div>
-                  <div className="text-lg font-bold text-amber-900">
-                    ${(getAdjustedMetrics(selectedScenario)?.annualSavings * 5 || 0).toFixed(1)}M
-                  </div>
-                </div>
-                <div className="bg-amber-50 rounded-lg p-3">
-                  <div className="text-xs text-amber-700 mb-1">ROI</div>
-                  <div className="text-lg font-bold text-amber-900">
-                    {(((getAdjustedMetrics(selectedScenario)?.annualSavings || 0) * 5 / 1000000) / (SCENARIOS[selectedScenario]?.implementation?.costMillions || 1)).toFixed(1)}x
-                  </div>
+              <div className="bg-amber-50 rounded-lg p-3">
+                <div className="text-xs text-amber-700 mb-1">5-Year NPV</div>
+                <div className="text-lg font-bold text-amber-900">
+                  ${(getAdjustedMetrics(selectedScenario)?.annualSavings * 5 || 0).toFixed(1)}M
                 </div>
               </div>
             </div>

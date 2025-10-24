@@ -12,13 +12,25 @@ console.log('Calculating switching burden by region for each consolidation scena
 const regions = [...new Set(data.surgeons.map(s => s.region))].filter(Boolean).sort();
 console.log(`Analyzing ${regions.length} regions across ${data.surgeons.length} surgeons\n`);
 
-// Function to calculate surgeon's primary vendor
-const getPrimaryVendor = (surgeon) => {
+// Function to check if surgeon has >75% spend concentration in one vendor
+const getLoyalVendor = (surgeon) => {
   if (!surgeon.vendors) return null;
+
+  const totalSpend = surgeon.totalSpend || 0;
+  if (totalSpend === 0) return null;
+
+  // Find vendor with highest spend
   const vendors = Object.entries(surgeon.vendors)
     .map(([vendor, stats]) => ({ vendor, spend: stats.spend || 0 }))
     .sort((a, b) => b.spend - a.spend);
-  return vendors.length > 0 ? vendors[0].vendor : null;
+
+  if (vendors.length === 0) return null;
+
+  const topVendor = vendors[0];
+  const concentration = (topVendor.spend / totalSpend) * 100;
+
+  // Only return vendor if surgeon has >75% concentration
+  return concentration > 75 ? topVendor.vendor : null;
 };
 
 // Calculate switching burden for each region-scenario combination
@@ -41,8 +53,8 @@ Object.entries(data.scenarios).forEach(([scenarioKey, scenario]) => {
     let totalSpend = 0;
 
     regionSurgeons.forEach(surgeon => {
-      const primaryVendor = getPrimaryVendor(surgeon);
-      const mustSwitch = primaryVendor && !preferredVendors.includes(primaryVendor);
+      const loyalVendor = getLoyalVendor(surgeon);
+      const mustSwitch = loyalVendor && !preferredVendors.includes(loyalVendor);
 
       totalCases += surgeon.totalCases || 0;
       totalSpend += surgeon.totalSpend || 0;

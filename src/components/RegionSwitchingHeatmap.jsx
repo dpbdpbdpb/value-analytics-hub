@@ -1,25 +1,58 @@
 import React, { useState, useEffect } from 'react';
 import { Info } from 'lucide-react';
+import { DataNotAvailable } from './shared/ComingSoonBadge';
 
 const RegionSwitchingHeatmap = () => {
   const [heatmapData, setHeatmapData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [hasRealRegionData, setHasRealRegionData] = useState(false);
 
   useEffect(() => {
-    fetch('/data/region-switching-heatmap.json')
+    // Check if we have real region data from the main data file
+    fetch('/data/hip-knee-data.json')
       .then(res => res.json())
       .then(data => {
-        setHeatmapData(data);
-        setLoading(false);
+        // Check if surgeons have real region data (not synthetic)
+        const surgeonsWithRegion = data.surgeons?.filter(s => s.region).length || 0;
+        const hasRegions = surgeonsWithRegion > 0 && data.metadata?.dataQuality?.realData?.regions;
+
+        setHasRealRegionData(hasRegions);
+
+        if (hasRegions) {
+          // Only load heatmap if we have real region data
+          return fetch('/data/region-switching-heatmap.json')
+            .then(res => res.json())
+            .then(heatmapData => {
+              setHeatmapData(heatmapData);
+              setLoading(false);
+            });
+        } else {
+          setLoading(false);
+        }
       })
       .catch(err => {
-        console.error('Error loading heatmap data:', err);
+        console.error('Error loading data:', err);
         setLoading(false);
       });
   }, []);
 
   if (loading) {
     return <div className="text-center py-8">Loading heatmap...</div>;
+  }
+
+  // Show "Coming Soon" if we don't have real region data
+  if (!hasRealRegionData) {
+    return (
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          Regional Switching Burden Heatmap
+        </h2>
+        <DataNotAvailable
+          title="Regional Analysis Coming Soon"
+          description="Regional switching burden analysis will be available when your data includes region/facility information. This analysis will show which geographic areas face the most physician disruption under each consolidation scenario."
+        />
+      </div>
+    );
   }
 
   if (!heatmapData) {
