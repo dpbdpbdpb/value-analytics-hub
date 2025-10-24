@@ -154,13 +154,33 @@ const AdminDataUpload = () => {
 
   // Helper: Identify if component is a primary component (one per surgery)
   const isPrimaryComponent = (componentName) => {
+    if (!componentName) return false;
     const name = componentName.toUpperCase();
-    // Primary hip components (typically 1 per surgery)
-    const hipPrimary = ['ACETABULAR CUP', 'ACETABULAR SHELL', 'CUP'];
-    // Primary knee components (typically 1 per surgery)
-    const kneePrimary = ['FEMORAL COMPONENT', 'TIBIAL TRAY', 'TIBIAL BASEPLATE'];
 
-    return hipPrimary.some(p => name.includes(p)) || kneePrimary.some(p => name.includes(p));
+    // Hip primary component indicators (typically 1 per surgery)
+    const isHipPrimary =
+      // Acetabular components (cup, shell, liner combinations)
+      (name.includes('ACETABULAR') && (name.includes('CUP') || name.includes('SHELL'))) ||
+      (name.includes('ACETAB') && (name.includes('CUP') || name.includes('SHELL'))) ||
+      // Femoral hip components (stem, head)
+      (name.includes('FEMORAL') && name.includes('STEM') && !name.includes('KNEE')) ||
+      (name.includes('FEM') && name.includes('STEM') && !name.includes('KNEE')) ||
+      // Standalone hip indicators
+      (name.includes('HIP') && (name.includes('CUP') || name.includes('SHELL') || name.includes('STEM')));
+
+    // Knee primary component indicators (typically 1 per surgery)
+    const isKneePrimary =
+      // Tibial components (tray, baseplate, plate)
+      (name.includes('TIBIAL') && (name.includes('TRAY') || name.includes('BASEPLATE') || name.includes('BASE PLATE') || name.includes('PLATE'))) ||
+      (name.includes('TIB') && (name.includes('TRAY') || name.includes('BASEPLATE') || name.includes('BASE PLATE') || name.includes('PLATE'))) ||
+      // Femoral knee components
+      (name.includes('FEMORAL') && (name.includes('KNEE') || name.includes('COMP'))) ||
+      (name.includes('FEM') && name.includes('KNEE')) ||
+      // Knee-specific patterns
+      (name.includes('KNEE') && name.includes('FEMORAL')) ||
+      (name.includes('KNEE') && name.includes('TIBIAL'));
+
+    return isHipPrimary || isKneePrimary;
   };
 
   // Transform raw data to JSON (implementing the prompt logic)
