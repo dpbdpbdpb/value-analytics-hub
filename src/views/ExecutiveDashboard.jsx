@@ -697,6 +697,75 @@ const EnhancedOrthopedicDashboard = () => {
                 ))}
               </tr>
 
+              {/* Pricing Cap Section Header */}
+              <tr className="bg-blue-50 border-t-2 border-blue-200">
+                <td colSpan={filteredScenarios.length + 1} className="px-4 py-2">
+                  <div className="font-bold text-blue-900 text-sm uppercase tracking-wide">
+                    + Pricing Cap Strategy (Additional Savings Potential)
+                  </div>
+                </td>
+              </tr>
+
+              {/* Pricing Cap Feasibility Row */}
+              <tr className="border-b hover:bg-gray-50 bg-blue-25">
+                <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                  Pricing Cap Feasibility
+                </td>
+                {filteredScenarios.map(scenario => (
+                  <td
+                    key={scenario.id}
+                    className={`px-4 py-4 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                  >
+                    <div className="font-bold text-blue-600 text-lg">
+                      {scenario.pricingCap?.feasibilityPercent || 0}%
+                    </div>
+                    <div className="text-xs text-gray-600 mt-1">
+                      {scenario.pricingCap?.rationale || 'Calculating...'}
+                    </div>
+                  </td>
+                ))}
+              </tr>
+
+              {/* Additional Pricing Cap Savings Row */}
+              <tr className="border-b hover:bg-gray-50 bg-blue-25">
+                <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                  + Pricing Cap Savings
+                </td>
+                {filteredScenarios.map(scenario => (
+                  <td
+                    key={scenario.id}
+                    className={`px-4 py-4 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                  >
+                    <div className="font-bold text-blue-600 text-lg">
+                      +${(scenario.pricingCap?.expectedSavings || 0).toFixed(2)}M
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      of ${(scenario.pricingCap?.potentialSavings || 0).toFixed(2)}M potential
+                    </div>
+                  </td>
+                ))}
+              </tr>
+
+              {/* Total Potential Savings Row */}
+              <tr className="border-b-2 border-blue-300 bg-blue-100 font-bold">
+                <td className="px-4 py-4 font-bold text-blue-900 sticky left-0 bg-blue-100 z-10">
+                  = Total Potential Savings
+                </td>
+                {filteredScenarios.map(scenario => (
+                  <td
+                    key={scenario.id}
+                    className={`px-4 py-4 text-center ${selectedScenario === scenario.id ? 'bg-purple-100' : ''}`}
+                  >
+                    <div className="font-bold text-blue-900 text-xl">
+                      ${(scenario.totalPotentialSavings || 0).toFixed(2)}M
+                    </div>
+                    <div className="text-xs text-blue-700 mt-1">
+                      Base: ${scenario.annualSavings.toFixed(2)}M + Cap: ${(scenario.pricingCap?.expectedSavings || 0).toFixed(2)}M
+                    </div>
+                  </td>
+                ))}
+              </tr>
+
               {/* Action Row */}
               <tr className="bg-gray-50">
                 <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-gray-50 z-10">

@@ -142,6 +142,88 @@ export const calculateVolumeWeightedRisk = (surgeons, scenarioVendors, totalCase
 };
 
 /**
+ * Calculate pricing cap feasibility and potential savings for a scenario
+ *
+ * Pricing cap feasibility is based on:
+ * - Vendor count (more vendors = more competition = higher acceptance)
+ * - Vendor characteristics (premium vs value vendors)
+ * - Volume consolidation leverage
+ *
+ * @param {Array} vendors - List of vendors in the scenario
+ * @param {Object} realData - Raw data from orthopedic-data.json
+ * @returns {Object} Pricing cap metrics
+ */
+export const calculatePricingCapMetrics = (vendors, realData) => {
+  // Calculate total pricing cap savings potential from matrix pricing
+  const totalPricingCapPotential = realData.matrixPricing
+    ? realData.matrixPricing.reduce((sum, item) => sum + (item.potentialSavings || 0), 0) / 1000000
+    : 0;
+
+  if (totalPricingCapPotential === 0 || !vendors || vendors.length === 0) {
+    return {
+      feasibilityPercent: 0,
+      potentialSavings: 0,
+      expectedSavings: 0,
+      rational: 'No pricing cap data available'
+    };
+  }
+
+  // Base feasibility by vendor count
+  let feasibility = 0;
+  if (vendors.length >= 4) {
+    feasibility = 0.30; // Multiple vendors = good competition but harder to coordinate
+  } else if (vendors.length === 3) {
+    feasibility = 0.50; // Sweet spot: good competition + manageable coordination
+  } else if (vendors.length === 2) {
+    feasibility = 0.60; // Strong leverage with dual vendor model
+  } else if (vendors.length === 1) {
+    feasibility = 0.70; // Total control but highest risk if vendor walks
+  }
+
+  // Vendor characteristic adjustments
+  const vendorNames = vendors.map(v => v.toUpperCase());
+
+  // Premium vendors less willing to discount deeply
+  if (vendorNames.includes('STRYKER')) {
+    feasibility -= 0.10; // Premium brand, less flexible on pricing caps
+  }
+
+  // Value-focused vendors more willing to accept pricing caps
+  if (vendorNames.includes('JOHNSON & JOHNSON') || vendorNames.includes('ZIMMER BIOMET')) {
+    feasibility += 0.08; // More flexible, competitive pricing strategies
+  }
+
+  // Smaller vendors more willing to compete
+  if (vendorNames.includes('SMITH & NEPHEW') && vendors.length <= 3) {
+    feasibility += 0.07; // Hungry for market share
+  }
+
+  // Cap between 15% and 75%
+  feasibility = Math.max(0.15, Math.min(0.75, feasibility));
+
+  const expectedSavings = totalPricingCapPotential * feasibility;
+
+  // Generate rationale
+  let rationale = `${Math.round(feasibility * 100)}% likely to achieve pricing caps. `;
+  if (vendors.length === 3) {
+    rationale += 'Optimal vendor count for negotiating leverage.';
+  } else if (vendors.length === 2) {
+    rationale += 'Strong dual-vendor leverage for pricing caps.';
+  } else if (vendors.length === 1) {
+    rationale += 'Maximum control enables strict pricing enforcement.';
+  } else {
+    rationale += 'Competition among multiple vendors supports pricing discipline.';
+  }
+
+  return {
+    feasibilityPercent: Math.round(feasibility * 100),
+    potentialSavings: totalPricingCapPotential,
+    expectedSavings: expectedSavings,
+    rationale: rationale
+  };
+};
+
+/**
  * Generate standardized scenarios with volume-weighted risk
  *
  * @param {Object} realData - Raw data from orthopedic-data.json
@@ -156,10 +238,15 @@ export const generateScenarios = (realData) => {
   const baselineSpend = (realData.metadata?.totalSpend || 0) / 1000000; // Convert to millions
   const surgeons = realData.surgeons || [];
 
-  // Use ALL scenarios from the data file
+  // Use ALL scenarios from the data file EXCEPT pricing-cap (it's now a metric, not a scenario)
   const scenarios = {};
 
   Object.keys(realData.scenarios).forEach(scenarioId => {
+    // Skip the standalone pricing-cap scenario - it's now integrated as a metric
+    if (scenarioId === 'pricing-cap') {
+      return;
+    }
+
     const dataScenario = realData.scenarios[scenarioId];
     const vendors = dataScenario.vendors || [];
 
@@ -209,9 +296,11 @@ export const generateScenarios = (realData) => {
   });
 
 
-  // Calculate volume-weighted risk for each scenario
+  // Calculate volume-weighted risk and pricing cap metrics for each scenario
   Object.keys(scenarios).forEach(scenarioId => {
     const scenario = scenarios[scenarioId];
+
+    // Calculate volume-weighted risk
     const volumeWeightedRisk = calculateVolumeWeightedRisk(
       surgeons,
       scenario.vendors,
@@ -219,6 +308,14 @@ export const generateScenarios = (realData) => {
     );
     scenarios[scenarioId].volumeWeightedRisk = volumeWeightedRisk;
     scenarios[scenarioId].riskScore = volumeWeightedRisk.riskScore;
+
+    // Calculate pricing cap metrics
+    const pricingCapMetrics = calculatePricingCapMetrics(scenario.vendors, realData);
+    scenarios[scenarioId].pricingCap = pricingCapMetrics;
+
+    // Update total potential savings (base consolidation + pricing cap)
+    scenarios[scenarioId].totalPotentialSavings =
+      scenario.annualSavings + pricingCapMetrics.expectedSavings;
   });
 
   return scenarios;
@@ -270,5 +367,6 @@ export default {
   SCENARIO_IDS,
   SCENARIO_NAMES,
   generateScenarios,
-  calculateVolumeWeightedRisk
+  calculateVolumeWeightedRisk,
+  calculatePricingCapMetrics
 };
