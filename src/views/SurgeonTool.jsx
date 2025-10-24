@@ -7,12 +7,13 @@ import ComingSoonBadge from '../components/shared/ComingSoonBadge';
 
 const SurgeonTool = () => {
   const [surgeonData, setSurgeonData] = useState([]);
+  const [scenarios, setScenarios] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSurgeon, setSelectedSurgeon] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [selectedScenario, setSelectedScenario] = useState('C');
+  const [selectedScenario, setSelectedScenario] = useState('quad-source');
   const [showComponentDetail, setShowComponentDetail] = useState(true);
   const [expandedComponents, setExpandedComponents] = useState([]); // Track which components are expanded
   const [showPracticeTrends, setShowPracticeTrends] = useState(true);
@@ -24,7 +25,7 @@ const SurgeonTool = () => {
   const [projectionMode, setProjectionMode] = useState('realistic'); // optimistic, realistic, conservative
   const [savedScenario, setSavedScenario] = useState(null);
   const [showSystemContext, setShowSystemContext] = useState(true);
-  const [selectedSimulatorScenario, setSelectedSimulatorScenario] = useState('C');
+  const [selectedSimulatorScenario, setSelectedSimulatorScenario] = useState('quad-source');
   const [simulatorSurgeons, setSimulatorSurgeons] = useState(50);
   const [showDashboard, setShowDashboard] = useState(true);
   const [dismissedAlerts, setDismissedAlerts] = useState([]);
@@ -117,6 +118,22 @@ const SurgeonTool = () => {
           };
         });
         setSurgeonData(surgeons);
+
+        // Load scenarios from the data
+        if (data.scenarios) {
+          // Transform scenarios to match expected format
+          const transformedScenarios = {};
+          Object.entries(data.scenarios).forEach(([key, scenario]) => {
+            transformedScenarios[key] = {
+              name: scenario.shortName || scenario.name,
+              vendors: scenario.preferredVendors || [],
+              savingsPercent: scenario.savingsPercent || 0,
+              annualSavings: scenario.annualSavings || 0
+            };
+          });
+          setScenarios(transformedScenarios);
+        }
+
         setLoading(false);
       })
       .catch(err => {
@@ -124,17 +141,6 @@ const SurgeonTool = () => {
         setLoading(false);
       });
   }, []);
-
-  // Vendor consolidation scenarios
-  const scenarios = {
-    'A': { name: 'Status Quo', vendors: ['ZIMMER BIOMET', 'STRYKER', 'J&J', 'SMITH & NEPHEW', 'CONFORMIS'], savings: 0 },
-    'B': { name: 'Tri-Source (Zimmer + Stryker + J&J)', vendors: ['ZIMMER BIOMET', 'STRYKER', 'J&J'], savings: 0.12 },
-    'C': { name: 'Zimmer + J&J', vendors: ['ZIMMER BIOMET', 'J&J'], savings: 0.18 },
-    'D': { name: 'Stryker + Zimmer', vendors: ['STRYKER', 'ZIMMER BIOMET'], savings: 0.16 },
-    'E': { name: 'Stryker + J&J', vendors: ['STRYKER', 'J&J'], savings: 0.20 },
-    'F': { name: 'Zimmer Only', vendors: ['ZIMMER BIOMET'], savings: 0.25 },
-    'G': { name: 'Stryker Only', vendors: ['STRYKER'], savings: 0.22 }
-  };
 
   // Utility function to separate hip vs. knee data
   const separateHipKneeData = (surgeon) => {
@@ -1002,8 +1008,8 @@ const SurgeonTool = () => {
               <div className="text-2xl font-bold">Hip & Knee</div>
             </div>
             <div className="bg-white/20 rounded-lg p-3">
-              <div className="text-xs opacity-80">Data Includes</div>
-              <div className="text-2xl font-bold">Top 5 Components</div>
+              <div className="text-xs opacity-80">Consolidation Scenarios</div>
+              <div className="text-2xl font-bold">{Object.keys(scenarios).length}</div>
             </div>
           </div>
         </div>
@@ -1190,7 +1196,7 @@ const SurgeonTool = () => {
                     <div className="text-xs opacity-70 mt-1">Through vendor consolidation</div>
                   </div>
                   <div className="bg-white/20 rounded-lg p-4">
-                    <div className="text-2xl font-bold mb-1">6</div>
+                    <div className="text-2xl font-bold mb-1">{Object.keys(scenarios).length}</div>
                     <div className="text-sm opacity-80">Consolidation Scenarios</div>
                     <div className="text-xs opacity-70 mt-1">Different paths forward</div>
                   </div>
