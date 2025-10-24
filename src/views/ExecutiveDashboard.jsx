@@ -1864,12 +1864,13 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
                 <tr className="bg-purple-100 border-b-2 border-purple-300">
                   <th className="text-left p-4 font-bold text-purple-900">Hospital</th>
                   <th className="text-center p-4 font-bold text-purple-900">Region</th>
+                  <th className="text-center p-4 font-bold text-purple-900">Total Cases</th>
+                  <th className="text-center p-4 font-bold text-purple-900">% of Overall Spend</th>
                   <th className="text-center p-4 font-bold text-purple-900">Preferred Vendor</th>
                   <th className="text-center p-4 font-bold text-purple-900">Robots Available</th>
                   <th className="text-center p-4 font-bold text-purple-900" title="Surgeons with >200 cases/year who are ≥70% loyal to non-preferred vendors. These surgeons represent high-impact transition challenges.">High-Vol Loyalists<br/><span className="text-xs font-normal">(to non-preferred)</span></th>
-                  <th className="text-center p-4 font-bold text-purple-900">Non-Preferred Vendors</th>
                   <th className="text-center p-4 font-bold text-purple-900">Cases at Risk</th>
-                  <th className="text-center p-4 font-bold text-purple-900">% of Overall Spend</th>
+                  <th className="text-center p-4 font-bold text-purple-900">Non-Preferred Vendors</th>
                   <th className="text-center p-4 font-bold text-purple-900">Experienced Sherpas<br/><span className="text-xs font-normal">(≥30 cases/yr)</span></th>
                   <th className="text-center p-4 font-bold text-purple-900">Sherpa Capacity<br/><span className="text-xs font-normal">(volume-weighted)</span></th>
                   <th className="text-center p-4 font-bold text-purple-900">Risk Score<br/><span className="text-xs font-normal">(0-10)</span></th>
@@ -1938,7 +1939,7 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
                       {/* Threshold marker if this row crosses a threshold */}
                       {crossedHere.length > 0 && (
                         <tr key={`threshold-${idx}`} className="bg-purple-100">
-                          <td colSpan="12" className="p-2 text-center">
+                          <td colSpan="13" className="p-2 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <div className="h-0.5 flex-1 bg-purple-400"></div>
                               <span className="text-sm font-bold text-purple-700">
@@ -1952,6 +1953,16 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
                       <tr key={idx} className="border-b border-gray-200 hover:bg-purple-50">
                       <td className="p-4 font-semibold text-gray-900">{hospital.facility}</td>
                       <td className="p-4 text-center text-gray-700">{hospital.region}</td>
+                      <td className="p-4 text-center">
+                        <span className="font-bold text-lg text-gray-900">
+                          {hospital.totalCases?.toLocaleString() || 0}
+                        </span>
+                      </td>
+                      <td className="p-4 text-center">
+                        <span className="font-semibold text-gray-900">
+                          {totalSystemSpend > 0 ? ((hospital.totalSpend || 0) / totalSystemSpend * 100).toFixed(1) : '0.0'}%
+                        </span>
+                      </td>
                       <td className="p-4 text-center">
                         <div className="font-semibold text-gray-900">{hospital.preferredVendor}</div>
                         <div className="text-xs text-gray-600 mt-1">
@@ -1985,6 +1996,7 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
                           )}
                         </span>
                       </td>
+                      <td className="p-4 text-center font-bold text-purple-600">{hospital.casesAtRisk.toLocaleString()}</td>
                       <td className="p-4 text-center">
                         {hospital.highVolumeLoyalists > 0 ? (
                           <div className="text-sm">
@@ -2000,12 +2012,6 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
                         ) : (
                           <span className="text-gray-400 text-xs">—</span>
                         )}
-                      </td>
-                      <td className="p-4 text-center font-bold text-purple-600">{hospital.casesAtRisk.toLocaleString()}</td>
-                      <td className="p-4 text-center">
-                        <span className="font-semibold text-gray-900">
-                          {totalSystemSpend > 0 ? ((hospital.totalSpend || 0) / totalSystemSpend * 100).toFixed(1) : '0.0'}%
-                        </span>
                       </td>
                       <td className="p-4 text-center">
                         {potentialSherpas > 0 ? (
