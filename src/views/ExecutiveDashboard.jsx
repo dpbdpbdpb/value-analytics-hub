@@ -462,8 +462,6 @@ const EnhancedOrthopedicDashboard = () => {
   // OVERVIEW TAB
   const renderOverviewTab = () => (
     <div className="space-y-6">
-      <ExecutiveSummaryCard scenario={selectedScenario} />
-
       {/* Real Data Indicators */}
       {realData && (
         <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4 border-2 border-green-200">
