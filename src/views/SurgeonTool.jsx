@@ -1449,6 +1449,212 @@ const SurgeonTool = () => {
                     </div>
                   </div>
 
+                  {/* Vendor Distribution */}
+                  <div className="bg-white rounded-xl shadow-lg p-5">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-900">Vendor Distribution</h3>
+                        <p className="text-sm text-gray-600">Breakdown of vendor usage by spend</p>
+                      </div>
+                      <Package className="text-blue-600" size={24} />
+                    </div>
+
+                    {displayData.vendorBreakdown && displayData.vendorBreakdown.length > 0 ? (
+                      <div className="space-y-3">
+                        {displayData.vendorBreakdown
+                          .sort((a, b) => b.spend - a.spend)
+                          .map((vendor, idx) => {
+                            const percentage = (vendor.spend / displayData.totalSpend) * 100;
+                            const isPreferred = currentScenario.vendors.includes(vendor.vendor);
+
+                            return (
+                              <div key={idx} className="space-y-1">
+                                <div className="flex items-center justify-between text-sm">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-semibold text-gray-900">{vendor.vendor}</span>
+                                    {isPreferred && (
+                                      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                                        ✓ Preferred
+                                      </span>
+                                    )}
+                                    {!isPreferred && (
+                                      <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded">
+                                        Switch needed
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-right">
+                                    <div className="font-bold text-gray-900">${(vendor.spend / 1000).toFixed(1)}K</div>
+                                    <div className="text-xs text-gray-600">{percentage.toFixed(1)}%</div>
+                                  </div>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                  <div
+                                    className={`h-3 rounded-full transition-all ${
+                                      isPreferred
+                                        ? 'bg-gradient-to-r from-green-500 to-green-600'
+                                        : 'bg-gradient-to-r from-orange-400 to-orange-500'
+                                    }`}
+                                    style={{ width: `${percentage}%` }}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
+
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="font-semibold text-gray-700">Vendor Loyalty</span>
+                            <span className="font-bold text-purple-600">
+                              {displayData.vendorBreakdown.length > 0
+                                ? ((displayData.vendorBreakdown[0].spend / displayData.totalSpend) * 100).toFixed(0)
+                                : 0}% to {displayData.primaryVendor}
+                            </span>
+                          </div>
+                          <div className="text-xs text-gray-600 mt-1">
+                            Using {displayData.vendorBreakdown.length} vendor{displayData.vendorBreakdown.length !== 1 ? 's' : ''} total
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-500 text-center py-4">
+                        No vendor distribution data available
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Construct Cost Analysis */}
+                  {selectedSurgeon.constructCosts && (
+                    <div className="bg-white rounded-xl shadow-lg p-5">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className="text-lg font-bold text-gray-900">Construct Cost Analysis</h3>
+                          <p className="text-sm text-gray-600">Cost ranges based on vendors you use</p>
+                        </div>
+                        <DollarSign className="text-green-600" size={24} />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Hip Construct */}
+                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border-2 border-blue-200">
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="font-bold text-gray-900">Hip Construct</h4>
+                            <span className="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded">
+                              {selectedSurgeon.constructCosts.hip.vendorCount} vendor{selectedSurgeon.constructCosts.hip.vendorCount !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+
+                          {selectedSurgeon.constructCosts.hip.vendorCount > 0 ? (
+                            <>
+                              <div className="grid grid-cols-3 gap-2 mb-3">
+                                <div>
+                                  <div className="text-xs text-gray-600">Min</div>
+                                  <div className="text-lg font-bold text-green-700">
+                                    ${selectedSurgeon.constructCosts.hip.min.toFixed(0)}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div className="text-xs text-gray-600">Median</div>
+                                  <div className="text-xl font-bold text-blue-700">
+                                    ${selectedSurgeon.constructCosts.hip.median.toFixed(0)}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div className="text-xs text-gray-600">Max</div>
+                                  <div className="text-lg font-bold text-orange-700">
+                                    ${selectedSurgeon.constructCosts.hip.max.toFixed(0)}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="text-xs text-gray-700 bg-white/50 rounded p-2">
+                                <div className="font-semibold mb-1">Cost by Vendor:</div>
+                                {selectedSurgeon.constructCosts.hip.vendors.slice(0, 3).map((v, idx) => (
+                                  <div key={idx} className="flex justify-between">
+                                    <span>{v.vendor}</span>
+                                    <span className="font-bold">${v.cost.toFixed(0)}</span>
+                                  </div>
+                                ))}
+                                {selectedSurgeon.constructCosts.hip.vendors.length > 3 && (
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    +{selectedSurgeon.constructCosts.hip.vendors.length - 3} more
+                                  </div>
+                                )}
+                              </div>
+                            </>
+                          ) : (
+                            <div className="text-sm text-gray-500 text-center py-4">
+                              No hip construct pricing data
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Knee Construct */}
+                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 border-2 border-green-200">
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="font-bold text-gray-900">Knee Construct</h4>
+                            <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded">
+                              {selectedSurgeon.constructCosts.knee.vendorCount} vendor{selectedSurgeon.constructCosts.knee.vendorCount !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+
+                          {selectedSurgeon.constructCosts.knee.vendorCount > 0 ? (
+                            <>
+                              <div className="grid grid-cols-3 gap-2 mb-3">
+                                <div>
+                                  <div className="text-xs text-gray-600">Min</div>
+                                  <div className="text-lg font-bold text-green-700">
+                                    ${selectedSurgeon.constructCosts.knee.min.toFixed(0)}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div className="text-xs text-gray-600">Median</div>
+                                  <div className="text-xl font-bold text-green-700">
+                                    ${selectedSurgeon.constructCosts.knee.median.toFixed(0)}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div className="text-xs text-gray-600">Max</div>
+                                  <div className="text-lg font-bold text-orange-700">
+                                    ${selectedSurgeon.constructCosts.knee.max.toFixed(0)}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="text-xs text-gray-700 bg-white/50 rounded p-2">
+                                <div className="font-semibold mb-1">Cost by Vendor:</div>
+                                {selectedSurgeon.constructCosts.knee.vendors.slice(0, 3).map((v, idx) => (
+                                  <div key={idx} className="flex justify-between">
+                                    <span>{v.vendor}</span>
+                                    <span className="font-bold">${v.cost.toFixed(0)}</span>
+                                  </div>
+                                ))}
+                                {selectedSurgeon.constructCosts.knee.vendors.length > 3 && (
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    +{selectedSurgeon.constructCosts.knee.vendors.length - 3} more
+                                  </div>
+                                )}
+                              </div>
+                            </>
+                          ) : (
+                            <div className="text-sm text-gray-500 text-center py-4">
+                              No knee construct pricing data
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="mt-3 bg-blue-50 border-l-4 border-blue-400 p-3">
+                        <div className="flex items-start gap-2">
+                          <Info className="text-blue-600 mt-0.5" size={16} />
+                          <div className="text-xs text-gray-700">
+                            <strong>About Construct Costs:</strong> These costs represent complete implant sets (hip: cup + head + stem; knee: tray + insert + femoral + patella) based on median vendor pricing. Ranges reflect the different vendors you use.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* 8-Agent Framework Overview Cards */}
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
                     {/* Clinical Evidence Score */}

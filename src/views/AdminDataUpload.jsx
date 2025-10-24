@@ -221,7 +221,20 @@ const AdminDataUpload = () => {
 
       // Aggregate surgeons
       if (!surgeonMap[surgeon]) {
-        surgeonMap[surgeon] = { totalCases: 0, totalSpend: 0, vendors: {} };
+        surgeonMap[surgeon] = {
+          totalCases: 0,
+          totalSpend: 0,
+          vendors: {},
+          facility: null,
+          region: null
+        };
+      }
+      // Store facility and region (first occurrence wins)
+      if (facility && !surgeonMap[surgeon].facility) {
+        surgeonMap[surgeon].facility = facility;
+      }
+      if (region && !surgeonMap[surgeon].region) {
+        surgeonMap[surgeon].region = region;
       }
       // Count cases only from primary components for accurate surgery count
       if (isPrimaryComponent(component)) {
@@ -374,6 +387,8 @@ const AdminDataUpload = () => {
       name,
       totalCases: Math.round(data.totalCases),
       totalSpend: Math.round(data.totalSpend),
+      facility: data.facility,
+      region: data.region,
       vendors: Object.entries(data.vendors).reduce((acc, [vendor, stats]) => {
         acc[vendor] = {
           cases: Math.round(stats.cases),

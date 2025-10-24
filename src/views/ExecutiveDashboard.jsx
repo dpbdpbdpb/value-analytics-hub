@@ -17,6 +17,7 @@ import {
   BookOpen, MapPin, Stethoscope, Users2, Home, RefreshCw, Calendar
 } from 'lucide-react';
 import NavigationHeader from '../components/shared/NavigationHeader';
+import RegionSwitchingHeatmap from '../components/RegionSwitchingHeatmap';
 
 const EnhancedOrthopedicDashboard = () => {
   // Get persona from URL params
@@ -140,9 +141,20 @@ const EnhancedOrthopedicDashboard = () => {
     });
   };
 
-  // 5 Standardized Scenarios with volume-weighted adoption risk
+  // Load scenarios from real data (12 scenarios from hip-knee-data.json)
   const SCENARIOS = useMemo(() => {
-    return generateScenarios(realData);
+    if (!realData?.scenarios) {
+      return {}; // Return empty object if no data loaded yet
+    }
+    // Convert scenarios object to have proper IDs as keys
+    const scenariosWithIds = {};
+    Object.entries(realData.scenarios).forEach(([key, scenario]) => {
+      scenariosWithIds[key] = {
+        id: key,
+        ...scenario
+      };
+    });
+    return scenariosWithIds;
   }, [realData]);
 
   // Matrix Pricing Component Details from real data
@@ -789,6 +801,9 @@ const EnhancedOrthopedicDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Regional Switching Burden Heatmap */}
+      <RegionSwitchingHeatmap />
     </div>
   );
 
