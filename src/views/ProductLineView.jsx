@@ -98,8 +98,8 @@ const ProductLineView = () => {
   const decisionCanvases = [
     {
       id: 'team-decision',
-      name: 'Integrated Decision Dashboard',
-      description: 'Tri-pillar team view with all three perspectives integrated in one canvas',
+      name: 'Integrated',
+      description: 'Executive dashboard with scenario comparison and strategic insights',
       icon: Users,
       color: 'from-blue-600 to-blue-700',
       bgColor: 'bg-blue-50',
@@ -109,10 +109,10 @@ const ProductLineView = () => {
       status: 'active',
       route: `/executive/${specialtyName}`,
       features: [
-        'Unified tri-pillar view',
-        '5-scenario value framework',
-        'Real-time tradeoff analysis',
-        'Collaborative decision support'
+        'Scenario comparison table',
+        'Hospital risk analysis',
+        'Key metrics dashboard',
+        'Strategic decision support'
       ],
       metrics: {
         scenarios: 5,
@@ -121,81 +121,9 @@ const ProductLineView = () => {
       }
     },
     {
-      id: 'clinical-view',
-      name: 'Clinical Perspective',
-      description: 'Clinical quality, outcomes, and evidence-based analysis',
-      icon: Stethoscope,
-      color: 'from-green-600 to-green-700',
-      bgColor: 'bg-green-50',
-      borderColor: 'border-green-200',
-      textColor: 'text-green-900',
-      accentColor: 'text-green-600',
-      status: 'active',
-      route: `/executive/${specialtyName}?persona=clinical`,
-      features: [
-        'Clinical outcomes analysis',
-        'Quality metrics',
-        'Evidence-based recommendations',
-        'Surgeon-level insights'
-      ],
-      metrics: {
-        surgeons: orthoData?.metadata?.totalSurgeons || 443,
-        procedures: (orthoData?.metadata?.totalCases) ? `${(orthoData.metadata.totalCases).toLocaleString()}/yr` : '27,623/yr',
-        lastUpdated: (orthoData?.metadata?.lastUpdated) ? orthoData.metadata.lastUpdated.split('T')[0] : '2025-10-21'
-      }
-    },
-    {
-      id: 'financial-view',
-      name: 'Financial Perspective',
-      description: 'Cost analysis, value optimization, and financial impact modeling',
-      icon: DollarSign,
-      color: 'from-amber-600 to-amber-700',
-      bgColor: 'bg-amber-50',
-      borderColor: 'border-amber-200',
-      textColor: 'text-amber-900',
-      accentColor: 'text-amber-600',
-      status: 'active',
-      route: `/executive/${specialtyName}?persona=financial`,
-      features: [
-        'Cost per case analysis',
-        'Value opportunity modeling',
-        '$8M savings scenarios',
-        'Vendor consolidation impact'
-      ],
-      metrics: {
-        opportunity: '$8M',
-        scenarios: 5,
-        lastUpdated: '2025-10-21'
-      }
-    },
-    {
-      id: 'operational-view',
-      name: 'Operational Perspective',
-      description: 'Workflow efficiency, capacity optimization, and operational metrics',
-      icon: Settings,
-      color: 'from-purple-600 to-purple-700',
-      bgColor: 'bg-purple-50',
-      borderColor: 'border-purple-200',
-      textColor: 'text-purple-900',
-      accentColor: 'text-purple-600',
-      status: 'active',
-      route: `/executive/${specialtyName}?persona=operational`,
-      features: [
-        'OR efficiency analysis',
-        'Capacity planning',
-        'Workflow optimization',
-        'Resource utilization'
-      ],
-      metrics: {
-        orTime: '150 min avg',
-        utilization: '78%',
-        lastUpdated: '2025-10-21'
-      }
-    },
-    {
       id: 'surgeon-tool',
-      name: 'Surgeon-Level Analytics',
-      description: 'Individual surgeon performance, preferences, and value contribution',
+      name: 'Physician',
+      description: 'Individual surgeon profiles, search, sherpas, and transition planning',
       icon: BarChart3,
       color: 'from-teal-600 to-teal-700',
       bgColor: 'bg-teal-50',
@@ -205,17 +133,17 @@ const ProductLineView = () => {
       status: 'active',
       route: `/surgeon/${specialtyName}`,
       features: [
-        'Surgeon scorecards',
-        'Preference card analysis',
-        'Cost per surgeon',
-        'Volume and outcomes'
+        'Surgeon search & profiles',
+        'Sherpa recommendations',
+        'Peer benchmarks',
+        'Risk scoring'
       ],
       metrics: {
         surgeons: orthoData?.metadata?.totalSurgeons || 443,
         avgCost: (orthoData?.metadata?.totalCases && orthoData?.metadata?.totalSpend) ?
           `$${(Math.round(orthoData.metadata.totalSpend / orthoData.metadata.totalCases)).toLocaleString()}` :
-          '$1,523',
-        lastUpdated: (orthoData?.metadata?.lastUpdated) ? orthoData.metadata.lastUpdated.split('T')[0] : '2025-10-21'
+          '$2,352',
+        lastUpdated: (orthoData?.metadata?.lastUpdated) ? orthoData.metadata.lastUpdated.split('T')[0] : '2025-10-24'
       }
     }
   ];
@@ -452,12 +380,12 @@ const ProductLineView = () => {
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Decision Canvases</h2>
             <p className="text-gray-600 mb-6">
-              Select a decision canvas to analyze Hip & Knee replacement from different perspectives
+              Choose between strategic overview or detailed physician analysis
             </p>
           </div>
 
           {/* Decision Canvas Cards */}
-          <div className="grid grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 gap-6 max-w-4xl mx-auto">
             {decisionCanvases.map((canvas) => {
               const IconComponent = canvas.icon;
               const isActive = canvas.status === 'active';
@@ -528,14 +456,13 @@ const ProductLineView = () => {
               <div>
                 <h3 className="font-bold text-blue-900 mb-2">How to Use Decision Canvases</h3>
                 <div className="text-blue-800 text-sm space-y-2">
-                  <p>Each canvas provides different analytical views:</p>
+                  <p>Two streamlined views for efficient decision-making:</p>
                   <ul className="space-y-1 ml-4">
-                    <li>• <strong>Integrated Dashboard</strong> - All three pillars in one view for team decisions</li>
-                    <li>• <strong>Individual Perspectives</strong> - Deep dive into Clinical, Financial, or Operational analysis</li>
-                    <li>• <strong>Surgeon Analytics</strong> - Individual surgeon performance and preference analysis</li>
+                    <li>• <strong>Integrated</strong> - Executive dashboard with scenario comparison, hospital risk analysis, and key metrics for strategic decisions</li>
+                    <li>• <strong>Physician</strong> - Individual surgeon profiles, search capabilities, sherpa recommendations, and transition planning</li>
                   </ul>
                   <p className="mt-3 italic">
-                    All canvases use the same underlying data and 7-scenario framework to ensure consistency across perspectives.
+                    Both canvases use the same underlying data to ensure consistency across all analyses.
                   </p>
                 </div>
               </div>

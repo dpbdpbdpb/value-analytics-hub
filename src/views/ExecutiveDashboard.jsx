@@ -467,11 +467,8 @@ const EnhancedOrthopedicDashboard = () => {
   const renderTabs = () => {
     // Define all tabs with persona visibility
     const allTabs = [
-      { id: 'overview', label: 'Overview', icon: Eye, personas: ['financial', 'operational', 'clinical', 'integrated'] },
-      { id: 'financial', label: 'Financial Analysis', icon: DollarSign, personas: ['financial', 'operational', 'integrated'] },
-      { id: 'clinical', label: 'Clinical Analysis', icon: Stethoscope, personas: ['clinical', 'integrated'] },
-      { id: 'surgeons', label: 'Surgeon Analytics', icon: Users2, personas: ['clinical', 'operational', 'integrated'] },
-      { id: 'components', label: 'Component Analysis', icon: Package, personas: ['financial', 'operational', 'integrated'] }
+      { id: 'overview', label: 'Integrated', icon: Eye, personas: ['financial', 'operational', 'clinical', 'integrated'] },
+      { id: 'surgeons', label: 'Physician', icon: Users2, personas: ['clinical', 'operational', 'integrated'] }
     ];
 
     // Filter tabs based on current persona (integrated shows all tabs)
@@ -4459,10 +4456,7 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
         {/* Tab Content */}
         <div className="transition-all">
           {activeTab === 'overview' && renderOverviewTab()}
-          {activeTab === 'financial' && renderFinancialTab()}
-          {activeTab === 'clinical' && renderClinicalTab()}
           {activeTab === 'surgeons' && renderSurgeonTab()}
-          {activeTab === 'components' && renderComponentTab()}
         </div>
 
         {/* Footer with Data Source */}
