@@ -383,24 +383,231 @@ const TeamDecisionDashboard = () => {
                   <div>
                     <h3 className="font-bold text-blue-900 mb-2">How to Use This View</h3>
                     <p className="text-blue-800 text-sm">
-                      Each scenario shows three perspectives side-by-side. Review the tradeoffs between financial savings,
-                      clinical adoption, and operational feasibility. Select a scenario to see more details.
+                      Compare all scenarios side-by-side. Scan across each row to see how scenarios differ on key metrics like savings, clinical adoption, and implementation complexity.
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Scenario Cards - Responsive Grid Layout */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mt-6">
-                {Object.entries(SCENARIOS).map(([id, scenario]) => (
-                  <ThreePillarScenarioCard
-                    key={id}
-                    scenarioId={id}
-                    scenario={scenario}
-                    isSelected={selectedScenario === id}
-                    onClick={() => setSelectedScenario(id)}
-                  />
-                ))}
+              {/* Scenario Comparison Table - Horizontal Layout */}
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h2 className="text-2xl font-bold text-purple-900 mb-6">Scenario Comparison</h2>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-purple-100 border-b-2 border-purple-300">
+                        <th className="px-4 py-3 text-left font-bold text-purple-900 sticky left-0 bg-purple-100 z-10 min-w-[180px]">
+                          Metric
+                        </th>
+                        {Object.entries(SCENARIOS).map(([id, scenario]) => (
+                          <th
+                            key={id}
+                            className={`px-4 py-3 text-center font-bold text-purple-900 min-w-[200px] cursor-pointer hover:bg-purple-200 ${
+                              selectedScenario === id ? 'bg-purple-200' : ''
+                            }`}
+                            onClick={() => setSelectedScenario(id)}
+                          >
+                            <div className="font-bold text-base">{scenario.shortName || scenario.name}</div>
+                            <div className="text-xs text-purple-700 font-normal mt-1">{scenario.vendors?.length || 0} vendors</div>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {/* Finance Section Header */}
+                      <tr className="bg-amber-50">
+                        <td colSpan={Object.keys(SCENARIOS).length + 1} className="px-4 py-2">
+                          <div className="flex items-center gap-2">
+                            <DollarSign className="w-5 h-5 text-amber-700" />
+                            <span className="font-bold text-amber-900 uppercase tracking-wide text-sm">Finance - Funding the Mission</span>
+                          </div>
+                        </td>
+                      </tr>
+
+                      {/* Annual Savings */}
+                      <tr className="border-b hover:bg-amber-25">
+                        <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                          Annual Savings
+                        </td>
+                        {Object.entries(SCENARIOS).map(([id, scenario]) => (
+                          <td
+                            key={id}
+                            className={`px-4 py-4 text-center ${selectedScenario === id ? 'bg-purple-50' : ''}`}
+                          >
+                            <div className="font-bold text-green-600 text-lg">
+                              {formatCurrency(scenario.annualSavings || 0, { millions: true })}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {((scenario.savingsPercent || 0) * 100).toFixed(1)}% reduction
+                            </div>
+                          </td>
+                        ))}
+                      </tr>
+
+                      {/* 5-Year NPV */}
+                      <tr className="border-b hover:bg-amber-25">
+                        <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                          5-Year NPV
+                        </td>
+                        {Object.entries(SCENARIOS).map(([id, scenario]) => (
+                          <td
+                            key={id}
+                            className={`px-4 py-4 text-center ${selectedScenario === id ? 'bg-purple-50' : ''}`}
+                          >
+                            <div className="font-bold text-purple-600 text-lg">
+                              {formatCurrency(scenario.npv5Year || 0, { millions: true })}
+                            </div>
+                          </td>
+                        ))}
+                      </tr>
+
+                      {/* Clinical Section Header */}
+                      <tr className="bg-blue-50 border-t-2 border-gray-200">
+                        <td colSpan={Object.keys(SCENARIOS).length + 1} className="px-4 py-2">
+                          <div className="flex items-center gap-2">
+                            <Stethoscope className="w-5 h-5 text-blue-700" />
+                            <span className="font-bold text-blue-900 uppercase tracking-wide text-sm">Clinical - Delivering Excellent Care</span>
+                          </div>
+                        </td>
+                      </tr>
+
+                      {/* Adoption Rate */}
+                      <tr className="border-b hover:bg-blue-25">
+                        <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                          Already Aligned
+                        </td>
+                        {Object.entries(SCENARIOS).map(([id, scenario]) => (
+                          <td
+                            key={id}
+                            className={`px-4 py-4 ${selectedScenario === id ? 'bg-purple-50' : ''}`}
+                          >
+                            <div className="flex flex-col items-center gap-2">
+                              <span className="font-bold text-blue-600 text-2xl">
+                                {((scenario.adoptionRate || 0) * 100).toFixed(0)}%
+                              </span>
+                              <div className="w-full max-w-[120px] bg-gray-200 rounded-full h-3">
+                                <div
+                                  className="h-3 rounded-full bg-blue-500 transition-all"
+                                  style={{ width: `${((scenario.adoptionRate || 0) * 100).toFixed(0)}%` }}
+                                />
+                              </div>
+                              <div className="text-xs text-gray-600">of surgeons</div>
+                            </div>
+                          </td>
+                        ))}
+                      </tr>
+
+                      {/* Surgeons Needing Transition */}
+                      <tr className="border-b hover:bg-blue-25">
+                        <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                          Need Transitioning
+                        </td>
+                        {Object.entries(SCENARIOS).map(([id, scenario]) => (
+                          <td
+                            key={id}
+                            className={`px-4 py-4 text-center ${selectedScenario === id ? 'bg-purple-50' : ''}`}
+                          >
+                            <div className="font-bold text-orange-600 text-lg">
+                              {scenario.volumeWeightedRisk?.totalSurgeonsAffected || 0} surgeons
+                            </div>
+                          </td>
+                        ))}
+                      </tr>
+
+                      {/* Operations Section Header */}
+                      <tr className="bg-green-50 border-t-2 border-gray-200">
+                        <td colSpan={Object.keys(SCENARIOS).length + 1} className="px-4 py-2">
+                          <div className="flex items-center gap-2">
+                            <Shield className="w-5 h-5 text-green-700" />
+                            <span className="font-bold text-green-900 uppercase tracking-wide text-sm">Operations - Executing Efficiently</span>
+                          </div>
+                        </td>
+                      </tr>
+
+                      {/* Implementation Timeline */}
+                      <tr className="border-b hover:bg-green-25">
+                        <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                          Implementation Timeline
+                        </td>
+                        {Object.entries(SCENARIOS).map(([id, scenario]) => (
+                          <td
+                            key={id}
+                            className={`px-4 py-4 text-center ${selectedScenario === id ? 'bg-purple-50' : ''}`}
+                          >
+                            <div className="font-bold text-green-600 text-lg">
+                              {scenario.implementation?.timeline || 0}
+                            </div>
+                            <div className="text-xs text-gray-600">months to full deployment</div>
+                          </td>
+                        ))}
+                      </tr>
+
+                      {/* Complexity */}
+                      <tr className="border-b hover:bg-green-25">
+                        <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                          Complexity
+                        </td>
+                        {Object.entries(SCENARIOS).map(([id, scenario]) => (
+                          <td
+                            key={id}
+                            className={`px-4 py-4 text-center ${selectedScenario === id ? 'bg-purple-50' : ''}`}
+                          >
+                            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                              scenario.implementation?.complexity === 'Low' ? 'bg-green-100 text-green-800' :
+                              scenario.implementation?.complexity === 'Medium' || scenario.implementation?.complexity === 'Medium-High' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {scenario.implementation?.complexity || 'Medium'}
+                            </span>
+                          </td>
+                        ))}
+                      </tr>
+
+                      {/* Risk Score */}
+                      <tr className="border-b hover:bg-green-25">
+                        <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                          Risk Score
+                        </td>
+                        {Object.entries(SCENARIOS).map(([id, scenario]) => (
+                          <td
+                            key={id}
+                            className={`px-4 py-4 text-center ${selectedScenario === id ? 'bg-purple-50' : ''}`}
+                          >
+                            <div className="font-bold text-gray-900 text-lg">
+                              {(scenario.riskScore || 0).toFixed(1)}/10
+                            </div>
+                            <div className="text-xs text-gray-600">
+                              {scenario.riskLevel === 'low' ? 'Low Risk' :
+                               scenario.riskLevel === 'medium' || scenario.riskLevel === 'medium-high' ? 'Moderate Risk' :
+                               'High Risk'}
+                            </div>
+                          </td>
+                        ))}
+                      </tr>
+
+                      {/* Action Row */}
+                      <tr className="bg-gray-50 border-t-2 border-gray-300">
+                        <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-gray-50 z-10">
+                          Actions
+                        </td>
+                        {Object.entries(SCENARIOS).map(([id, scenario]) => (
+                          <td
+                            key={id}
+                            className={`px-4 py-4 text-center ${selectedScenario === id ? 'bg-purple-50' : ''}`}
+                          >
+                            <button
+                              onClick={() => setSelectedScenario(id)}
+                              className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-semibold hover:bg-purple-700 transition-colors"
+                            >
+                              Select Scenario
+                            </button>
+                          </td>
+                        ))}
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}

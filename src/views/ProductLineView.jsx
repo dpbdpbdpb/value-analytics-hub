@@ -107,7 +107,7 @@ const ProductLineView = () => {
       textColor: 'text-blue-900',
       accentColor: 'text-blue-600',
       status: 'active',
-      route: `/team-decision/${specialtyName}`,
+      route: `/executive/${specialtyName}`,
       features: [
         'Unified tri-pillar view',
         '5-scenario value framework',

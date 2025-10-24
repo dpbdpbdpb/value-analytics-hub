@@ -22,7 +22,7 @@ import RegionSwitchingHeatmap from '../components/RegionSwitchingHeatmap';
 const EnhancedOrthopedicDashboard = () => {
   // Get persona from URL params
   const [searchParams] = useSearchParams();
-  const persona = searchParams.get('persona') || 'financial'; // default to financial
+  const persona = searchParams.get('persona') || 'integrated'; // default to integrated (all tabs)
   // Data loading state
   const [realData, setRealData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -369,16 +369,16 @@ const EnhancedOrthopedicDashboard = () => {
   const renderTabs = () => {
     // Define all tabs with persona visibility
     const allTabs = [
-      { id: 'overview', label: 'Overview', icon: Eye, personas: ['financial', 'operational', 'clinical'] },
-      { id: 'financial', label: 'Financial Analysis', icon: DollarSign, personas: ['financial', 'operational'] },
-      { id: 'clinical', label: 'Clinical Analysis', icon: Stethoscope, personas: ['clinical'] },
-      { id: 'components', label: 'Component Analysis', icon: Package, personas: ['financial', 'operational'] },
-      { id: 'risk', label: 'Risk Assessment', icon: Shield, personas: ['financial', 'operational'] },
-      { id: 'mission', label: 'Mission Impact', icon: Heart, personas: ['financial', 'clinical'] },
-      { id: 'industry', label: 'Industry Intelligence', icon: AlertCircle, personas: ['financial', 'operational'] }
+      { id: 'overview', label: 'Overview', icon: Eye, personas: ['financial', 'operational', 'clinical', 'integrated'] },
+      { id: 'financial', label: 'Financial Analysis', icon: DollarSign, personas: ['financial', 'operational', 'integrated'] },
+      { id: 'clinical', label: 'Clinical Analysis', icon: Stethoscope, personas: ['clinical', 'integrated'] },
+      { id: 'components', label: 'Component Analysis', icon: Package, personas: ['financial', 'operational', 'integrated'] },
+      { id: 'risk', label: 'Risk Assessment', icon: Shield, personas: ['financial', 'operational', 'integrated'] },
+      { id: 'mission', label: 'Mission Impact', icon: Heart, personas: ['financial', 'clinical', 'integrated'] },
+      { id: 'industry', label: 'Industry Intelligence', icon: AlertCircle, personas: ['financial', 'operational', 'integrated'] }
     ];
 
-    // Filter tabs based on current persona
+    // Filter tabs based on current persona (integrated shows all tabs)
     const tabs = allTabs.filter(tab => tab.personas.includes(persona));
 
     return (
@@ -850,7 +850,7 @@ const EnhancedOrthopedicDashboard = () => {
                       { min: 22, max: 100 }
                     ].map((savingsCol, colIdx) => {
                       const scenariosInCell = Object.values(SCENARIOS).filter(s => {
-                        const savingsPercent = (s.savingsPercent || 0) * 100; // Convert to percentage
+                        const savingsPercent = s.savingsPercent || 0; // Already in percentage format from scenarios.js
                         const risk = s.riskScore || 0;
                         return savingsPercent >= savingsCol.min && savingsPercent < savingsCol.max &&
                                risk >= riskRow.min && risk < riskRow.max;
@@ -885,7 +885,7 @@ const EnhancedOrthopedicDashboard = () => {
                                     {s.shortName}
                                   </div>
                                   <div className="text-xs text-gray-700 font-medium">
-                                    {(s.savingsPercent * 100).toFixed(0)}% / {s.riskScore.toFixed(1)}
+                                    {s.savingsPercent.toFixed(0)}% / {s.riskScore.toFixed(1)}
                                   </div>
                                 </div>
                               ))}
@@ -3172,124 +3172,6 @@ const EnhancedOrthopedicDashboard = () => {
             <span>-10%</span>
             <span className="font-semibold">0</span>
             <span>+20%</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Key Outcomes by Pillar */}
-      <div className="bg-white rounded-xl p-6 shadow-lg border-2 border-purple-200">
-        <h4 className="text-xl font-bold mb-6 flex items-center gap-2" style={{ color: COLORS.primary }}>
-          <Calculator className="w-6 h-6" />
-          Real-Time Impact on Key Outcomes
-        </h4>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Financial Outcomes */}
-          <div className="bg-gradient-to-br from-amber-50 to-white rounded-xl p-5 border-2 border-amber-300">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-amber-600 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-white" />
-              </div>
-              <h5 className="text-lg font-bold text-amber-900">Financial</h5>
-            </div>
-
-            <div className="space-y-4">
-              <div className="bg-white rounded-lg p-4 border border-amber-200">
-                <div className="text-sm text-amber-700 mb-1">Annual Savings</div>
-                <div className="text-3xl font-bold text-amber-900">
-                  ${getAdjustedMetrics(selectedScenario)?.annualSavings.toFixed(2)}M
-                </div>
-                <div className="text-sm font-medium mt-2" style={{ color: ((getAdjustedMetrics(selectedScenario)?.annualSavings || 0) - (SCENARIOS['status-quo']?.annualSavings || 0)) >= 0 ? '#10B981' : '#EF4444' }}>
-                  {((getAdjustedMetrics(selectedScenario)?.annualSavings || 0) - (SCENARIOS['status-quo']?.annualSavings || 0)) >= 0 ? '↑' : '↓'}
-                  ${Math.abs((getAdjustedMetrics(selectedScenario)?.annualSavings || 0) - (SCENARIOS['status-quo']?.annualSavings || 0)).toFixed(2)}M vs status quo
-                </div>
-              </div>
-
-              <div className="bg-amber-50 rounded-lg p-3">
-                <div className="text-xs text-amber-700 mb-1">5-Year NPV</div>
-                <div className="text-lg font-bold text-amber-900">
-                  ${(getAdjustedMetrics(selectedScenario)?.annualSavings * 5 || 0).toFixed(1)}M
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Clinical Outcomes */}
-          <div className="bg-gradient-to-br from-blue-50 to-white rounded-xl p-5 border-2 border-blue-300">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                <Stethoscope className="w-6 h-6 text-white" />
-              </div>
-              <h5 className="text-lg font-bold text-blue-900">Clinical</h5>
-            </div>
-
-            <div className="space-y-4">
-              <div className="bg-white rounded-lg p-4 border border-blue-200">
-                <div className="text-sm text-blue-700 mb-1">Surgeon Adoption</div>
-                <div className="text-3xl font-bold text-blue-900">
-                  {getAdjustedMetrics(selectedScenario)?.adoptionRate.toFixed(0)}%
-                </div>
-                <div className="text-sm font-medium mt-2" style={{ color: ((getAdjustedMetrics(selectedScenario)?.adoptionRate || 0) - (SCENARIOS['status-quo']?.adoptionRate || 0)) >= 0 ? '#10B981' : '#EF4444' }}>
-                  {((getAdjustedMetrics(selectedScenario)?.adoptionRate || 0) - (SCENARIOS['status-quo']?.adoptionRate || 0)) >= 0 ? '↑' : '↓'}
-                  {Math.abs((getAdjustedMetrics(selectedScenario)?.adoptionRate || 0) - (SCENARIOS['status-quo']?.adoptionRate || 0)).toFixed(0)}% vs status quo
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-blue-50 rounded-lg p-3">
-                  <div className="text-xs text-blue-700 mb-1">Adopting</div>
-                  <div className="text-lg font-bold text-blue-900">
-                    {Math.round((getAdjustedMetrics(selectedScenario)?.adoptionRate / 100 || 0) * (realData?.metadata?.totalSurgeons || 443))}
-                  </div>
-                  <div className="text-xs text-blue-600">surgeons</div>
-                </div>
-                <div className="bg-blue-50 rounded-lg p-3">
-                  <div className="text-xs text-blue-700 mb-1">Resistant</div>
-                  <div className="text-lg font-bold text-blue-900">
-                    {Math.round((1 - getAdjustedMetrics(selectedScenario)?.adoptionRate / 100 || 0) * (realData?.metadata?.totalSurgeons || 443))}
-                  </div>
-                  <div className="text-xs text-blue-600">surgeons</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Operational Outcomes */}
-          <div className="bg-gradient-to-br from-green-50 to-white rounded-xl p-5 border-2 border-green-300">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
-                <Shield className="w-6 h-6 text-white" />
-              </div>
-              <h5 className="text-lg font-bold text-green-900">Operations</h5>
-            </div>
-
-            <div className="space-y-4">
-              <div className="bg-white rounded-lg p-4 border border-green-200">
-                <div className="text-sm text-green-700 mb-1">Implementation Timeline</div>
-                <div className="text-3xl font-bold text-green-900">
-                  {whatIfParams.implementationMonths}
-                </div>
-                <div className="text-sm font-medium mt-2" style={{ color: (whatIfParams.implementationMonths - 12) <= 0 ? '#10B981' : '#EF4444' }}>
-                  {(whatIfParams.implementationMonths - 12) <= 0 ? '↓' : '↑'}
-                  {Math.abs(whatIfParams.implementationMonths - 12)} months vs standard
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-green-50 rounded-lg p-3">
-                  <div className="text-xs text-green-700 mb-1">Complexity</div>
-                  <div className="text-lg font-bold text-green-900">
-                    {SCENARIOS[selectedScenario]?.implementation?.complexity || 'Medium'}
-                  </div>
-                </div>
-                <div className="bg-green-50 rounded-lg p-3">
-                  <div className="text-xs text-green-700 mb-1">Risk Score</div>
-                  <div className="text-lg font-bold text-green-900">
-                    {(SCENARIOS[selectedScenario]?.riskScore || 0).toFixed(1)}/10
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
