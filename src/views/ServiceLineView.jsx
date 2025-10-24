@@ -183,7 +183,7 @@ const ServiceLineView = () => {
                 </p>
               </div>
               <div className="text-right">
-                <div className="text-sm text-gray-600">Total Opportunity</div>
+                <div className="text-sm text-gray-600">Total Spend</div>
                 <div className="text-3xl font-bold text-blue-600">{hipKneeMetrics.opportunityValue}</div>
                 <div className="text-sm text-gray-600 mt-1">Hip & Knee product line</div>
               </div>

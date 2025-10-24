@@ -437,36 +437,61 @@ const AdminDataUpload = () => {
     const top3Vendors = vendorsBySpend.slice(0, 3);
     const top2Vendors = vendorsBySpend.slice(0, 2);
 
+    // Scenario generation with proper field names for generateScenarios() function
     const scenarios = {
       'status-quo': {
         name: 'Status Quo',
+        shortName: 'Status Quo',
         description: 'Continue current vendor mix',
         vendors: vendorsBySpend.map(v => v.name),
-        projectedSavings: 0,
-        savingsPercentage: 0,
-        implementationComplexity: 'low',
-        clinicalRisk: 'low',
-        notes: 'Maintain current vendor relationships and pricing'
+        annualSavings: 0,
+        savingsPercent: 0,
+        adoptionRate: 1.0, // 100% = no change
+        riskLevel: 'low',
+        riskScore: 1,
+        quintupleMissionScore: 65,
+        npv5Year: 0,
+        implementation: {
+          complexity: 'Low',
+          timeline: 0,
+          costMillions: 0
+        }
       },
       'tri-source': {
         name: 'Tri-Source Consolidation',
+        shortName: `${top3Vendors.map(v => v.name.split(' ')[0]).join('+')}`,
         description: `Focus on top 3 vendors: ${top3Vendors.map(v => v.name).join(', ')}`,
         vendors: top3Vendors.map(v => v.name),
-        projectedSavings: Math.round(totalSpend * 0.12),
-        savingsPercentage: 12,
-        implementationComplexity: 'medium',
-        clinicalRisk: 'low',
-        notes: `Top 3 vendors represent ${Math.round((top3Vendors.reduce((sum, v) => sum + v.totalSpend, 0) / totalSpend) * 100)}% of spend`
+        annualSavings: totalSpend * 0.12,
+        savingsPercent: 0.12,
+        adoptionRate: 0.85, // 85%
+        riskLevel: 'low',
+        riskScore: 3,
+        quintupleMissionScore: 78,
+        npv5Year: (totalSpend * 0.12 * 5) - 2500000,
+        implementation: {
+          complexity: 'Medium',
+          timeline: 12,
+          costMillions: 2.5
+        }
       },
       'premium-dual': {
         name: 'Premium Dual-Source',
+        shortName: `${top2Vendors.map(v => v.name.split(' ')[0]).join('+')}`,
         description: `Partner with ${top2Vendors.map(v => v.name).join(' + ')}`,
         vendors: top2Vendors.map(v => v.name),
-        projectedSavings: Math.round(totalSpend * 0.18),
-        savingsPercentage: 18,
-        implementationComplexity: 'medium-high',
-        clinicalRisk: 'medium',
-        notes: 'Focus on top 2 vendors with premium products and strong surgeon preference'
+        annualSavings: totalSpend * 0.18,
+        savingsPercent: 0.18,
+        adoptionRate: 0.75, // 75%
+        riskLevel: 'medium',
+        riskScore: 5,
+        quintupleMissionScore: 82,
+        npv5Year: (totalSpend * 0.18 * 5) - 3500000,
+        implementation: {
+          complexity: 'Medium',
+          timeline: 15,
+          costMillions: 3.5
+        }
       }
     };
 
