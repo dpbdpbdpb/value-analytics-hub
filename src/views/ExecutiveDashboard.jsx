@@ -559,79 +559,166 @@ const EnhancedOrthopedicDashboard = () => {
         )}
 
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full border-collapse">
             <thead>
               <tr className="bg-gray-100 border-b-2 border-gray-300">
-                <th className="px-4 py-3 text-left font-bold text-gray-900">Scenario</th>
-                <th className="px-4 py-3 text-left font-bold text-gray-900">Annual Savings</th>
-                <th className="px-4 py-3 text-left font-bold text-gray-900">Adoption Rate</th>
-                <th className="px-4 py-3 text-left font-bold text-gray-900">Risk Level</th>
-                <th className="px-4 py-3 text-left font-bold text-gray-900">Expected Value</th>
-                <th className="px-4 py-3 text-left font-bold text-gray-900">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredScenarios.map(scenario => {
-                return (
-                  <tr
+                <th className="px-4 py-3 text-left font-bold text-gray-900 sticky left-0 bg-gray-100 z-10 min-w-[180px]">
+                  Metric
+                </th>
+                {filteredScenarios.map(scenario => (
+                  <th
                     key={scenario.id}
-                    className={`border-b hover:bg-gray-50 cursor-pointer ${
-                      selectedScenario === scenario.id ? 'bg-purple-50' : ''
+                    className={`px-4 py-3 text-center font-bold text-gray-900 min-w-[200px] cursor-pointer hover:bg-gray-200 ${
+                      selectedScenario === scenario.id ? 'bg-purple-100' : ''
                     }`}
                     onClick={() => setSelectedScenario(scenario.id)}
                   >
-                    <td className="px-4 py-4">
-                      <div className="font-medium text-gray-900">{scenario.shortName}</div>
-                      <div className="text-xs text-gray-500">{scenario.vendorCount} vendors</div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="font-bold text-green-600 text-lg">${scenario.annualSavings.toFixed(2)}M</div>
-                      <div className="text-xs text-gray-500">
-                        ${scenario.savingsRange.conservative.toFixed(2)}M - ${scenario.savingsRange.optimistic.toFixed(2)}M
+                    <div className="font-bold text-base">{scenario.shortName}</div>
+                    <div className="text-xs text-gray-500 font-normal mt-1">{scenario.vendorCount} vendors</div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {/* Annual Savings Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                  Annual Savings
+                </td>
+                {filteredScenarios.map(scenario => (
+                  <td
+                    key={scenario.id}
+                    className={`px-4 py-4 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                  >
+                    <div className="font-bold text-green-600 text-lg">${scenario.annualSavings.toFixed(2)}M</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      ${scenario.savingsRange.conservative.toFixed(2)}M - ${scenario.savingsRange.optimistic.toFixed(2)}M
+                    </div>
+                  </td>
+                ))}
+              </tr>
+
+              {/* Expected Value Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                  Probability-Weighted
+                </td>
+                {filteredScenarios.map(scenario => (
+                  <td
+                    key={scenario.id}
+                    className={`px-4 py-4 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                  >
+                    <div className="font-bold text-blue-600 text-lg">${getProbabilityWeighted(scenario.id).toFixed(2)}M</div>
+                  </td>
+                ))}
+              </tr>
+
+              {/* Adoption Rate Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                  Adoption Rate
+                </td>
+                {filteredScenarios.map(scenario => (
+                  <td
+                    key={scenario.id}
+                    className={`px-4 py-4 ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-full max-w-[120px] bg-gray-200 rounded-full h-3">
+                        <div
+                          className="h-3 rounded-full transition-all"
+                          style={{
+                            width: `${scenario.adoptionRate}%`,
+                            backgroundColor: scenario.adoptionRate >= 85 ? COLORS.success :
+                                           scenario.adoptionRate >= 70 ? COLORS.warning : COLORS.danger
+                          }}
+                        />
                       </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-16 bg-gray-200 rounded-full h-2">
-                          <div
-                            className="h-2 rounded-full"
-                            style={{
-                              width: `${scenario.adoptionRate}%`,
-                              backgroundColor: scenario.adoptionRate >= 85 ? COLORS.success :
-                                             scenario.adoptionRate >= 70 ? COLORS.warning : COLORS.danger
-                            }}
-                          />
-                        </div>
-                        <span className="font-medium">{scenario.adoptionRate.toFixed(0)}%</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      <span className="font-bold text-gray-900">{scenario.adoptionRate.toFixed(0)}%</span>
+                    </div>
+                  </td>
+                ))}
+              </tr>
+
+              {/* Risk Level Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                  Risk Level
+                </td>
+                {filteredScenarios.map(scenario => (
+                  <td
+                    key={scenario.id}
+                    className={`px-4 py-4 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                  >
+                    <div className="flex justify-center">
+                      <span className={`px-4 py-2 rounded-full text-sm font-bold ${
                         scenario.riskLevel === 'low' ? 'bg-green-100 text-green-700' :
                         scenario.riskLevel === 'medium' ? 'bg-yellow-100 text-yellow-700' :
                         'bg-red-100 text-red-700'
                       }`}>
                         {scenario.riskLevel.charAt(0).toUpperCase() + scenario.riskLevel.slice(1)}
                       </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="font-medium text-blue-600">${getProbabilityWeighted(scenario.id).toFixed(2)}M</div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedScenario(scenario.id);
-                          setActiveTab('financial');
-                        }}
-                        className="px-3 py-1 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700"
-                      >
-                        Analyze
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
+                    </div>
+                  </td>
+                ))}
+              </tr>
+
+              {/* NPV 5-Year Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                  5-Year NPV
+                </td>
+                {filteredScenarios.map(scenario => (
+                  <td
+                    key={scenario.id}
+                    className={`px-4 py-4 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                  >
+                    <div className="font-bold text-purple-600 text-lg">
+                      ${scenario.npv5Year?.toFixed(2) || '0.00'}M
+                    </div>
+                  </td>
+                ))}
+              </tr>
+
+              {/* Mission Score Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                  Quintuple Aim Score
+                </td>
+                {filteredScenarios.map(scenario => (
+                  <td
+                    key={scenario.id}
+                    className={`px-4 py-4 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                  >
+                    <div className="font-bold text-gray-900 text-lg">
+                      {scenario.quintupleMissionScore || 0}/100
+                    </div>
+                  </td>
+                ))}
+              </tr>
+
+              {/* Action Row */}
+              <tr className="bg-gray-50">
+                <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-gray-50 z-10">
+                  Actions
+                </td>
+                {filteredScenarios.map(scenario => (
+                  <td
+                    key={scenario.id}
+                    className={`px-4 py-4 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                  >
+                    <button
+                      onClick={() => {
+                        setSelectedScenario(scenario.id);
+                        setActiveTab('financial');
+                      }}
+                      className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-semibold hover:bg-purple-700 transition-colors"
+                    >
+                      Analyze
+                    </button>
+                  </td>
+                ))}
+              </tr>
             </tbody>
           </table>
         </div>
