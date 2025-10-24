@@ -46,8 +46,19 @@ function transformMatrixPricing(filePath) {
       currentAvgPrice = Math.round(vendorPrices.reduce((a, b) => a + b, 0) / vendorPrices.length);
     }
 
-    // Calculate matrix price (lowest vendor price as target)
-    const matrixPrice = Math.min(...vendorPrices);
+    // Calculate matrix price (lowest price from top 4 vendors by volume)
+    // Sort vendors by sample count (volume) descending
+    const vendorsWithVolume = Object.entries(vendors).map(([name, data]) => ({
+      name,
+      price: data.medianPrice,
+      samples: data.samples || 0
+    })).sort((a, b) => b.samples - a.samples);
+
+    // Take top 4 vendors by volume
+    const top4Vendors = vendorsWithVolume.slice(0, 4);
+
+    // Get lowest price among top 4
+    const matrixPrice = Math.min(...top4Vendors.map(v => v.price));
 
     // Estimate total spend based on samples (rough estimate)
     const totalSamples = Object.values(vendors).reduce((sum, v) => sum + (v.samples || 0), 0);

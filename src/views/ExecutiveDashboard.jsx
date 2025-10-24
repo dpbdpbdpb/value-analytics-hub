@@ -39,6 +39,7 @@ const EnhancedOrthopedicDashboard = () => {
   const [filterProcedureType, setFilterProcedureType] = useState('all'); // all, primary, revision
   const [showFilters, setShowFilters] = useState(false);
   const [bookmarks, setBookmarks] = useState([]);
+  const [visibleHospitalCount, setVisibleHospitalCount] = useState(10); // Show 10 hospitals initially
 
   // What-if scenario sliders
   const [whatIfParams, setWhatIfParams] = useState({
@@ -48,6 +49,7 @@ const EnhancedOrthopedicDashboard = () => {
     volumeGrowth: 0, // -15 to +15
     surgeonResistance: 0, // 0 to 30
     negotiationLeverage: 0, // -10 to +20
+    savingsAdjustment: 0, // -30 to +30 percentage adjustment
   });
 
   // CommonSpirit brand colors
@@ -132,15 +134,47 @@ const EnhancedOrthopedicDashboard = () => {
     }));
   };
 
-  // Load scenarios from real data (12 scenarios from hip-knee-data.json)
+  // Filter real data based on procedure type before generating scenarios
+  const filteredRealData = useMemo(() => {
+    if (!realData) return null;
+
+    // If "all" is selected, return original data
+    if (filterProcedureType === 'all') return realData;
+
+    // Filter components based on procedure type
+    const filteredComponents = realData.components.filter(component => {
+      const isRevision = component.procedureType?.toUpperCase().includes('REVISION');
+
+      if (filterProcedureType === 'primary') return !isRevision;
+      if (filterProcedureType === 'revision') return isRevision;
+      return true;
+    });
+
+    // Calculate new metadata based on filtered components
+    const filteredSpend = filteredComponents.reduce((sum, c) => sum + (c.totalSpend || 0), 0);
+    const filteredQuantity = filteredComponents.reduce((sum, c) => sum + (c.quantity || 0), 0);
+
+    // Return filtered data with updated metadata
+    return {
+      ...realData,
+      components: filteredComponents,
+      metadata: {
+        ...realData.metadata,
+        totalSpend: filteredSpend,
+        totalCases: filteredQuantity
+      }
+    };
+  }, [realData, filterProcedureType]);
+
+  // Load scenarios from filtered real data
   const SCENARIOS = useMemo(() => {
-    if (!realData?.scenarios) {
+    if (!filteredRealData?.scenarios) {
       return {}; // Return empty object if no data loaded yet
     }
     // Use generateScenarios to ensure all scenarios have proper structure
     // including savingsRange, volumeWeightedRisk, etc.
-    return generateScenarios(realData);
-  }, [realData]);
+    return generateScenarios(filteredRealData);
+  }, [filteredRealData]);
 
   // Matrix Pricing Component Details from real data
   const MATRIX_COMPONENTS = useMemo(() => {
@@ -243,26 +277,18 @@ const EnhancedOrthopedicDashboard = () => {
     const base = SCENARIOS[scenario];
     if (!base) return null;
 
-    const adoptionAdjustment = whatIfParams.adoptionModifier / 100;
-    const priceAdjustment = whatIfParams.priceErosion / 100;
     const volumeAdjustment = whatIfParams.volumeGrowth / 100;
-    const resistanceAdjustment = whatIfParams.surgeonResistance / 100;
     const leverageAdjustment = whatIfParams.negotiationLeverage / 100;
+    const savingsAdjustment = whatIfParams.savingsAdjustment / 100;
 
-    // Adoption rate affected by surgeon resistance
-    const adjustedAdoption = Math.max(0, Math.min(100,
-      base.adoptionRate + whatIfParams.adoptionModifier - whatIfParams.surgeonResistance
-    ));
-
-    // Savings affected by price erosion, volume growth, and negotiation leverage
-    const baseSavings = base.annualSavings * (1 + priceAdjustment);
+    // Savings affected by volume growth, negotiation leverage, and savings adjustment
+    const baseSavings = base.annualSavings;
     const volumeImpact = baseSavings * (1 + volumeAdjustment);
     const leverageImpact = volumeImpact * (1 + leverageAdjustment);
-    const adjustedSavings = leverageImpact * (adjustedAdoption / base.adoptionRate);
+    const adjustedSavings = leverageImpact * (1 + savingsAdjustment);
 
     return {
       ...base,
-      adoptionRate: adjustedAdoption,
       annualSavings: adjustedSavings,
       implementation: {
         ...base.implementation,
@@ -297,7 +323,7 @@ const EnhancedOrthopedicDashboard = () => {
     });
 
     return scenarios;
-  }, [SCENARIOS, sortBy, filterRisk]);
+  }, [SCENARIOS, sortBy, filterRisk, filterProcedureType]);
 
   // Calculate probability-weighted savings
   const getProbabilityWeighted = (scenario) => {
@@ -372,10 +398,7 @@ const EnhancedOrthopedicDashboard = () => {
       { id: 'overview', label: 'Overview', icon: Eye, personas: ['financial', 'operational', 'clinical', 'integrated'] },
       { id: 'financial', label: 'Financial Analysis', icon: DollarSign, personas: ['financial', 'operational', 'integrated'] },
       { id: 'clinical', label: 'Clinical Analysis', icon: Stethoscope, personas: ['clinical', 'integrated'] },
-      { id: 'components', label: 'Component Analysis', icon: Package, personas: ['financial', 'operational', 'integrated'] },
-      { id: 'risk', label: 'Risk Assessment', icon: Shield, personas: ['financial', 'operational', 'integrated'] },
-      { id: 'mission', label: 'Mission Impact', icon: Heart, personas: ['financial', 'clinical', 'integrated'] },
-      { id: 'industry', label: 'Industry Intelligence', icon: AlertCircle, personas: ['financial', 'operational', 'integrated'] }
+      { id: 'components', label: 'Component Analysis', icon: Package, personas: ['financial', 'operational', 'integrated'] }
     ];
 
     // Filter tabs based on current persona (integrated shows all tabs)
@@ -444,11 +467,6 @@ const EnhancedOrthopedicDashboard = () => {
             <div className="text-xs text-gray-500 mt-1">Score: {s.riskScore}/10</div>
           </div>
 
-          <div className="bg-white rounded-lg p-4">
-            <div className="text-sm text-gray-600">Mission Score</div>
-            <div className="text-2xl font-bold text-purple-600">{s.quintupleMissionScore}/100</div>
-            <div className="text-xs text-gray-500 mt-1">Quintuple Aim aligned</div>
-          </div>
         </div>
 
         <div className="mt-4 p-4 bg-white rounded-lg">
@@ -463,16 +481,23 @@ const EnhancedOrthopedicDashboard = () => {
   const renderOverviewTab = () => (
     <div className="space-y-6">
       {/* Real Data Indicators */}
-      {realData && (
+      {filteredRealData && (
         <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4 border-2 border-green-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <CheckCircle className="w-6 h-6 text-green-600" />
               <div>
-                <div className="font-bold text-green-900">Real CommonSpirit Data Loaded</div>
+                <div className="font-bold text-green-900">
+                  Real CommonSpirit Data Loaded
+                  {filterProcedureType !== 'all' && (
+                    <span className="ml-2 text-sm text-green-700">
+                      (Filtered: {filterProcedureType === 'primary' ? 'Primary' : 'Revision'} Only)
+                    </span>
+                  )}
+                </div>
                 <div className="text-sm text-green-700">
-                  {realData.metadata.totalCases.toLocaleString()} cases |
-                  ${(realData.metadata.totalSpend / 1000000).toFixed(2)}M total spend |
+                  {filteredRealData.metadata.totalCases.toLocaleString()} cases |
+                  ${(filteredRealData.metadata.totalSpend / 1000000).toFixed(2)}M total spend |
                   Last updated: {new Date(realData.metadata.lastUpdated).toLocaleString()}
                 </div>
               </div>
@@ -525,7 +550,6 @@ const EnhancedOrthopedicDashboard = () => {
                 <option value="savings">Annual Savings</option>
                 <option value="adoption">Adoption Rate</option>
                 <option value="risk">Risk Level</option>
-                <option value="mission">Mission Score</option>
               </select>
             </div>
             <div>
@@ -611,28 +635,26 @@ const EnhancedOrthopedicDashboard = () => {
                 ))}
               </tr>
 
-              {/* Adoption Rate Row */}
+              {/* Loyalists Needing Transition Row */}
               <tr className="border-b hover:bg-gray-50">
                 <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-white z-10">
-                  Adoption Rate
+                  Loyalists Needing Transition
                 </td>
                 {filteredScenarios.map(scenario => (
                   <td
                     key={scenario.id}
-                    className={`px-4 py-4 ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                    className={`px-4 py-4 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
                   >
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="w-full max-w-[120px] bg-gray-200 rounded-full h-3">
-                        <div
-                          className="h-3 rounded-full transition-all"
-                          style={{
-                            width: `${scenario.adoptionRate}%`,
-                            backgroundColor: scenario.adoptionRate >= 85 ? COLORS.success :
-                                           scenario.adoptionRate >= 70 ? COLORS.warning : COLORS.danger
-                          }}
-                        />
-                      </div>
-                      <span className="font-bold text-gray-900">{scenario.adoptionRate.toFixed(0)}%</span>
+                    <div className="font-bold text-orange-600 text-lg">
+                      {scenario.volumeWeightedRisk?.loyalistsAffected || 0}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      <span className="font-semibold text-red-600">
+                        {scenario.volumeWeightedRisk?.highVolumeSurgeonsAffected || 0} high-volume
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1">
+                      {((scenario.volumeWeightedRisk?.loyalistsAffected || 0) / (realData?.surgeons?.length || 1) * 100).toFixed(0)}% of surgeons
                     </div>
                   </td>
                 ))}
@@ -673,23 +695,6 @@ const EnhancedOrthopedicDashboard = () => {
                   >
                     <div className="font-bold text-purple-600 text-lg">
                       ${scenario.npv5Year?.toFixed(2) || '0.00'}M
-                    </div>
-                  </td>
-                ))}
-              </tr>
-
-              {/* Mission Score Row */}
-              <tr className="border-b hover:bg-gray-50">
-                <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-white z-10">
-                  Quintuple Aim Score
-                </td>
-                {filteredScenarios.map(scenario => (
-                  <td
-                    key={scenario.id}
-                    className={`px-4 py-4 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
-                  >
-                    <div className="font-bold text-gray-900 text-lg">
-                      {scenario.quintupleMissionScore || 0}/100
                     </div>
                   </td>
                 ))}
@@ -829,13 +834,12 @@ const EnhancedOrthopedicDashboard = () => {
 
               {/* Grid cells */}
               <div className="flex-1">
-                {/* Risk levels from low to high (top to bottom) */}
+                {/* Risk levels from low to high (top to bottom) - aligned with riskLevel categories */}
                 {[
-                  { label: 'Very Low (0-2)', min: 0, max: 2 },
-                  { label: 'Low (2-4)', min: 2, max: 4 },
-                  { label: 'Medium (4-6)', min: 4, max: 6 },
-                  { label: 'High (6-8)', min: 6, max: 8 },
-                  { label: 'Very High (8-10)', min: 8, max: 10 }
+                  { label: 'Low (0-3)', min: 0, max: 3 },
+                  { label: 'Medium (3-5)', min: 3, max: 5 },
+                  { label: 'Medium-High (5-7)', min: 5, max: 7 },
+                  { label: 'High (7-10)', min: 7, max: 10 }
                 ].map((riskRow, rowIdx) => (
                   <div key={rowIdx} className="flex gap-1 mb-1">
                     <div className="w-24 flex items-center justify-end pr-3">
@@ -857,7 +861,7 @@ const EnhancedOrthopedicDashboard = () => {
                       });
 
                       const rewardScore = colIdx;
-                      const riskScore = 4 - rowIdx;
+                      const riskScore = 3 - rowIdx; // 4 rows (0-3), lower rowIdx = lower risk = higher score
                       const heatScore = rewardScore + riskScore;
 
                       let bgColor = '';
@@ -971,8 +975,28 @@ const EnhancedOrthopedicDashboard = () => {
       const volume = surgeon.totalCases || 0;
       const volumeCategory = volume >= HIGH_VOLUME_THRESHOLD ? 'high' :
                             volume >= MEDIUM_VOLUME_THRESHOLD ? 'medium' : 'low';
-      const primaryVendor = surgeon.primaryVendor || 'Unknown';
-      const primaryVendorPercent = surgeon.primaryVendorPercent || 0;
+
+      // Calculate primary vendor from vendors object
+      let primaryVendor = 'Unknown';
+      let primaryVendorCases = 0;
+      let primaryVendorPercent = 0;
+
+      if (surgeon.vendors && typeof surgeon.vendors === 'object') {
+        // Find vendor with most cases
+        Object.entries(surgeon.vendors).forEach(([vendorName, vendorData]) => {
+          const cases = vendorData.cases || 0;
+          if (cases > primaryVendorCases) {
+            primaryVendorCases = cases;
+            primaryVendor = vendorName;
+          }
+        });
+
+        // Calculate percentage
+        if (volume > 0) {
+          primaryVendorPercent = primaryVendorCases / volume;
+        }
+      }
+
       const isLoyalist = primaryVendorPercent >= LOYALTY_THRESHOLD;
       const mustTransition = !scenarioVendors.includes(primaryVendor);
 
@@ -982,6 +1006,7 @@ const EnhancedOrthopedicDashboard = () => {
         volumeCategory,
         primaryVendor,
         primaryVendorPercent,
+        primaryVendorCases,
         isLoyalist,
         mustTransition,
         impactScore: mustTransition ? (volume * (isLoyalist ? 2 : 1)) : 0
@@ -994,7 +1019,7 @@ const EnhancedOrthopedicDashboard = () => {
       s.volumeCategory === 'high' && s.isLoyalist
     );
 
-    // Group by region
+    // Group by region (will be updated with hospital risk scores later)
     const regionalImpact = {};
     surgeonImpact.forEach(surgeon => {
       const region = surgeon.region || 'Unassigned';
@@ -1003,10 +1028,14 @@ const EnhancedOrthopedicDashboard = () => {
           totalSurgeons: 0,
           needingTransition: 0,
           highVolumeLoyalists: 0,
-          casesAtRisk: 0
+          casesAtRisk: 0,
+          totalCases: 0,
+          hospitals: [],
+          riskScores: []
         };
       }
       regionalImpact[region].totalSurgeons++;
+      regionalImpact[region].totalCases += surgeon.volume;
       if (surgeon.mustTransition) {
         regionalImpact[region].needingTransition++;
         regionalImpact[region].casesAtRisk += surgeon.volume;
@@ -1028,12 +1057,23 @@ const EnhancedOrthopedicDashboard = () => {
           highVolumeLoyalists: 0,
           loyalistsNeedingTransition: 0,
           casesAtRisk: 0,
+          totalCases: 0,
           vendorDiversity: new Set(),
-          transitioningVendors: new Set()
+          transitioningVendors: new Set(),
+          vendorCaseCounts: {}, // Track cases by vendor
+          highVolLoyalistVendors: {} // Track vendors for high-volume loyalists
         };
       }
       hospitalImpact[facility].totalSurgeons++;
+      hospitalImpact[facility].totalCases += surgeon.volume;
       hospitalImpact[facility].vendorDiversity.add(surgeon.primaryVendor);
+
+      // Track vendor case counts
+      const vendor = surgeon.primaryVendor || 'Unknown';
+      if (!hospitalImpact[facility].vendorCaseCounts[vendor]) {
+        hospitalImpact[facility].vendorCaseCounts[vendor] = 0;
+      }
+      hospitalImpact[facility].vendorCaseCounts[vendor] += surgeon.volume;
 
       if (surgeon.mustTransition) {
         hospitalImpact[facility].needingTransition++;
@@ -1044,7 +1084,125 @@ const EnhancedOrthopedicDashboard = () => {
         }
         if (surgeon.volumeCategory === 'high' && surgeon.isLoyalist) {
           hospitalImpact[facility].highVolumeLoyalists++;
+          // Track which vendor this high-volume loyalist uses
+          if (!hospitalImpact[facility].highVolLoyalistVendors[vendor]) {
+            hospitalImpact[facility].highVolLoyalistVendors[vendor] = 0;
+          }
+          hospitalImpact[facility].highVolLoyalistVendors[vendor]++;
         }
+      }
+    });
+
+    // Calculate risk scores for each hospital and aggregate to regions
+    Object.entries(hospitalImpact).forEach(([facility, hospital]) => {
+      // Volume-weighted sherpa calculation:
+      // Only count surgeons with ≥30 cases as potential sherpas
+      // Weight their contribution by their case volume (normalized per 100 cases)
+      const sherpaCapacity = surgeonImpact
+        .filter(s => s.facility === facility && !s.mustTransition && s.volume >= 30)
+        .reduce((sum, s) => sum + (s.volume / 100), 0);
+
+      const loyalistCount = hospital.loyalistsNeedingTransition;
+      const sherpaRatio = loyalistCount > 0 ? sherpaCapacity / loyalistCount : 0;
+
+      // Also calculate simple count for reference
+      const potentialSherpas = surgeonImpact.filter(s => s.facility === facility && !s.mustTransition && s.volume >= 30).length;
+
+      // Store sherpa metrics in hospital object for reuse
+      hospital.sherpaRatio = sherpaRatio;
+      hospital.sherpaCapacity = sherpaCapacity;
+      hospital.potentialSherpas = potentialSherpas;
+
+      // Determine preferred vendor (vendor with most cases)
+      let preferredVendor = 'Unknown';
+      let preferredVendorCases = 0;
+      Object.entries(hospital.vendorCaseCounts).forEach(([vendor, cases]) => {
+        if (cases > preferredVendorCases) {
+          preferredVendorCases = cases;
+          preferredVendor = vendor;
+        }
+      });
+      const preferredVendorPercent = hospital.totalCases > 0 ? (preferredVendorCases / hospital.totalCases) * 100 : 0;
+      hospital.preferredVendor = preferredVendor;
+      hospital.preferredVendorPercent = preferredVendorPercent;
+
+      // Calculate hospital risk score (0-10 scale, higher = more risk)
+      // Base risk from loyalists and sherpa ratio
+      let baseRisk = 0;
+
+      if (hospital.highVolumeLoyalists >= 3) {
+        if (sherpaRatio < 1.5) {
+          baseRisk = 8; // High risk
+        } else if (sherpaRatio < 2.5) {
+          baseRisk = 5; // Medium risk
+        } else {
+          baseRisk = 2; // Low risk
+        }
+      } else if (hospital.highVolumeLoyalists === 2) {
+        if (sherpaRatio < 0.8) {
+          baseRisk = 8; // High risk
+        } else if (sherpaRatio < 2) {
+          baseRisk = 5; // Medium risk
+        } else {
+          baseRisk = 2; // Low risk
+        }
+      } else if (hospital.highVolumeLoyalists === 1) {
+        if (sherpaRatio < 1) {
+          baseRisk = 5; // Medium risk
+        } else {
+          baseRisk = 2; // Low risk
+        }
+      } else {
+        baseRisk = 1; // Very low risk (no high-volume loyalists)
+      }
+
+      // Adjust risk based on volume of cases at risk
+      // High volume of cases at risk increases the stakes and overall risk
+      let volumeMultiplier = 1.0;
+      if (hospital.casesAtRisk >= 300) {
+        volumeMultiplier = 1.4; // Significantly increase risk for very high volume
+      } else if (hospital.casesAtRisk >= 200) {
+        volumeMultiplier = 1.3;
+      } else if (hospital.casesAtRisk >= 150) {
+        volumeMultiplier = 1.2;
+      } else if (hospital.casesAtRisk >= 100) {
+        volumeMultiplier = 1.1;
+      } else if (hospital.casesAtRisk <= 30) {
+        volumeMultiplier = 0.8; // Reduce risk for low volume
+      }
+
+      // Final risk score capped at 10
+      let riskScore = Math.min(10, baseRisk * volumeMultiplier);
+
+      // Store risk score in hospital object for reuse
+      hospital.riskScore = riskScore;
+
+      // Weight the risk score by cases at risk (hospital with more cases has bigger impact on regional risk)
+      const weightedRisk = riskScore * hospital.casesAtRisk;
+
+      // Aggregate to region
+      const region = hospital.region;
+      if (regionalImpact[region]) {
+        regionalImpact[region].hospitals.push(facility);
+        regionalImpact[region].riskScores.push({ score: riskScore, weight: hospital.casesAtRisk, weightedRisk, sherpaRatio });
+      }
+    });
+
+    // Calculate average risk score and sherpa ratio for each region (weighted by cases at risk)
+    Object.keys(regionalImpact).forEach(region => {
+      const data = regionalImpact[region];
+      if (data.riskScores.length > 0) {
+        const totalWeight = data.riskScores.reduce((sum, r) => sum + r.weight, 0);
+        const totalWeightedRisk = data.riskScores.reduce((sum, r) => sum + r.weightedRisk, 0);
+        const totalWeightedSherpaRatio = data.riskScores.reduce((sum, r) => sum + (r.sherpaRatio * r.weight), 0);
+
+        data.avgRiskScore = totalWeight > 0 ? totalWeightedRisk / totalWeight : 0;
+        data.avgSherpaRatio = totalWeight > 0 ? totalWeightedSherpaRatio / totalWeight : 0;
+        data.hospitalCount = data.hospitals.length;
+      } else {
+        data.avgRiskScore = 0;
+        data.avgSherpaRatio = 0;
+        data.hospitalCount = 0;
       }
     });
 
@@ -1063,31 +1221,14 @@ const EnhancedOrthopedicDashboard = () => {
       }))
       .sort((a, b) => b.loyalistsNeedingTransition - a.loyalistsNeedingTransition);
 
-    // Top high-risk hospitals (most high-volume loyalists needing transition)
+    // Top high-risk hospitals (sorted by risk score: high to low)
     const topRiskHospitals = Object.entries(hospitalImpact)
       .filter(([_, data]) => data.highVolumeLoyalists > 0)
-      .map(([facility, data]) => ({ facility, ...data }))
-      .sort((a, b) => b.casesAtRisk - a.casesAtRisk)
-      .slice(0, 10);
-
-    // Quality metrics - using placeholder/dummy data for demonstration
-    const qualityMetrics = realData?.qualityMetrics || {
-      // ⚠️ PLACEHOLDER DATA - Awaiting integration with clinical data systems
-      revisionRate: 2.3, // % - industry benchmark ~2-3%
-      readmissionRate30Day: 4.1, // % - 30-day all-cause readmission
-      readmissionRate90Day: 6.8, // % - 90-day all-cause readmission
-      avgLengthOfStay: 2.1, // days
-      complicationRate: 3.2, // % - any complication
-      infectionRate: 0.8, // % - surgical site infection
-      benchmarkRevisionRate: 2.5,
-      benchmarkReadmission30: 5.2,
-      benchmarkReadmission90: 7.5,
-      benchmarkLOS: 2.4,
-      benchmarkComplicationRate: 4.0,
-      benchmarkInfectionRate: 1.2,
-      dataSource: "PLACEHOLDER - Awaiting EMR/Registry Integration",
-      lastUpdated: null
-    };
+      .map(([facility, data]) => {
+        // Use the pre-calculated risk score (which includes volume adjustment)
+        return { facility, ...data };
+      })
+      .sort((a, b) => b.riskScore - a.riskScore); // Sort by risk score descending (high risk first)
 
     return (
       <div className="space-y-6">
@@ -1149,7 +1290,6 @@ const EnhancedOrthopedicDashboard = () => {
                   <th className="text-center p-4 font-bold text-purple-900">Need Transition</th>
                   <th className="text-center p-4 font-bold text-purple-900">High-Vol Loyalists</th>
                   <th className="text-center p-4 font-bold text-purple-900">Cases at Risk</th>
-                  <th className="text-left p-4 font-bold text-purple-900">Impact Level</th>
                 </tr>
               </thead>
               <tbody>
@@ -1167,18 +1307,6 @@ const EnhancedOrthopedicDashboard = () => {
                         </td>
                         <td className="p-4 text-center font-bold text-orange-600">{data.highVolumeLoyalists}</td>
                         <td className="p-4 text-center font-bold text-purple-600">{data.casesAtRisk.toLocaleString()}</td>
-                        <td className="p-4">
-                          <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                            impactPercent >= 40 ? 'bg-red-100 text-red-800' :
-                            impactPercent >= 25 ? 'bg-orange-100 text-orange-800' :
-                            impactPercent >= 10 ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-green-100 text-green-800'
-                          }`}>
-                            {impactPercent >= 40 ? 'High' :
-                             impactPercent >= 25 ? 'Moderate' :
-                             impactPercent >= 10 ? 'Low' : 'Minimal'}
-                          </span>
-                        </td>
                       </tr>
                     );
                   })}
@@ -1187,87 +1315,106 @@ const EnhancedOrthopedicDashboard = () => {
           </div>
         </div>
 
-        {/* High-Risk Hospitals */}
+        {/* Hospital Impact & Risk Assessment (Combined) */}
         <div className="bg-white p-6 rounded-xl shadow-lg">
           <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Building className="w-6 h-6 text-red-600" />
-            Hospitals with Highest Impact
+            <Building2 className="w-6 h-6 text-purple-600" />
+            Hospital Impact & Risk Assessment
           </h3>
-          <p className="text-sm text-gray-600 mb-4">
-            Facilities with the most high-volume vendor loyalists requiring transition
-          </p>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-red-100 border-b-2 border-red-300">
-                  <th className="text-left p-4 font-bold text-red-900">Hospital</th>
-                  <th className="text-center p-4 font-bold text-red-900">Region</th>
-                  <th className="text-center p-4 font-bold text-red-900">High-Vol Loyalists</th>
-                  <th className="text-center p-4 font-bold text-red-900">Total Transitioning</th>
-                  <th className="text-center p-4 font-bold text-red-900">Cases at Risk</th>
-                </tr>
-              </thead>
-              <tbody>
-                {topRiskHospitals.map((hospital, idx) => (
-                  <tr key={idx} className="border-b border-gray-200 hover:bg-red-50">
-                    <td className="p-4 font-semibold text-gray-900">{hospital.facility}</td>
-                    <td className="p-4 text-center text-gray-700">{hospital.region}</td>
-                    <td className="p-4 text-center">
-                      <span className="font-bold text-2xl text-orange-600">{hospital.highVolumeLoyalists}</span>
-                    </td>
-                    <td className="p-4 text-center font-bold text-red-600">{hospital.needingTransition}</td>
-                    <td className="p-4 text-center font-bold text-purple-600">{hospital.casesAtRisk.toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Peer Sherpa Opportunities */}
-        <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-green-300">
-          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Users className="w-6 h-6 text-green-600" />
-            Peer Sherpa Opportunities (Mixed Vendor Hospitals)
-          </h3>
-          <div className="bg-green-50 border-l-4 border-green-600 p-4 rounded-lg mb-4">
-            <p className="text-sm text-green-800">
-              <strong>Peer Sherpas:</strong> These hospitals have surgeons who are STAYING with their current vendors (aligned with scenario) who can mentor and support colleagues who need to transition. This peer-to-peer approach significantly increases adoption success rates.
+          <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-lg mb-4">
+            <p className="text-sm text-blue-800">
+              <strong>Risk Assessment:</strong> Hospitals with high-volume loyalists needing transition but good peer sherpa ratios (aligned surgeons who can mentor) have lower implementation risk.
+              <strong className="ml-2">Sherpa Ratio:</strong> Volume-weighted capacity of experienced surgeons (≥30 cases/year) available to support each transitioning loyalist. A surgeon doing 100 cases/year = 1.0 unit of capacity, 200 cases/year = 2.0 units, etc.
             </p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="bg-green-100 border-b-2 border-green-300">
-                  <th className="text-left p-4 font-bold text-green-900">Hospital</th>
-                  <th className="text-center p-4 font-bold text-green-900">Region</th>
-                  <th className="text-center p-4 font-bold text-green-900">Loyalists Transitioning</th>
-                  <th className="text-center p-4 font-bold text-green-900">Potential Sherpas</th>
-                  <th className="text-center p-4 font-bold text-green-900">Sherpa Ratio</th>
-                  <th className="text-left p-4 font-bold text-green-900">Opportunity Level</th>
+                <tr className="bg-purple-100 border-b-2 border-purple-300">
+                  <th className="text-left p-4 font-bold text-purple-900">Hospital</th>
+                  <th className="text-center p-4 font-bold text-purple-900">Region</th>
+                  <th className="text-center p-4 font-bold text-purple-900">Preferred Vendor</th>
+                  <th className="text-center p-4 font-bold text-purple-900">High-Vol Loyalists</th>
+                  <th className="text-center p-4 font-bold text-purple-900">Loyalist Vendors</th>
+                  <th className="text-center p-4 font-bold text-purple-900">Total Transitioning</th>
+                  <th className="text-center p-4 font-bold text-purple-900">Cases at Risk</th>
+                  <th className="text-center p-4 font-bold text-purple-900">Experienced Sherpas<br/><span className="text-xs font-normal">(≥30 cases/yr)</span></th>
+                  <th className="text-center p-4 font-bold text-purple-900">Sherpa Capacity<br/><span className="text-xs font-normal">(volume-weighted)</span></th>
+                  <th className="text-left p-4 font-bold text-purple-900">Implementation Risk</th>
                 </tr>
               </thead>
               <tbody>
-                {hospitalsWithMixedLoyalists.slice(0, 15).map((hospital, idx) => {
-                  const potentialSherpas = hospital.totalSurgeons - hospital.needingTransition;
-                  const sherpaRatio = hospital.peerSherpaScore;
+                {topRiskHospitals.slice(0, visibleHospitalCount).map((hospital, idx) => {
+                  // Use the pre-calculated volume-weighted sherpa metrics
+                  const potentialSherpas = hospital.potentialSherpas;
+                  const sherpaRatio = hospital.sherpaRatio;
+
+                  // More realistic risk assessment with lower thresholds
+                  let riskLevel = 'Low';
+                  let riskColor = 'bg-green-100 text-green-800';
+
+                  // High Risk: Multiple high-volume loyalists with insufficient sherpa support
+                  if (hospital.highVolumeLoyalists >= 3) {
+                    if (sherpaRatio < 1.5) {
+                      riskLevel = 'High';
+                      riskColor = 'bg-red-100 text-red-800';
+                    } else if (sherpaRatio < 2.5) {
+                      riskLevel = 'Medium';
+                      riskColor = 'bg-orange-100 text-orange-800';
+                    }
+                  } else if (hospital.highVolumeLoyalists === 2) {
+                    if (sherpaRatio < 0.8) {
+                      riskLevel = 'High';
+                      riskColor = 'bg-red-100 text-red-800';
+                    } else if (sherpaRatio < 2) {
+                      riskLevel = 'Medium';
+                      riskColor = 'bg-orange-100 text-orange-800';
+                    }
+                  } else if (hospital.highVolumeLoyalists === 1) {
+                    if (sherpaRatio < 1) {
+                      riskLevel = 'Medium';
+                      riskColor = 'bg-orange-100 text-orange-800';
+                    }
+                  }
+
                   return (
-                    <tr key={idx} className="border-b border-gray-200 hover:bg-green-50">
+                    <tr key={idx} className="border-b border-gray-200 hover:bg-purple-50">
                       <td className="p-4 font-semibold text-gray-900">{hospital.facility}</td>
                       <td className="p-4 text-center text-gray-700">{hospital.region}</td>
-                      <td className="p-4 text-center font-bold text-orange-600">{hospital.loyalistsNeedingTransition}</td>
+                      <td className="p-4 text-center">
+                        <div className="font-semibold text-gray-900">{hospital.preferredVendor}</div>
+                        <div className="text-xs text-gray-600 mt-1">
+                          {hospital.preferredVendorPercent.toFixed(0)}% of cases
+                        </div>
+                      </td>
+                      <td className="p-4 text-center">
+                        <span className="font-bold text-xl text-orange-600">{hospital.highVolumeLoyalists}</span>
+                      </td>
+                      <td className="p-4 text-center">
+                        {hospital.highVolumeLoyalists > 0 ? (
+                          <div className="text-sm">
+                            {Object.entries(hospital.highVolLoyalistVendors || {})
+                              .sort((a, b) => b[1] - a[1])
+                              .map(([vendor, count]) => (
+                                <div key={vendor} className="text-gray-900">
+                                  <span className="font-semibold">{vendor}</span>
+                                  <span className="text-gray-600 ml-1">({count})</span>
+                                </div>
+                              ))}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-xs">—</span>
+                        )}
+                      </td>
+                      <td className="p-4 text-center font-bold text-red-600">{hospital.needingTransition}</td>
+                      <td className="p-4 text-center font-bold text-purple-600">{hospital.casesAtRisk.toLocaleString()}</td>
                       <td className="p-4 text-center font-bold text-green-600">{potentialSherpas}</td>
                       <td className="p-4 text-center">
                         <span className="font-bold text-blue-600">{sherpaRatio.toFixed(1)}:1</span>
                       </td>
                       <td className="p-4">
-                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                          sherpaRatio >= 2 ? 'bg-green-100 text-green-800' :
-                          sherpaRatio >= 1 ? 'bg-blue-100 text-blue-800' :
-                          'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {sherpaRatio >= 2 ? 'Excellent' :
-                           sherpaRatio >= 1 ? 'Good' : 'Fair'}
+                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${riskColor}`}>
+                          {riskLevel}
                         </span>
                       </td>
                     </tr>
@@ -1276,143 +1423,184 @@ const EnhancedOrthopedicDashboard = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Show More / Show Less Button */}
+          {topRiskHospitals.length > 10 && (
+            <div className="mt-4 text-center">
+              <button
+                onClick={() => {
+                  if (visibleHospitalCount < topRiskHospitals.length) {
+                    setVisibleHospitalCount(prev => Math.min(prev + 10, topRiskHospitals.length));
+                  } else {
+                    setVisibleHospitalCount(10);
+                  }
+                }}
+                className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
+              >
+                {visibleHospitalCount < topRiskHospitals.length
+                  ? `Show More (${topRiskHospitals.length - visibleHospitalCount} remaining)`
+                  : 'Show Less'}
+              </button>
+              <div className="text-sm text-gray-600 mt-2">
+                Showing {visibleHospitalCount} of {topRiskHospitals.length} hospitals
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Regional Heat Map */}
+        {/* Regional Transition Heat Map */}
         <div className="bg-white p-6 rounded-xl shadow-lg">
           <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
             <Activity className="w-6 h-6 text-purple-600" />
             Regional Transition Heat Map
           </h3>
-          <div className="grid grid-cols-1 gap-4">
-            {Object.entries(regionalImpact)
-              .sort((a, b) => b[1].casesAtRisk - a[1].casesAtRisk)
-              .map(([region, data]) => {
-                const impactPercent = (data.needingTransition / data.totalSurgeons) * 100;
-                const maxCases = Math.max(...Object.values(regionalImpact).map(r => r.casesAtRisk));
-                const barWidth = (data.casesAtRisk / maxCases) * 100;
+          <p className="text-sm text-gray-600 mb-4">
+            Implementation Risk aggregates hospital-level assessments (considering high-volume loyalists + sherpa support). Support Ratio shows average aligned surgeons available per transitioning loyalist — <span className="font-semibold">green = strong support (lower risk), red = limited support (higher risk)</span>.
+          </p>
 
-                return (
-                  <div key={region} className="border-l-4 border-purple-500 pl-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="font-bold text-gray-900">{region}</div>
-                      <div className="flex items-center gap-4 text-sm">
-                        <span className="text-gray-600">
-                          <span className="font-bold text-red-600">{data.needingTransition}</span> / {data.totalSurgeons} surgeons
-                        </span>
-                        <span className="text-gray-600">
-                          <span className="font-bold text-purple-600">{data.casesAtRisk.toLocaleString()}</span> cases
-                        </span>
-                      </div>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-8 relative">
-                      <div
-                        className={`h-8 rounded-full flex items-center justify-end pr-3 text-white font-bold text-sm ${
-                          impactPercent >= 40 ? 'bg-red-500' :
-                          impactPercent >= 25 ? 'bg-orange-500' :
-                          impactPercent >= 10 ? 'bg-yellow-500' : 'bg-green-500'
-                        }`}
-                        style={{ width: `${barWidth}%` }}
-                      >
-                        {impactPercent.toFixed(0)}% Impact
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-100 border-b-2 border-gray-300">
+                  <th className="px-4 py-3 text-left font-bold text-gray-900">Region</th>
+                  <th className="px-4 py-3 text-center font-bold text-gray-900">Hospitals</th>
+                  <th className="px-4 py-3 text-center font-bold text-gray-900">Surgeons Needing Transition</th>
+                  <th className="px-4 py-3 text-center font-bold text-gray-900">High-Vol Loyalists</th>
+                  <th className="px-4 py-3 text-center font-bold text-gray-900">Cases at Risk</th>
+                  <th className="px-4 py-3 text-center font-bold text-gray-900">Support Ratio<br/><span className="text-xs font-normal">(higher = better)</span></th>
+                  <th className="px-4 py-3 text-center font-bold text-gray-900">Implementation Risk</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(regionalImpact)
+                  .sort((a, b) => b[1].casesAtRisk - a[1].casesAtRisk)
+                  .map(([region, data]) => {
+                    const impactPercent = (data.needingTransition / data.totalSurgeons) * 100;
+
+                    // Helper functions to get color based on ABSOLUTE thresholds (not relative)
+                    const getSurgeonTransitionColor = (needingTransition, totalSurgeons) => {
+                      const percent = (needingTransition / totalSurgeons) * 100;
+                      if (percent >= 50) return 'bg-red-600 text-white font-bold';
+                      if (percent >= 35) return 'bg-red-400 text-white font-semibold';
+                      if (percent >= 25) return 'bg-orange-400 text-white font-medium';
+                      if (percent >= 15) return 'bg-yellow-300 text-gray-900';
+                      return 'bg-green-100 text-gray-700';
+                    };
+
+                    const getLoyalistColor = (count) => {
+                      if (count >= 6) return 'bg-red-600 text-white font-bold';
+                      if (count >= 4) return 'bg-red-400 text-white font-semibold';
+                      if (count >= 3) return 'bg-orange-400 text-white font-medium';
+                      if (count >= 2) return 'bg-yellow-300 text-gray-900';
+                      if (count >= 1) return 'bg-green-200 text-green-900 font-medium';
+                      return 'bg-green-100 text-gray-700';
+                    };
+
+                    const getCasesColor = (cases) => {
+                      if (cases >= 150) return 'bg-red-600 text-white font-bold';
+                      if (cases >= 100) return 'bg-red-400 text-white font-semibold';
+                      if (cases >= 60) return 'bg-orange-400 text-white font-medium';
+                      if (cases >= 30) return 'bg-yellow-300 text-gray-900';
+                      return 'bg-green-100 text-gray-700';
+                    };
+
+                    return (
+                      <tr key={region} className="border-b hover:bg-gray-50">
+                        <td className="px-4 py-3 font-semibold text-gray-900">{region}</td>
+                        <td className="px-4 py-3 text-center text-gray-700 font-medium">{data.hospitalCount}</td>
+                        <td className={`px-4 py-3 text-center ${getSurgeonTransitionColor(data.needingTransition, data.totalSurgeons)}`}>
+                          {data.needingTransition} / {data.totalSurgeons}
+                          <div className="text-xs opacity-75 mt-1">
+                            ({((data.needingTransition / data.totalSurgeons) * 100).toFixed(0)}%)
+                          </div>
+                        </td>
+                        <td className={`px-4 py-3 text-center ${getLoyalistColor(data.highVolumeLoyalists)}`}>
+                          {data.highVolumeLoyalists}
+                        </td>
+                        <td className={`px-4 py-3 text-center ${getCasesColor(data.casesAtRisk)}`}>
+                          {data.casesAtRisk.toLocaleString()}
+                          <div className="text-xs opacity-75 mt-1">
+                            ({((data.casesAtRisk / data.totalCases) * 100).toFixed(0)}%)
+                          </div>
+                        </td>
+                        <td className={`px-4 py-3 text-center ${
+                          data.avgSherpaRatio >= 2.5 ? 'bg-green-600 text-white font-bold' :
+                          data.avgSherpaRatio >= 2 ? 'bg-green-400 text-white font-semibold' :
+                          data.avgSherpaRatio >= 1.5 ? 'bg-green-200 text-green-900 font-medium' :
+                          data.avgSherpaRatio >= 1 ? 'bg-yellow-300 text-gray-900' :
+                          data.avgSherpaRatio >= 0.5 ? 'bg-orange-400 text-white font-medium' :
+                          'bg-red-600 text-white font-bold'
+                        }`}>
+                          <div className="font-bold">
+                            {data.avgSherpaRatio.toFixed(2)}:1
+                          </div>
+                          <div className="text-xs opacity-75 mt-1">
+                            {data.avgSherpaRatio >= 2 ? '✓ Strong' :
+                             data.avgSherpaRatio >= 1 ? 'Adequate' : '⚠ Limited'}
+                          </div>
+                        </td>
+                        <td className={`px-4 py-3 text-center ${
+                          data.avgRiskScore >= 7 ? 'bg-red-100 text-red-800' :
+                          data.avgRiskScore >= 5 ? 'bg-orange-100 text-orange-800' :
+                          data.avgRiskScore >= 3 ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-green-100 text-green-800'
+                        }`}>
+                          <div className="font-bold">
+                            {data.avgRiskScore >= 7 ? 'High' :
+                             data.avgRiskScore >= 5 ? 'Medium' :
+                             data.avgRiskScore >= 3 ? 'Low' : 'Very Low'}
+                          </div>
+                          <div className="text-xs opacity-75 mt-1">
+                            Score: {data.avgRiskScore.toFixed(1)}/10
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Legend */}
+          <div className="mt-4 flex items-center gap-6 text-sm">
+            <span className="font-semibold text-gray-700">Heat Map Legend:</span>
+            <div className="flex items-center gap-4">
+              <span className="text-gray-600 font-medium">← Favorable</span>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-green-600 rounded border border-gray-400"></div>
+                <div className="w-6 h-6 bg-green-200 rounded border border-gray-400"></div>
+                <div className="w-6 h-6 bg-yellow-300 rounded border border-gray-400"></div>
+                <div className="w-6 h-6 bg-orange-400 rounded border border-gray-400"></div>
+                <div className="w-6 h-6 bg-red-400 rounded border border-gray-400"></div>
+                <div className="w-6 h-6 bg-red-600 rounded border border-gray-400"></div>
+              </div>
+              <span className="text-gray-600 font-medium">Unfavorable →</span>
+            </div>
+            <div className="text-xs text-gray-500 italic ml-2">
+              (Note: Support Ratio reverses scale - higher is more favorable)
+            </div>
           </div>
         </div>
 
         {/* Quality Metrics Overview - Moved to bottom */}
-        <div className="bg-white p-6 rounded-xl shadow-lg">
-          <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+        {/* Quality & Outcomes Metrics Placeholder */}
+        <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-xl border-2 border-blue-300">
+          <h3 className="text-xl font-bold text-blue-900 mb-3 flex items-center gap-2">
             <Activity className="w-6 h-6 text-blue-600" />
             Quality & Outcomes Metrics
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {/* Revision Rate */}
-            <div className="bg-gradient-to-br from-green-50 to-white border-2 border-green-200 rounded-lg p-4">
-              <div className="text-xs text-gray-600 mb-1">Revision Rate</div>
-              <div className="text-2xl font-bold text-green-900">{qualityMetrics.revisionRate}%</div>
-              <div className="text-xs text-gray-500 mt-1">vs {qualityMetrics.benchmarkRevisionRate}% benchmark</div>
-              <div className={`text-xs font-semibold mt-2 ${
-                qualityMetrics.revisionRate < qualityMetrics.benchmarkRevisionRate
-                  ? 'text-green-600'
-                  : 'text-amber-600'
-              }`}>
-                {qualityMetrics.revisionRate < qualityMetrics.benchmarkRevisionRate ? '✓ Better' : '⚠ Monitor'}
-              </div>
+          <div className="bg-white rounded-lg p-6 border border-blue-200">
+            <div className="flex items-center gap-3 mb-3">
+              <Info className="w-5 h-5 text-blue-500" />
+              <p className="text-gray-700 font-medium">
+                Clinical quality outcomes data integration pending
+              </p>
             </div>
-
-            {/* 30-Day Readmission */}
-            <div className="bg-gradient-to-br from-blue-50 to-white border-2 border-blue-200 rounded-lg p-4">
-              <div className="text-xs text-gray-600 mb-1">30-Day Readmit</div>
-              <div className="text-2xl font-bold text-blue-900">{qualityMetrics.readmissionRate30Day}%</div>
-              <div className="text-xs text-gray-500 mt-1">vs {qualityMetrics.benchmarkReadmission30}% benchmark</div>
-              <div className={`text-xs font-semibold mt-2 ${
-                qualityMetrics.readmissionRate30Day < qualityMetrics.benchmarkReadmission30
-                  ? 'text-green-600'
-                  : 'text-amber-600'
-              }`}>
-                {qualityMetrics.readmissionRate30Day < qualityMetrics.benchmarkReadmission30 ? '✓ Better' : '⚠ Monitor'}
-              </div>
-            </div>
-
-            {/* 90-Day Readmission */}
-            <div className="bg-gradient-to-br from-purple-50 to-white border-2 border-purple-200 rounded-lg p-4">
-              <div className="text-xs text-gray-600 mb-1">90-Day Readmit</div>
-              <div className="text-2xl font-bold text-purple-900">{qualityMetrics.readmissionRate90Day}%</div>
-              <div className="text-xs text-gray-500 mt-1">vs {qualityMetrics.benchmarkReadmission90}% benchmark</div>
-              <div className={`text-xs font-semibold mt-2 ${
-                qualityMetrics.readmissionRate90Day < qualityMetrics.benchmarkReadmission90
-                  ? 'text-green-600'
-                  : 'text-amber-600'
-              }`}>
-                {qualityMetrics.readmissionRate90Day < qualityMetrics.benchmarkReadmission90 ? '✓ Better' : '⚠ Monitor'}
-              </div>
-            </div>
-
-            {/* Length of Stay */}
-            <div className="bg-gradient-to-br from-amber-50 to-white border-2 border-amber-200 rounded-lg p-4">
-              <div className="text-xs text-gray-600 mb-1">Avg Length of Stay</div>
-              <div className="text-2xl font-bold text-amber-900">{qualityMetrics.avgLengthOfStay} days</div>
-              <div className="text-xs text-gray-500 mt-1">vs {qualityMetrics.benchmarkLOS} days benchmark</div>
-              <div className={`text-xs font-semibold mt-2 ${
-                qualityMetrics.avgLengthOfStay < qualityMetrics.benchmarkLOS
-                  ? 'text-green-600'
-                  : 'text-amber-600'
-              }`}>
-                {qualityMetrics.avgLengthOfStay < qualityMetrics.benchmarkLOS ? '✓ Better' : '⚠ Monitor'}
-              </div>
-            </div>
-
-            {/* Complication Rate */}
-            <div className="bg-gradient-to-br from-red-50 to-white border-2 border-red-200 rounded-lg p-4">
-              <div className="text-xs text-gray-600 mb-1">Complication Rate</div>
-              <div className="text-2xl font-bold text-red-900">{qualityMetrics.complicationRate}%</div>
-              <div className="text-xs text-gray-500 mt-1">vs {qualityMetrics.benchmarkComplicationRate}% benchmark</div>
-              <div className={`text-xs font-semibold mt-2 ${
-                qualityMetrics.complicationRate < qualityMetrics.benchmarkComplicationRate
-                  ? 'text-green-600'
-                  : 'text-amber-600'
-              }`}>
-                {qualityMetrics.complicationRate < qualityMetrics.benchmarkComplicationRate ? '✓ Better' : '⚠ Monitor'}
-              </div>
-            </div>
-
-            {/* Infection Rate */}
-            <div className="bg-gradient-to-br from-pink-50 to-white border-2 border-pink-200 rounded-lg p-4">
-              <div className="text-xs text-gray-600 mb-1">Infection Rate (SSI)</div>
-              <div className="text-2xl font-bold text-pink-900">{qualityMetrics.infectionRate}%</div>
-              <div className="text-xs text-gray-500 mt-1">vs {qualityMetrics.benchmarkInfectionRate}% benchmark</div>
-              <div className={`text-xs font-semibold mt-2 ${
-                qualityMetrics.infectionRate < qualityMetrics.benchmarkInfectionRate
-                  ? 'text-green-600'
-                  : 'text-amber-600'
-              }`}>
-                {qualityMetrics.infectionRate < qualityMetrics.benchmarkInfectionRate ? '✓ Better' : '⚠ Monitor'}
-              </div>
-            </div>
+            <p className="text-sm text-gray-600 ml-8">
+              This section will display real-time quality metrics including revision rates, readmissions,
+              length of stay, complications, and infection rates when clinical outcomes data is integrated
+              from the CommonSpirit quality reporting systems.
+            </p>
           </div>
         </div>
 
@@ -1420,13 +1608,14 @@ const EnhancedOrthopedicDashboard = () => {
     );
   };
 
-  // COMPONENT ANALYSIS TAB - Simplified version
+  // COMPONENT ANALYSIS TAB - Using procedure-based classification
   const renderComponentTab = () => {
+    const procedureData = realData?.matrixPricingByProcedure || { primary: [], revision: [] };
     const components = realData?.matrixPricing || [];
     const totalSavings = components.reduce((sum, item) => sum + item.potentialSavings, 0);
 
-    // Classification helpers
-    const hipKeywords = ['hip', 'femoral head', 'acetabular', 'stem', 'cup', 'bi polar', 'uni polar'];
+    // Classification helpers for hip vs knee
+    const hipKeywords = ['hip', 'femoral head', 'acetabular', 'stem', 'cup', 'bi polar', 'uni polar', 'femur'];
     const kneeKeywords = ['knee', 'tibial', 'femoral component', 'patella', 'bearing', 'tray'];
 
     const isHip = (category) => {
@@ -1439,14 +1628,11 @@ const EnhancedOrthopedicDashboard = () => {
       return kneeKeywords.some(k => cat.includes(k));
     };
 
-    const isPrimary = (category) => !category.toLowerCase().includes('revision');
-    const isRevision = (category) => category.toLowerCase().includes('revision');
-
-    // Group components
-    const hipPrimary = components.filter(c => isHip(c.category) && isPrimary(c.category));
-    const hipRevision = components.filter(c => isHip(c.category) && isRevision(c.category));
-    const kneePrimary = components.filter(c => isKnee(c.category) && isPrimary(c.category));
-    const kneeRevision = components.filter(c => isKnee(c.category) && isRevision(c.category));
+    // Group components by procedure type and body part
+    const hipPrimary = procedureData.primary.filter(c => isHip(c.category));
+    const hipRevision = procedureData.revision.filter(c => isHip(c.category));
+    const kneePrimary = procedureData.primary.filter(c => isKnee(c.category));
+    const kneeRevision = procedureData.revision.filter(c => isKnee(c.category));
 
     const renderComponentTable = (componentList, title, bgColor, borderColor) => {
       const groupSavings = componentList.reduce((sum, item) => sum + item.potentialSavings, 0);
@@ -1514,8 +1700,6 @@ const EnhancedOrthopedicDashboard = () => {
 
     return (
       <div className="space-y-6">
-        <ExecutiveSummaryCard scenario={selectedScenario} />
-
         {/* Component-Level Savings Analysis */}
         <div className="bg-white rounded-xl shadow-lg p-6">
           <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
@@ -1543,10 +1727,17 @@ const EnhancedOrthopedicDashboard = () => {
             <h3 className="text-xl font-bold text-blue-900 mb-4 flex items-center gap-2">
               <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
               Hip Procedures
+              {filterProcedureType !== 'all' && (
+                <span className="text-sm text-blue-600 font-normal ml-2">
+                  ({filterProcedureType === 'primary' ? 'Primary Only' : 'Revision Only'})
+                </span>
+              )}
             </h3>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {renderComponentTable(hipPrimary, 'Hip Primary', 'bg-blue-50', 'border-blue-200')}
-              {renderComponentTable(hipRevision, 'Hip Revision', 'bg-amber-50', 'border-amber-200')}
+              {(filterProcedureType === 'all' || filterProcedureType === 'primary') &&
+                renderComponentTable(hipPrimary, 'Hip Primary', 'bg-blue-50', 'border-blue-200')}
+              {(filterProcedureType === 'all' || filterProcedureType === 'revision') &&
+                renderComponentTable(hipRevision, 'Hip Revision', 'bg-amber-50', 'border-amber-200')}
             </div>
           </div>
 
@@ -1555,10 +1746,17 @@ const EnhancedOrthopedicDashboard = () => {
             <h3 className="text-xl font-bold text-teal-900 mb-4 flex items-center gap-2">
               <div className="w-3 h-3 bg-teal-600 rounded-full"></div>
               Knee Procedures
+              {filterProcedureType !== 'all' && (
+                <span className="text-sm text-teal-600 font-normal ml-2">
+                  ({filterProcedureType === 'primary' ? 'Primary Only' : 'Revision Only'})
+                </span>
+              )}
             </h3>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {renderComponentTable(kneePrimary, 'Knee Primary', 'bg-teal-50', 'border-teal-200')}
-              {renderComponentTable(kneeRevision, 'Knee Revision', 'bg-orange-50', 'border-orange-200')}
+              {(filterProcedureType === 'all' || filterProcedureType === 'primary') &&
+                renderComponentTable(kneePrimary, 'Knee Primary', 'bg-teal-50', 'border-teal-200')}
+              {(filterProcedureType === 'all' || filterProcedureType === 'revision') &&
+                renderComponentTable(kneeRevision, 'Knee Revision', 'bg-orange-50', 'border-orange-200')}
             </div>
           </div>
         </div>
@@ -1763,1169 +1961,7 @@ const EnhancedOrthopedicDashboard = () => {
     </div>
   );
 
-  // RISK ASSESSMENT TAB
-  const renderRiskTab = () => (
-    <div className="space-y-6">
-      <ExecutiveSummaryCard scenario={selectedScenario} />
 
-      {/* Risk vs Reward Heat Map */}
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-          <Target className="w-6 h-6" style={{ color: COLORS.primary }} />
-          Risk vs Reward Heat Map
-        </h2>
-        <p className="text-gray-600 mb-4">
-          Strategic positioning of each scenario based on risk level and financial reward. Colors indicate optimal zones: <span className="font-semibold text-green-700">Green = Optimal</span>, <span className="font-semibold text-yellow-700">Yellow = Balanced</span>, <span className="font-semibold text-blue-700">Blue = Conservative</span>, <span className="font-semibold text-red-700">Red = Caution</span>.
-        </p>
-
-        {/* Heat Map Grid */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-sm font-semibold text-gray-700">Risk Level →</div>
-            <div className="flex gap-8 text-xs text-gray-600">
-              <span>Low Risk (0-3)</span>
-              <span>Medium Risk (4-6)</span>
-              <span>High Risk (7-10)</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-4 gap-3">
-            {/* Y-axis labels */}
-            <div className="flex flex-col justify-around text-sm font-semibold text-gray-700 pr-2">
-              <div className="text-right">High Reward<br/>(&gt;$15M)</div>
-              <div className="text-right">Med Reward<br/>($10-15M)</div>
-              <div className="text-right">Low Reward<br/>(&lt;$10M)</div>
-            </div>
-
-            {/* Heat map cells - organized by Risk (columns) and Reward (rows) */}
-            {/* Row 1: High Reward */}
-            <div className="space-y-3">
-              {/* High Reward, Low Risk - OPTIMAL ZONE (Green) */}
-              <div className="bg-gradient-to-br from-green-100 to-green-200 border-2 border-green-300 rounded-lg p-4 h-32 flex flex-col justify-between">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-green-800">OPTIMAL</span>
-                  <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                </div>
-                <div className="space-y-1">
-                  {Object.values(SCENARIOS).filter(s => s.annualSavings >= 15 && s.riskScore <= 3).map(s => (
-                    <div
-                      key={s.id}
-                      onClick={() => setSelectedScenario(s.id)}
-                      className={`text-xs px-2 py-1 rounded cursor-pointer transition-all ${
-                        selectedScenario === s.id
-                          ? 'bg-purple-600 text-white font-bold shadow-lg scale-105'
-                          : 'bg-white text-green-900 hover:bg-green-50 font-semibold'
-                      }`}
-                    >
-                      <div className="truncate">{s.shortName}</div>
-                      <div className="text-[10px]">${s.annualSavings.toFixed(1)}M</div>
-                    </div>
-                  ))}
-                  {Object.values(SCENARIOS).filter(s => s.annualSavings >= 15 && s.riskScore <= 3).length === 0 && (
-                    <div className="text-xs text-green-700 italic">None</div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {/* High Reward, Medium Risk - BALANCED ZONE (Yellow) */}
-              <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 border-2 border-yellow-300 rounded-lg p-4 h-32 flex flex-col justify-between">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-yellow-800">BALANCED</span>
-                  <div className="w-2 h-2 bg-yellow-600 rounded-full"></div>
-                </div>
-                <div className="space-y-1">
-                  {Object.values(SCENARIOS).filter(s => s.annualSavings >= 15 && s.riskScore > 3 && s.riskScore <= 6).map(s => (
-                    <div
-                      key={s.id}
-                      onClick={() => setSelectedScenario(s.id)}
-                      className={`text-xs px-2 py-1 rounded cursor-pointer transition-all ${
-                        selectedScenario === s.id
-                          ? 'bg-purple-600 text-white font-bold shadow-lg scale-105'
-                          : 'bg-white text-yellow-900 hover:bg-yellow-50 font-semibold'
-                      }`}
-                    >
-                      <div className="truncate">{s.shortName}</div>
-                      <div className="text-[10px]">${s.annualSavings.toFixed(1)}M</div>
-                    </div>
-                  ))}
-                  {Object.values(SCENARIOS).filter(s => s.annualSavings >= 15 && s.riskScore > 3 && s.riskScore <= 6).length === 0 && (
-                    <div className="text-xs text-yellow-700 italic">None</div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {/* High Reward, High Risk - CAUTION ZONE (Red) */}
-              <div className="bg-gradient-to-br from-red-100 to-red-200 border-2 border-red-300 rounded-lg p-4 h-32 flex flex-col justify-between">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-red-800">CAUTION</span>
-                  <div className="w-2 h-2 bg-red-600 rounded-full"></div>
-                </div>
-                <div className="space-y-1">
-                  {Object.values(SCENARIOS).filter(s => s.annualSavings >= 15 && s.riskScore > 6).map(s => (
-                    <div
-                      key={s.id}
-                      onClick={() => setSelectedScenario(s.id)}
-                      className={`text-xs px-2 py-1 rounded cursor-pointer transition-all ${
-                        selectedScenario === s.id
-                          ? 'bg-purple-600 text-white font-bold shadow-lg scale-105'
-                          : 'bg-white text-red-900 hover:bg-red-50 font-semibold'
-                      }`}
-                    >
-                      <div className="truncate">{s.shortName}</div>
-                      <div className="text-[10px]">${s.annualSavings.toFixed(1)}M</div>
-                    </div>
-                  ))}
-                  {Object.values(SCENARIOS).filter(s => s.annualSavings >= 15 && s.riskScore > 6).length === 0 && (
-                    <div className="text-xs text-red-700 italic">None</div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Row 2: Medium Reward */}
-            <div className="col-start-2 space-y-3">
-              {/* Med Reward, Low Risk */}
-              <div className="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200 rounded-lg p-4 h-32 flex flex-col justify-between">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-green-700">GOOD</span>
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                </div>
-                <div className="space-y-1">
-                  {Object.values(SCENARIOS).filter(s => s.annualSavings >= 10 && s.annualSavings < 15 && s.riskScore <= 3).map(s => (
-                    <div
-                      key={s.id}
-                      onClick={() => setSelectedScenario(s.id)}
-                      className={`text-xs px-2 py-1 rounded cursor-pointer transition-all ${
-                        selectedScenario === s.id
-                          ? 'bg-purple-600 text-white font-bold shadow-lg scale-105'
-                          : 'bg-white text-green-800 hover:bg-green-50 font-semibold'
-                      }`}
-                    >
-                      <div className="truncate">{s.shortName}</div>
-                      <div className="text-[10px]">${s.annualSavings.toFixed(1)}M</div>
-                    </div>
-                  ))}
-                  {Object.values(SCENARIOS).filter(s => s.annualSavings >= 10 && s.annualSavings < 15 && s.riskScore <= 3).length === 0 && (
-                    <div className="text-xs text-green-600 italic">None</div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {/* Med Reward, Medium Risk */}
-              <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-2 border-yellow-200 rounded-lg p-4 h-32 flex flex-col justify-between">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-yellow-700">MODERATE</span>
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                </div>
-                <div className="space-y-1">
-                  {Object.values(SCENARIOS).filter(s => s.annualSavings >= 10 && s.annualSavings < 15 && s.riskScore > 3 && s.riskScore <= 6).map(s => (
-                    <div
-                      key={s.id}
-                      onClick={() => setSelectedScenario(s.id)}
-                      className={`text-xs px-2 py-1 rounded cursor-pointer transition-all ${
-                        selectedScenario === s.id
-                          ? 'bg-purple-600 text-white font-bold shadow-lg scale-105'
-                          : 'bg-white text-yellow-800 hover:bg-yellow-50 font-semibold'
-                      }`}
-                    >
-                      <div className="truncate">{s.shortName}</div>
-                      <div className="text-[10px]">${s.annualSavings.toFixed(1)}M</div>
-                    </div>
-                  ))}
-                  {Object.values(SCENARIOS).filter(s => s.annualSavings >= 10 && s.annualSavings < 15 && s.riskScore > 3 && s.riskScore <= 6).length === 0 && (
-                    <div className="text-xs text-yellow-600 italic">None</div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {/* Med Reward, High Risk */}
-              <div className="bg-gradient-to-br from-orange-100 to-orange-200 border-2 border-orange-300 rounded-lg p-4 h-32 flex flex-col justify-between">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-orange-800">RISKY</span>
-                  <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
-                </div>
-                <div className="space-y-1">
-                  {Object.values(SCENARIOS).filter(s => s.annualSavings >= 10 && s.annualSavings < 15 && s.riskScore > 6).map(s => (
-                    <div
-                      key={s.id}
-                      onClick={() => setSelectedScenario(s.id)}
-                      className={`text-xs px-2 py-1 rounded cursor-pointer transition-all ${
-                        selectedScenario === s.id
-                          ? 'bg-purple-600 text-white font-bold shadow-lg scale-105'
-                          : 'bg-white text-orange-900 hover:bg-orange-50 font-semibold'
-                      }`}
-                    >
-                      <div className="truncate">{s.shortName}</div>
-                      <div className="text-[10px]">${s.annualSavings.toFixed(1)}M</div>
-                    </div>
-                  ))}
-                  {Object.values(SCENARIOS).filter(s => s.annualSavings >= 10 && s.annualSavings < 15 && s.riskScore > 6).length === 0 && (
-                    <div className="text-xs text-orange-700 italic">None</div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Row 3: Low Reward */}
-            <div className="col-start-2 space-y-3">
-              {/* Low Reward, Low Risk - CONSERVATIVE (Blue) */}
-              <div className="bg-gradient-to-br from-blue-100 to-blue-200 border-2 border-blue-300 rounded-lg p-4 h-32 flex flex-col justify-between">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-blue-800">CONSERVATIVE</span>
-                  <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                </div>
-                <div className="space-y-1">
-                  {Object.values(SCENARIOS).filter(s => s.annualSavings < 10 && s.riskScore <= 3).map(s => (
-                    <div
-                      key={s.id}
-                      onClick={() => setSelectedScenario(s.id)}
-                      className={`text-xs px-2 py-1 rounded cursor-pointer transition-all ${
-                        selectedScenario === s.id
-                          ? 'bg-purple-600 text-white font-bold shadow-lg scale-105'
-                          : 'bg-white text-blue-900 hover:bg-blue-50 font-semibold'
-                      }`}
-                    >
-                      <div className="truncate">{s.shortName}</div>
-                      <div className="text-[10px]">${s.annualSavings.toFixed(1)}M</div>
-                    </div>
-                  ))}
-                  {Object.values(SCENARIOS).filter(s => s.annualSavings < 10 && s.riskScore <= 3).length === 0 && (
-                    <div className="text-xs text-blue-700 italic">None</div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {/* Low Reward, Medium Risk */}
-              <div className="bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-gray-300 rounded-lg p-4 h-32 flex flex-col justify-between">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-gray-700">LIMITED</span>
-                  <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-                </div>
-                <div className="space-y-1">
-                  {Object.values(SCENARIOS).filter(s => s.annualSavings < 10 && s.riskScore > 3 && s.riskScore <= 6).map(s => (
-                    <div
-                      key={s.id}
-                      onClick={() => setSelectedScenario(s.id)}
-                      className={`text-xs px-2 py-1 rounded cursor-pointer transition-all ${
-                        selectedScenario === s.id
-                          ? 'bg-purple-600 text-white font-bold shadow-lg scale-105'
-                          : 'bg-white text-gray-800 hover:bg-gray-50 font-semibold'
-                      }`}
-                    >
-                      <div className="truncate">{s.shortName}</div>
-                      <div className="text-[10px]">${s.annualSavings.toFixed(1)}M</div>
-                    </div>
-                  ))}
-                  {Object.values(SCENARIOS).filter(s => s.annualSavings < 10 && s.riskScore > 3 && s.riskScore <= 6).length === 0 && (
-                    <div className="text-xs text-gray-600 italic">None</div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {/* Low Reward, High Risk - AVOID (Dark Red) */}
-              <div className="bg-gradient-to-br from-red-200 to-red-300 border-2 border-red-400 rounded-lg p-4 h-32 flex flex-col justify-between">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-red-900">AVOID</span>
-                  <div className="w-2 h-2 bg-red-700 rounded-full"></div>
-                </div>
-                <div className="space-y-1">
-                  {Object.values(SCENARIOS).filter(s => s.annualSavings < 10 && s.riskScore > 6).map(s => (
-                    <div
-                      key={s.id}
-                      onClick={() => setSelectedScenario(s.id)}
-                      className={`text-xs px-2 py-1 rounded cursor-pointer transition-all ${
-                        selectedScenario === s.id
-                          ? 'bg-purple-600 text-white font-bold shadow-lg scale-105'
-                          : 'bg-white text-red-900 hover:bg-red-50 font-semibold'
-                      }`}
-                    >
-                      <div className="truncate">{s.shortName}</div>
-                      <div className="text-[10px]">${s.annualSavings.toFixed(1)}M</div>
-                    </div>
-                  ))}
-                  {Object.values(SCENARIOS).filter(s => s.annualSavings < 10 && s.riskScore > 6).length === 0 && (
-                    <div className="text-xs text-red-800 italic">None</div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Risk Radar Chart */}
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-          <Shield className="w-6 h-6" style={{ color: COLORS.primary }} />
-          Multi-Dimensional Risk Assessment
-        </h2>
-        <ResponsiveContainer width="100%" height={400}>
-          <RadarChart data={[
-            { risk: 'Clinical', [selectedScenario]: SCENARIOS[selectedScenario]?.adoptionRate || 0 },
-            { risk: 'Financial', [selectedScenario]: 100 - (SCENARIOS[selectedScenario]?.riskScore * 10) || 0 },
-            { risk: 'Operational', [selectedScenario]: SCENARIOS[selectedScenario]?.implementation.complexity === 'Low' ? 90 : SCENARIOS[selectedScenario]?.implementation.complexity === 'Medium' ? 70 : 50 },
-            { risk: 'Stakeholder', [selectedScenario]: SCENARIOS[selectedScenario]?.quintupleMissionScore || 0 },
-            { risk: 'Timeline', [selectedScenario]: Math.max(0, 100 - (SCENARIOS[selectedScenario]?.implementation.timeline || 0) * 3) }
-          ]}>
-            <PolarGrid />
-            <PolarAngleAxis dataKey="risk" />
-            <PolarRadiusAxis domain={[0, 100]} />
-            <Radar name={`Scenario ${selectedScenario}`} dataKey={selectedScenario} stroke={COLORS.primary} fill={COLORS.primary} fillOpacity={0.6} />
-            <Tooltip />
-            <Legend />
-          </RadarChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Risk Comparison Table */}
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <h2 className="text-2xl font-bold mb-4">Risk Comparison Matrix</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="px-4 py-3 text-left">Scenario</th>
-                <th className="px-4 py-3 text-center">Risk Level</th>
-                <th className="px-4 py-3 text-center">Risk Score</th>
-                <th className="px-4 py-3 text-center">Complexity</th>
-                <th className="px-4 py-3 text-center">Timeline</th>
-                <th className="px-4 py-3 text-center">Implementation Cost</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.values(SCENARIOS).map(scenario => (
-                <tr key={scenario.id} className={`border-b hover:bg-gray-50 ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}>
-                  <td className="px-4 py-3 font-medium">{scenario.shortName}</td>
-                  <td className="px-4 py-3 text-center">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      scenario.riskLevel === 'low' ? 'bg-green-100 text-green-700' :
-                      scenario.riskLevel === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                      'bg-red-100 text-red-700'
-                    }`}>
-                      {scenario.riskLevel}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-center font-bold">{scenario.riskScore}/10</td>
-                  <td className="px-4 py-3 text-center">{scenario.implementation.complexity}</td>
-                  <td className="px-4 py-3 text-center">{scenario.implementation.timeline} months</td>
-                  <td className="px-4 py-3 text-center">${scenario.implementation.costMillions}M</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-
-  // MISSION IMPACT TAB
-  const renderMissionTab = () => {
-    const missionData = QUINTUPLE_SCORING[selectedScenario];
-
-    // If no mission data for this scenario, show error
-    if (!missionData) {
-      return (
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          <div className="text-center">
-            <AlertCircle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Mission Data Not Available</h2>
-            <p className="text-gray-600">
-              Quintuple Aim scoring is not available for scenario: <strong>{selectedScenario}</strong>
-            </p>
-            <p className="text-sm text-gray-500 mt-2">
-              Available scenarios: {Object.keys(QUINTUPLE_SCORING).join(', ')}
-            </p>
-          </div>
-        </div>
-      );
-    }
-
-    const quintupleAimDefinitions = [
-      {
-        name: 'Patient Experience',
-        score: missionData.patientExperience,
-        color: '#10B981',
-        icon: Heart,
-        description: 'Quality of care from the patient perspective',
-        scoringFactors: [
-          'Device reliability and proven outcomes',
-          'Surgeon familiarity and training depth',
-          'Product availability and consistency',
-          'Reduced revision rates'
-        ],
-        scale: '0-100: Low (0-40) = Limited product choices/surgeon training; Medium (41-70) = Adequate options; High (71-100) = Optimal product portfolio and surgeon expertise'
-      },
-      {
-        name: 'Population Health',
-        score: missionData.populationHealth,
-        color: '#3B82F6',
-        icon: Building2,
-        description: 'Overall health outcomes across patient populations',
-        scoringFactors: [
-          'Clinical outcomes data and registry participation',
-          'Evidence-based product selection',
-          'Standardization benefits across facilities',
-          'Long-term implant survivorship'
-        ],
-        scale: '0-100: Low (0-40) = Limited outcomes tracking; Medium (41-70) = Good standardization; High (71-100) = Comprehensive outcomes with registry data'
-      },
-      {
-        name: 'Cost Reduction',
-        score: missionData.costReduction,
-        color: '#F59E0B',
-        icon: DollarSign,
-        description: 'Financial sustainability and value creation',
-        scoringFactors: [
-          'Direct savings from vendor negotiation',
-          'Reduced inventory and supply chain costs',
-          'Administrative efficiency gains',
-          'Volume-based contract optimization'
-        ],
-        scale: '0-100: Proportional to savings percentage (0% = 0 points, 25% = 92 points). Reflects annual cost reduction achieved.'
-      },
-      {
-        name: 'Provider Experience',
-        score: missionData.providerExperience,
-        color: '#BA4896',
-        icon: Stethoscope,
-        description: 'Surgeon and clinical team satisfaction',
-        scoringFactors: [
-          'Product choice flexibility and preference accommodation',
-          'Rep support and technical assistance',
-          'Training and education opportunities',
-          'Ease of adoption and workflow integration'
-        ],
-        scale: '0-100: Low (0-40) = Single vendor/limited choice; Medium (41-70) = 2-3 vendors; High (71-100) = 3+ vendors with broad portfolio'
-      },
-      {
-        name: 'Health Equity',
-        score: missionData.healthEquity,
-        color: '#9333EA',
-        icon: Shield,
-        description: 'Fair access to quality care across all populations',
-        scoringFactors: [
-          'Consistency of product availability across facilities',
-          'Standardized care protocols across regions',
-          'Access to premium implants for all patients',
-          'Reduced disparities in outcomes by location'
-        ],
-        scale: '0-100: Low (0-40) = High facility variation; Medium (41-70) = Moderate standardization; High (71-100) = Consistent protocols system-wide'
-      }
-    ];
-
-    return (
-      <div className="space-y-6">
-        <ExecutiveSummaryCard scenario={selectedScenario} />
-
-        {/* Disclaimer */}
-        <div className="bg-amber-50 border-l-4 border-amber-500 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
-            <div>
-              <h3 className="font-bold text-amber-900 mb-1">Estimated Mission Scores</h3>
-              <p className="text-sm text-amber-800">
-                The Quintuple Aim scores shown below are <strong>estimated based on industry benchmarks and scenario characteristics</strong>.
-                Actual patient experience, population health, and health equity scores would require clinical outcomes data,
-                patient satisfaction surveys, and facility-level performance metrics not currently available in this analysis.
-                Cost reduction scores are derived from actual financial data.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Quintuple Aim Explanations */}
-        <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl shadow-lg p-6">
-          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-            <HelpCircle className="w-6 h-6" style={{ color: COLORS.primary }} />
-            Understanding the Quintuple Aim Framework
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {quintupleAimDefinitions.map((aim) => {
-              const IconComponent = aim.icon;
-              return (
-                <div key={aim.name} className="bg-white rounded-lg p-4 shadow hover:shadow-md transition-shadow">
-                  <div className="flex items-center gap-2 mb-2">
-                    <IconComponent className="w-5 h-5" style={{ color: aim.color }} />
-                    <h3 className="font-bold text-lg">{aim.name}</h3>
-                  </div>
-                  <div className="mb-3">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm text-gray-600">Current Score</span>
-                      <span className="text-2xl font-bold" style={{ color: aim.color }}>{aim.score}</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="h-2 rounded-full transition-all"
-                        style={{ width: `${aim.score}%`, backgroundColor: aim.color }}
-                      />
-                    </div>
-                  </div>
-                  <p className="text-sm text-gray-700 mb-2 font-medium">{aim.description}</p>
-                  <div className="text-xs text-gray-600 mb-2">
-                    <strong>Scoring Factors:</strong>
-                    <ul className="list-disc ml-4 mt-1 space-y-0.5">
-                      {aim.scoringFactors.map((factor, idx) => (
-                        <li key={idx}>{factor}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200">
-                    <strong>Scale:</strong> {aim.scale}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Quintuple Aim Radar */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-            <Heart className="w-6 h-6" style={{ color: COLORS.primary }} />
-            Quintuple Aim Mission Alignment
-          </h2>
-          <ResponsiveContainer width="100%" height={500}>
-            <RadarChart data={[
-              { aim: 'Patient Experience', score: missionData.patientExperience },
-              { aim: 'Population Health', score: missionData.populationHealth },
-              { aim: 'Cost Reduction', score: missionData.costReduction },
-              { aim: 'Provider Experience', score: missionData.providerExperience },
-              { aim: 'Health Equity', score: missionData.healthEquity }
-            ]}>
-              <PolarGrid />
-              <PolarAngleAxis dataKey="aim" />
-              <PolarRadiusAxis domain={[0, 100]} />
-              <Radar name="Score" dataKey="score" stroke={COLORS.primary} fill={COLORS.primary} fillOpacity={0.7} />
-              <Tooltip />
-            </RadarChart>
-          </ResponsiveContainer>
-          <div className="mt-4 text-center">
-            <div className="text-sm text-gray-600">Overall Mission Score</div>
-            <div className="text-4xl font-bold" style={{ color: COLORS.primary }}>
-              {missionData.total}/100
-            </div>
-            <div className="text-sm text-gray-500 mt-1">
-              Mission Bonus: +{missionData.missionBonus} points
-            </div>
-          </div>
-        </div>
-
-        {/* Mission Comparison */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-2xl font-bold mb-4">Mission Score Comparison</h2>
-          <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={Object.entries(QUINTUPLE_SCORING).map(([id, data]) => ({
-              scenario: SCENARIOS[id]?.shortName,
-              patientExperience: data.patientExperience,
-              populationHealth: data.populationHealth,
-              costReduction: data.costReduction,
-              providerExperience: data.providerExperience,
-              healthEquity: data.healthEquity
-            }))}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="scenario" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="patientExperience" stackId="a" fill="#10B981" name="Patient Experience" />
-              <Bar dataKey="populationHealth" stackId="a" fill="#3B82F6" name="Population Health" />
-              <Bar dataKey="costReduction" stackId="a" fill="#F59E0B" name="Cost Reduction" />
-              <Bar dataKey="providerExperience" stackId="a" fill="#BA4896" name="Provider Experience" />
-              <Bar dataKey="healthEquity" stackId="a" fill="#9333EA" name="Health Equity" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-    );
-  };
-
-  // INDUSTRY INTELLIGENCE TAB
-  const renderIndustryTab = () => {
-    const industryIntelligence = [
-      {
-        category: 'Mergers & Acquisitions',
-        icon: Target,
-        color: '#BA4896',
-        events: [
-          {
-            date: '2024-Q2',
-            title: 'Stryker Acquires Vocera Communications',
-            impact: 'Medium',
-            leverage: 'Vendor',
-            description: 'Enhanced clinical communication capabilities, potential bundling opportunities with OR equipment',
-            implications: ['Integration with Stryker platforms', 'New communication solutions', 'Potential pricing leverage']
-          },
-          {
-            date: '2023-Q4',
-            title: 'J&J Completes Abiomed Acquisition',
-            impact: 'Low',
-            leverage: 'CommonSpirit',
-            description: 'Cardiovascular focus, minimal direct orthopedic impact - J&J diverted resources from ortho',
-            implications: ['J&J portfolio diversification', 'Resource allocation shifts away from ortho', 'Opportunity for competitor gains']
-          }
-        ]
-      },
-      {
-        category: 'Spinoffs & Divestitures',
-        icon: AlertCircle,
-        color: '#F59E0B',
-        events: [
-          {
-            date: '2023-Q2',
-            title: 'Zimmer Biomet Sells Spine Business to H.I.G. Capital',
-            impact: 'Medium',
-            leverage: 'CommonSpirit',
-            description: 'ZimVie spin-off completes separation, focusing core business on joints - need to prove joint focus',
-            implications: ['Increased focus on hip/knee portfolio', 'Motivated to grow joint market share', 'Opportunity for volume commitments']
-          },
-          {
-            date: '2021-Q3',
-            title: 'J&J Separates Consumer Health Division (Kenvue)',
-            impact: 'Low',
-            leverage: 'CommonSpirit',
-            description: 'Creation of Kenvue as standalone entity, DePuy Synthes remains with J&J MedTech - proving medical focus',
-            implications: ['Streamlined MedTech focus', 'Capital reallocation to ortho R&D', 'Strategic partnership opportunities']
-          }
-        ]
-      },
-      {
-        category: 'Legal & Regulatory',
-        icon: Shield,
-        color: '#EF4444',
-        events: [
-          {
-            date: '2024-Q1',
-            title: 'ASR Hip Settlement - DePuy',
-            impact: 'Low',
-            leverage: 'CommonSpirit',
-            description: 'Legacy metal-on-metal hip implant settlements continue - J&J motivated to rebuild trust',
-            implications: ['Increased quality oversight', 'Enhanced clinical evidence requirements', 'Opportunity for quality-based agreements']
-          },
-          {
-            date: '2023-Q3',
-            title: 'DOJ Investigation into Implant Pricing',
-            impact: 'High',
-            leverage: 'CommonSpirit',
-            description: 'Federal investigation into orthopedic device pricing practices across industry - pricing scrutiny',
-            implications: ['Increased price transparency pressure', 'Vendors motivated to show competitive pricing', 'Enhanced compliance as negotiation point']
-          },
-          {
-            date: '2023-Q1',
-            title: 'FDA Modernization Act 2.0',
-            impact: 'Medium',
-            leverage: 'Vendor',
-            description: 'New pathways for medical device approvals, alternatives to animal testing - faster innovation',
-            implications: ['Faster innovation cycles', 'New product introductions accelerated', 'Premium pricing for new tech']
-          }
-        ]
-      },
-      {
-        category: 'Market Dynamics',
-        icon: TrendingUp,
-        color: '#10B981',
-        events: [
-          {
-            date: '2024-Q1',
-            title: 'Robotic-Assisted Surgery Growth',
-            impact: 'High',
-            leverage: 'Vendor',
-            description: 'Continued expansion of robotic platforms (Mako, Rosa, Navio) driving vendor differentiation',
-            implications: ['Technology integration requirements', 'Capital equipment considerations', 'Bundled service contracts']
-          },
-          {
-            date: '2023-Q4',
-            title: 'ASC Migration Accelerates',
-            impact: 'High',
-            leverage: 'CommonSpirit',
-            description: 'Hip and knee procedures shifting to ambulatory surgery centers - pressure for value pricing',
-            implications: ['Value-based purchasing emphasis', 'Episode payment models', 'Aggressive pricing needed for ASC market']
-          },
-          {
-            date: '2023-Q2',
-            title: 'Direct Contracting Models Emerge',
-            impact: 'Medium',
-            leverage: 'CommonSpirit',
-            description: 'New direct-to-employer joint replacement programs - transparency and value requirements',
-            implications: ['Bundled payment pressure', 'Outcome-based contracting', 'Price transparency demands from employers']
-          }
-        ]
-      }
-    ];
-
-    // Negotiating Windows - Fiscal Year & Market Events
-    const negotiatingWindows = [
-      {
-        vendor: 'Stryker',
-        fiscalYearEnd: 'December 31',
-        optimalWindows: [
-          {
-            period: 'Q4 (Oct-Dec)',
-            rationale: 'End of fiscal year - sales teams motivated to hit annual targets',
-            leverage: 'High',
-            tactics: ['Volume commitments for year-end close', 'Multi-year deals with upfront recognition', 'Quarter-end urgency pricing']
-          },
-          {
-            period: 'Q1 (Jan-Mar)',
-            rationale: 'Post-earnings review period - new annual quotas established',
-            leverage: 'Medium',
-            tactics: ['Early-year momentum deals', 'Setting baseline for annual relationships', 'Capital equipment bundling']
-          }
-        ],
-        earningsReports: ['Late January', 'Late April', 'Late July', 'Late October'],
-        nextEarnings: '2025-01-28'
-      },
-      {
-        vendor: 'Zimmer Biomet',
-        fiscalYearEnd: 'December 31',
-        optimalWindows: [
-          {
-            period: 'Q2-Q3 (Apr-Sep)',
-            rationale: 'Post-ZimVie spin - proving joint market focus and growth',
-            leverage: 'Very High',
-            tactics: ['Market share gain commitments', 'Portfolio expansion into revision components', 'Competitive displacement deals']
-          },
-          {
-            period: 'Q4 (Oct-Dec)',
-            rationale: 'Fiscal year-end close with pressure to show spine divestiture success',
-            leverage: 'High',
-            tactics: ['Year-end target pricing', 'Show growth in core joint business', 'Multi-facility agreements']
-          }
-        ],
-        earningsReports: ['Early February', 'Early May', 'Early August', 'Early November'],
-        nextEarnings: '2025-02-04'
-      },
-      {
-        vendor: 'J&J (DePuy Synthes)',
-        fiscalYearEnd: 'December 31',
-        optimalWindows: [
-          {
-            period: 'Q1-Q2 (Jan-Jun)',
-            rationale: 'Post-Kenvue separation - proving MedTech focus and rebuilding trust',
-            leverage: 'Very High',
-            tactics: ['Partnership approach vs transactional', 'Quality and outcomes focus', 'ASR legacy offset with pricing']
-          },
-          {
-            period: 'Q4 (Oct-Dec)',
-            rationale: 'Calendar year-end with parent company scrutiny on MedTech performance',
-            leverage: 'High',
-            tactics: ['Ortho division performance targets', 'Strategic account pricing', 'Clinical evidence partnerships']
-          }
-        ],
-        earningsReports: ['Mid-January', 'Mid-April', 'Mid-July', 'Mid-October'],
-        nextEarnings: '2025-01-21'
-      },
-      {
-        vendor: 'Smith & Nephew',
-        fiscalYearEnd: 'December 31',
-        optimalWindows: [
-          {
-            period: 'Q2-Q3 (Apr-Sep)',
-            rationale: 'Smaller market share - aggressive pricing to gain CommonSpirit footprint',
-            leverage: 'Very High',
-            tactics: ['Market entry pricing', 'Navio robotics bundling', 'Revision component specialization']
-          },
-          {
-            period: 'Q4 (Oct-Dec)',
-            rationale: 'Year-end growth targets - need reference accounts',
-            leverage: 'High',
-            tactics: ['Reference customer pricing', 'Technology evaluation programs', 'Competitive win-back offers']
-          }
-        ],
-        earningsReports: ['Early February', 'Mid-May', 'Early August', 'Early November'],
-        nextEarnings: '2025-02-06'
-      }
-    ];
-
-    const getImpactColor = (impact) => {
-      switch(impact) {
-        case 'High': return '#EF4444';
-        case 'Medium': return '#F59E0B';
-        case 'Low': return '#10B981';
-        default: return '#6B7280';
-      }
-    };
-
-    return (
-      <div className="space-y-6">
-        <ExecutiveSummaryCard scenario={selectedScenario} />
-
-        {/* Industry Overview */}
-        <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl shadow-lg p-6">
-          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-            <AlertCircle className="w-6 h-6" style={{ color: COLORS.primary }} />
-            Orthopedic Industry Intelligence Dashboard
-          </h2>
-          <p className="text-gray-700 mb-4">
-            Strategic insights on mergers, acquisitions, divestitures, legal challenges, and market dynamics
-            affecting the orthopedic device landscape and vendor partnership decisions.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {industryIntelligence.map((cat) => {
-              const IconComponent = cat.icon;
-              return (
-                <div key={cat.category} className="bg-white rounded-lg p-4 shadow">
-                  <div className="flex items-center gap-2 mb-2">
-                    <IconComponent className="w-5 h-5" style={{ color: cat.color }} />
-                    <h3 className="font-bold">{cat.category}</h3>
-                  </div>
-                  <div className="text-3xl font-bold" style={{ color: cat.color }}>
-                    {cat.events.length}
-                  </div>
-                  <div className="text-xs text-gray-500">Recent Events</div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Detailed Intelligence Cards - Horizontal Grid Layout */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-2xl font-bold mb-6">Industry Events & Strategic Intelligence</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {industryIntelligence.map((category) => {
-              const CategoryIcon = category.icon;
-              return (
-                <div key={category.category} className="border-2 rounded-lg p-4" style={{ borderColor: category.color }}>
-                  <div className="flex items-center gap-2 mb-4 pb-3 border-b-2" style={{ borderColor: category.color }}>
-                    <CategoryIcon className="w-5 h-5" style={{ color: category.color }} />
-                    <h3 className="font-bold text-lg" style={{ color: category.color }}>{category.category}</h3>
-                  </div>
-                  <div className="space-y-3">
-                    {category.events.map((event, idx) => (
-                      <div key={idx} className="bg-gray-50 rounded-lg p-3">
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <h4 className="font-bold text-sm flex-1">{event.title}</h4>
-                          <div className="flex gap-1 flex-shrink-0">
-                            <span
-                              className="px-1.5 py-0.5 rounded text-xs font-medium text-white"
-                              style={{ backgroundColor: getImpactColor(event.impact) }}
-                            >
-                              {event.impact}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="text-xs text-gray-500 mb-2">{event.date}</div>
-                        <p className="text-xs text-gray-700 mb-2">{event.description}</p>
-                        <div className="flex items-center gap-1 mb-2">
-                          <span
-                            className={`px-2 py-0.5 rounded text-xs font-medium ${
-                              event.leverage === 'CommonSpirit'
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-red-100 text-red-700'
-                            }`}
-                          >
-                            {event.leverage === 'CommonSpirit' ? '✓ Favors CommonSpirit' : '⚠ Favors Vendor'}
-                          </span>
-                        </div>
-                        <div className="bg-white rounded p-2 mt-2">
-                          <div className="text-xs font-semibold text-gray-600 mb-1">Key Implications:</div>
-                          <ul className="text-xs text-gray-600 space-y-0.5">
-                            {event.implications.slice(0, 2).map((imp, i) => (
-                              <li key={i} className="flex items-start gap-1">
-                                <span className="text-purple-600">•</span>
-                                <span>{imp}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Vendor-Specific Intelligence */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-            <Target className="w-6 h-6" style={{ color: COLORS.primary }} />
-            Vendor-Specific Strategic Position
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="border-2 border-purple-200 rounded-lg p-4">
-              <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
-                <div className="w-3 h-3 bg-purple-600 rounded-full"></div>
-                Zimmer Biomet
-              </h3>
-              <ul className="text-sm text-gray-700 space-y-2">
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                  <span>Post-ZimVie spin: focused strategy on joints</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                  <span>Rosa robotics platform expansion</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
-                  <span>Integration challenges from historical M&A</span>
-                </li>
-              </ul>
-            </div>
-            <div className="border-2 border-blue-200 rounded-lg p-4">
-              <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
-                <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
-                Stryker
-              </h3>
-              <ul className="text-sm text-gray-700 space-y-2">
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                  <span>Mako robotics market leader</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                  <span>Vocera acquisition enhances digital ecosystem</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                  <span>Consistent innovation pipeline</span>
-                </li>
-              </ul>
-            </div>
-            <div className="border-2 border-green-200 rounded-lg p-4">
-              <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-600 rounded-full"></div>
-                J&J (DePuy Synthes)
-              </h3>
-              <ul className="text-sm text-gray-700 space-y-2">
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                  <span>Post-Kenvue split: focused MedTech strategy</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
-                  <span>Legacy litigation (ASR) ongoing</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-                  <span>Velys robotic platform development</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        {/* Negotiating Windows - Fiscal Year Intelligence - Compact Grid */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-            <Calendar className="w-6 h-6" style={{ color: COLORS.primary }} />
-            Strategic Negotiating Windows
-          </h2>
-          <p className="text-gray-600 mb-4">
-            Optimal timing for contract negotiations based on vendor fiscal years and market pressures
-          </p>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {negotiatingWindows.map((vendor, idx) => (
-              <div key={idx} className="border-2 border-purple-200 rounded-lg p-4">
-                <div className="mb-3 pb-3 border-b border-purple-200">
-                  <h3 className="text-lg font-bold text-purple-900">{vendor.vendor}</h3>
-                  <div className="text-xs text-gray-600 mt-1">
-                    FY End: <span className="font-semibold">{vendor.fiscalYearEnd}</span> |
-                    Next Earnings: <span className="font-semibold text-purple-600">{vendor.nextEarnings}</span>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  {vendor.optimalWindows.map((window, wIdx) => (
-                    <div
-                      key={wIdx}
-                      className={`rounded-lg p-3 ${
-                        window.leverage === 'Very High'
-                          ? 'bg-green-50 border border-green-300'
-                          : 'bg-blue-50 border border-blue-300'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-bold text-sm text-gray-900">{window.period}</h4>
-                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                          window.leverage === 'Very High'
-                            ? 'bg-green-600 text-white'
-                            : 'bg-blue-600 text-white'
-                        }`}>
-                          {window.leverage}
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-700 mb-2 italic">{window.rationale}</p>
-                      <div className="text-xs">
-                        <div className="font-semibold text-gray-600 mb-1">Tactics:</div>
-                        <ul className="space-y-0.5">
-                          {window.tactics.slice(0, 2).map((tactic, tIdx) => (
-                            <li key={tIdx} className="flex items-start gap-1">
-                              <span className="text-purple-600">▸</span>
-                              <span className="text-gray-600">{tactic}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Timeline Visualization */}
-          <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
-            <h3 className="text-xl font-bold text-purple-900 mb-6 flex items-center gap-2">
-              <Calendar className="w-6 h-6" />
-              Negotiating Windows Timeline (Next 12 Months)
-            </h3>
-
-            {/* Timeline */}
-            <div className="relative">
-              {/* Month headers */}
-              <div className="grid grid-cols-12 gap-1 mb-4">
-                {(() => {
-                  const today = new Date();
-                  const months = [];
-                  for (let i = 0; i < 12; i++) {
-                    const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
-                    months.push(date.toLocaleDateString('en-US', { month: 'short' }));
-                  }
-                  return months.map((month, idx) => (
-                    <div key={idx} className="text-center text-xs font-semibold text-gray-600">
-                      {month}
-                    </div>
-                  ));
-                })()}
-              </div>
-
-              {/* Vendor timelines */}
-              <div className="space-y-6">
-                {negotiatingWindows.map((vendor, vIdx) => (
-                  <div key={vIdx} className="relative">
-                    <div className="flex items-start gap-4">
-                      {/* Vendor name */}
-                      <div className="w-32 flex-shrink-0">
-                        <div className="font-bold text-purple-900">{vendor.vendor}</div>
-                        <div className="text-xs text-gray-600">FY End: {vendor.fiscalYearEnd}</div>
-                      </div>
-
-                      {/* Timeline bar */}
-                      <div className="flex-1 relative">
-                        <div className="grid grid-cols-12 gap-1 h-16">
-                          {/* Background months */}
-                          {[...Array(12)].map((_, mIdx) => (
-                            <div key={mIdx} className="border border-gray-200 rounded bg-gray-50"></div>
-                          ))}
-
-                          {/* Optimal windows overlay */}
-                          {vendor.optimalWindows.map((window, wIdx) => {
-                            // Map period to month range
-                            let startMonth, spanMonths;
-                            if (window.period.includes('Q1')) {
-                              startMonth = 0; spanMonths = 3;
-                            } else if (window.period.includes('Q2-Q3') || window.period.includes('Apr-Sep')) {
-                              startMonth = 3; spanMonths = 6;
-                            } else if (window.period.includes('Q1-Q2') || window.period.includes('Jan-Jun')) {
-                              startMonth = 0; spanMonths = 6;
-                            } else if (window.period.includes('Q4')) {
-                              startMonth = 9; spanMonths = 3;
-                            } else {
-                              startMonth = 0; spanMonths = 1;
-                            }
-
-                            const bgColor = window.leverage === 'Very High'
-                              ? 'bg-green-500'
-                              : window.leverage === 'High'
-                              ? 'bg-blue-500'
-                              : 'bg-amber-500';
-
-                            return (
-                              <div
-                                key={wIdx}
-                                className={`absolute ${bgColor} bg-opacity-80 rounded shadow-md flex items-center justify-center text-white font-bold text-xs px-2 border-2 border-white`}
-                                style={{
-                                  left: `${(startMonth / 12) * 100}%`,
-                                  width: `${(spanMonths / 12) * 100}%`,
-                                  top: `${wIdx * 50}%`,
-                                  height: '45%'
-                                }}
-                                title={`${window.period}: ${window.rationale}`}
-                              >
-                                <div className="truncate">{window.period}</div>
-                              </div>
-                            );
-                          })}
-                        </div>
-
-                        {/* Earnings markers */}
-                        <div className="absolute top-0 left-0 right-0 h-16 pointer-events-none">
-                          {vendor.earningsReports && vendor.earningsReports.map((earnings, eIdx) => {
-                            // Map earnings to approximate month
-                            let monthPos = 0;
-                            if (earnings.includes('January') || earnings.includes('Late January')) monthPos = 0.8;
-                            else if (earnings.includes('February') || earnings.includes('Early February')) monthPos = 1.2;
-                            else if (earnings.includes('April') || earnings.includes('Late April')) monthPos = 3.8;
-                            else if (earnings.includes('May') || earnings.includes('Early May')) monthPos = 4.2;
-                            else if (earnings.includes('July') || earnings.includes('Late July')) monthPos = 6.8;
-                            else if (earnings.includes('August') || earnings.includes('Early August')) monthPos = 7.2;
-                            else if (earnings.includes('October') || earnings.includes('Late October')) monthPos = 9.8;
-                            else if (earnings.includes('November') || earnings.includes('Early November')) monthPos = 10.2;
-
-                            return (
-                              <div
-                                key={eIdx}
-                                className="absolute w-1 bg-red-500 opacity-60"
-                                style={{
-                                  left: `${(monthPos / 12) * 100}%`,
-                                  top: 0,
-                                  height: '100%'
-                                }}
-                                title={`Earnings: ${earnings}`}
-                              >
-                                <div className="absolute -top-2 left-0 transform -translate-x-1/2">
-                                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Legend */}
-              <div className="mt-6 flex items-center justify-center gap-6 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-green-500 rounded"></div>
-                  <span className="text-gray-700">Very High Leverage</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                  <span className="text-gray-700">High Leverage</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-amber-500 rounded"></div>
-                  <span className="text-gray-700">Medium Leverage</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-1 h-4 bg-red-500"></div>
-                  <span className="text-gray-700">Earnings Report</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
 
   // WHAT-IF SCENARIO TOOLS
@@ -2950,27 +1986,6 @@ const EnhancedOrthopedicDashboard = () => {
         </div>
       </div>
 
-      {/* Scenario Selector - Prominent */}
-      <div className="mb-6 bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl p-6 shadow-xl">
-        <label className="block text-sm font-bold text-purple-100 uppercase tracking-wide mb-3">
-          Select Baseline Scenario
-        </label>
-        <select
-          value={selectedScenario}
-          onChange={(e) => setSelectedScenario(e.target.value)}
-          className="w-full px-6 py-4 text-lg font-bold border-4 border-purple-400 rounded-lg bg-white text-gray-900 hover:border-purple-300 focus:outline-none focus:ring-4 focus:ring-purple-300 cursor-pointer shadow-lg"
-        >
-          {Object.values(SCENARIOS).map(scenario => (
-            <option key={scenario.id} value={scenario.id}>
-              {scenario.shortName} - ${scenario.annualSavings.toFixed(2)}M savings ({scenario.savingsPercent}% reduction)
-            </option>
-          ))}
-        </select>
-        <p className="text-purple-100 text-sm mt-3 italic">
-          Choose your baseline scenario above, then adjust the parameters below to test different assumptions
-        </p>
-      </div>
-
       {/* Parameter Definitions Banner */}
       <div className="mb-6 p-4 bg-blue-50 border-l-4 border-blue-600 rounded-lg">
         <div className="flex items-start gap-2">
@@ -2981,119 +1996,48 @@ const EnhancedOrthopedicDashboard = () => {
         </div>
       </div>
 
-      {/* Parameter Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-        {/* Adoption Rate Modifier */}
-        <div className="bg-white rounded-lg p-5 shadow-md border border-gray-200">
-          <div className="flex items-start gap-2 mb-3">
-            <label className="block text-base font-bold text-gray-900">
-              Adoption Rate Modifier
+      {/* Parameter Grid - 4 Key Sliders */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {/* Projected Savings Adjustment */}
+        <div className="bg-white rounded-lg p-4 shadow-md border border-gray-200">
+          <div className="flex items-start gap-2 mb-2">
+            <label className="block text-sm font-bold text-gray-900">
+              Projected Savings
             </label>
             <HelpCircle
               className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5 cursor-help"
-              title="Percentage change in surgeon adoption of the standardized vendor strategy. Positive values indicate better adoption, negative values indicate resistance."
+              title="Adjust the baseline savings projection up or down based on confidence level, market conditions, or risk tolerance."
             />
           </div>
-          <div className="text-sm text-gray-600 mb-3 italic">
-            Adjust surgeon buy-in to standardization
-          </div>
-          <div className="text-2xl font-bold mb-2" style={{ color: COLORS.primary }}>
-            {whatIfParams.adoptionModifier > 0 ? '+' : ''}{whatIfParams.adoptionModifier}%
+          <div className="text-xl font-bold mb-2" style={{ color: COLORS.primary }}>
+            {whatIfParams.savingsAdjustment > 0 ? '+' : ''}{whatIfParams.savingsAdjustment}%
           </div>
           <input
             type="range"
-            min="-20"
-            max="20"
-            value={whatIfParams.adoptionModifier}
-            onChange={(e) => setWhatIfParams({ ...whatIfParams, adoptionModifier: parseInt(e.target.value) })}
+            min="-30"
+            max="30"
+            value={whatIfParams.savingsAdjustment}
+            onChange={(e) => setWhatIfParams({ ...whatIfParams, savingsAdjustment: parseInt(e.target.value) })}
             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
           />
-          <div className="flex justify-between text-xs text-gray-500 mt-2">
-            <span>-20%</span>
-            <span className="font-semibold">Baseline</span>
-            <span>+20%</span>
-          </div>
-        </div>
-
-        {/* Price Erosion */}
-        <div className="bg-white rounded-lg p-5 shadow-md border border-gray-200">
-          <div className="flex items-start gap-2 mb-3">
-            <label className="block text-base font-bold text-gray-900">
-              Price Erosion
-            </label>
-            <HelpCircle
-              className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5 cursor-help"
-              title="Annual rate of price increases or decreases from vendors. Negative values = price reductions (better for us), positive values = price increases (worse for us)."
-            />
-          </div>
-          <div className="text-sm text-gray-600 mb-3 italic">
-            Annual vendor price change
-          </div>
-          <div className="text-2xl font-bold mb-2" style={{ color: COLORS.primary }}>
-            {whatIfParams.priceErosion > 0 ? '+' : ''}{whatIfParams.priceErosion}%
-          </div>
-          <input
-            type="range"
-            min="-10"
-            max="10"
-            value={whatIfParams.priceErosion}
-            onChange={(e) => setWhatIfParams({ ...whatIfParams, priceErosion: parseInt(e.target.value) })}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
-          />
-          <div className="flex justify-between text-xs text-gray-500 mt-2">
-            <span>-10% (savings)</span>
-            <span className="font-semibold">0</span>
-            <span>+10% (cost)</span>
-          </div>
-        </div>
-
-        {/* Implementation Timeline */}
-        <div className="bg-white rounded-lg p-5 shadow-md border border-gray-200">
-          <div className="flex items-start gap-2 mb-3">
-            <label className="block text-base font-bold text-gray-900">
-              Implementation Timeline
-            </label>
-            <HelpCircle
-              className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5 cursor-help"
-              title="Total months from contract signing to full deployment. Longer timelines delay savings realization but may improve adoption."
-            />
-          </div>
-          <div className="text-sm text-gray-600 mb-3 italic">
-            Months to full deployment
-          </div>
-          <div className="text-2xl font-bold mb-2" style={{ color: COLORS.primary }}>
-            {whatIfParams.implementationMonths} months
-          </div>
-          <input
-            type="range"
-            min="6"
-            max="24"
-            value={whatIfParams.implementationMonths}
-            onChange={(e) => setWhatIfParams({ ...whatIfParams, implementationMonths: parseInt(e.target.value) })}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
-          />
-          <div className="flex justify-between text-xs text-gray-500 mt-2">
-            <span>6mo (fast)</span>
-            <span className="font-semibold">12mo</span>
-            <span>24mo (slow)</span>
+          <div className="flex justify-between text-xs text-gray-500 mt-1">
+            <span>Conservative</span>
+            <span>Optimistic</span>
           </div>
         </div>
 
         {/* Volume Growth */}
-        <div className="bg-white rounded-lg p-5 shadow-md border border-gray-200">
-          <div className="flex items-start gap-2 mb-3">
-            <label className="block text-base font-bold text-gray-900">
+        <div className="bg-white rounded-lg p-4 shadow-md border border-gray-200">
+          <div className="flex items-start gap-2 mb-2">
+            <label className="block text-sm font-bold text-gray-900">
               Volume Growth
             </label>
             <HelpCircle
               className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5 cursor-help"
-              title="Projected annual change in surgical case volume. Positive values = more procedures (aging population), negative values = fewer procedures (improved prevention)."
+              title="Projected annual change in surgical case volume. Positive = more procedures (aging population), negative = fewer procedures."
             />
           </div>
-          <div className="text-sm text-gray-600 mb-3 italic">
-            Annual case volume change
-          </div>
-          <div className="text-2xl font-bold mb-2" style={{ color: COLORS.primary }}>
+          <div className="text-xl font-bold mb-2" style={{ color: COLORS.primary }}>
             {whatIfParams.volumeGrowth > 0 ? '+' : ''}{whatIfParams.volumeGrowth}%
           </div>
           <input
@@ -3104,60 +2048,52 @@ const EnhancedOrthopedicDashboard = () => {
             onChange={(e) => setWhatIfParams({ ...whatIfParams, volumeGrowth: parseInt(e.target.value) })}
             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
           />
-          <div className="flex justify-between text-xs text-gray-500 mt-2">
+          <div className="flex justify-between text-xs text-gray-500 mt-1">
             <span>-15%</span>
-            <span className="font-semibold">0</span>
             <span>+15%</span>
           </div>
         </div>
 
-        {/* Surgeon Resistance */}
-        <div className="bg-white rounded-lg p-5 shadow-md border border-gray-200">
-          <div className="flex items-start gap-2 mb-3">
-            <label className="block text-base font-bold text-gray-900">
-              Surgeon Resistance
+        {/* Implementation Timeline */}
+        <div className="bg-white rounded-lg p-4 shadow-md border border-gray-200">
+          <div className="flex items-start gap-2 mb-2">
+            <label className="block text-sm font-bold text-gray-900">
+              Implementation
             </label>
             <HelpCircle
               className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5 cursor-help"
-              title="Percentage of surgeons who actively resist changing vendors. Higher values reduce effective adoption rate and may require additional change management."
+              title="Total months from contract signing to full deployment. Longer timelines delay savings realization."
             />
           </div>
-          <div className="text-sm text-gray-600 mb-3 italic">
-            Expected pushback on changes
-          </div>
-          <div className="text-2xl font-bold mb-2" style={{ color: COLORS.primary }}>
-            {whatIfParams.surgeonResistance}%
+          <div className="text-xl font-bold mb-2" style={{ color: COLORS.primary }}>
+            {whatIfParams.implementationMonths} mo
           </div>
           <input
             type="range"
-            min="0"
-            max="30"
-            value={whatIfParams.surgeonResistance}
-            onChange={(e) => setWhatIfParams({ ...whatIfParams, surgeonResistance: parseInt(e.target.value) })}
+            min="6"
+            max="24"
+            value={whatIfParams.implementationMonths}
+            onChange={(e) => setWhatIfParams({ ...whatIfParams, implementationMonths: parseInt(e.target.value) })}
             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
           />
-          <div className="flex justify-between text-xs text-gray-500 mt-2">
-            <span>0% (none)</span>
-            <span className="font-semibold">15%</span>
-            <span>30% (high)</span>
+          <div className="flex justify-between text-xs text-gray-500 mt-1">
+            <span>6mo</span>
+            <span>24mo</span>
           </div>
         </div>
 
         {/* Negotiation Leverage */}
-        <div className="bg-white rounded-lg p-5 shadow-md border border-gray-200">
-          <div className="flex items-start gap-2 mb-3">
-            <label className="block text-base font-bold text-gray-900">
+        <div className="bg-white rounded-lg p-4 shadow-md border border-gray-200">
+          <div className="flex items-start gap-2 mb-2">
+            <label className="block text-sm font-bold text-gray-900">
               Negotiation Leverage
             </label>
             <HelpCircle
               className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5 cursor-help"
-              title="Additional savings from improved negotiating position. Positive values = better terms through volume consolidation, negative values = weaker position (vendor consolidation)."
+              title="Additional savings from improved negotiating position through volume consolidation."
             />
           </div>
-          <div className="text-sm text-gray-600 mb-3 italic">
-            Enhanced contract terms
-          </div>
-          <div className="text-2xl font-bold mb-2" style={{ color: COLORS.primary }}>
+          <div className="text-xl font-bold mb-2" style={{ color: COLORS.primary }}>
             {whatIfParams.negotiationLeverage > 0 ? '+' : ''}{whatIfParams.negotiationLeverage}%
           </div>
           <input
@@ -3168,9 +2104,8 @@ const EnhancedOrthopedicDashboard = () => {
             onChange={(e) => setWhatIfParams({ ...whatIfParams, negotiationLeverage: parseInt(e.target.value) })}
             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
           />
-          <div className="flex justify-between text-xs text-gray-500 mt-2">
+          <div className="flex justify-between text-xs text-gray-500 mt-1">
             <span>-10%</span>
-            <span className="font-semibold">0</span>
             <span>+20%</span>
           </div>
         </div>
@@ -3180,11 +2115,9 @@ const EnhancedOrthopedicDashboard = () => {
       <div className="flex gap-3 mt-6">
         <button
           onClick={() => setWhatIfParams({
-            adoptionModifier: 0,
-            priceErosion: 0,
-            implementationMonths: 12,
+            savingsAdjustment: 0,
             volumeGrowth: 0,
-            surgeonResistance: 0,
+            implementationMonths: 12,
             negotiationLeverage: 0
           })}
           className="flex items-center gap-2 px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-semibold transition-all shadow-md"
@@ -3194,31 +2127,27 @@ const EnhancedOrthopedicDashboard = () => {
         </button>
         <button
           onClick={() => setWhatIfParams({
-            adoptionModifier: -15,
-            priceErosion: 5,
-            implementationMonths: 18,
+            savingsAdjustment: -20,
             volumeGrowth: -5,
-            surgeonResistance: 25,
+            implementationMonths: 18,
             negotiationLeverage: -5
           })}
           className="flex items-center gap-2 px-6 py-3 bg-red-100 text-red-800 rounded-lg hover:bg-red-200 font-semibold transition-all shadow-md"
         >
           <AlertTriangle className="w-4 h-4" />
-          Worst Case Scenario
+          Conservative Case
         </button>
         <button
           onClick={() => setWhatIfParams({
-            adoptionModifier: 15,
-            priceErosion: -5,
-            implementationMonths: 9,
+            savingsAdjustment: 20,
             volumeGrowth: 8,
-            surgeonResistance: 5,
+            implementationMonths: 9,
             negotiationLeverage: 15
           })}
           className="flex items-center gap-2 px-6 py-3 bg-green-100 text-green-800 rounded-lg hover:bg-green-200 font-semibold transition-all shadow-md"
         >
           <TrendingUp className="w-4 h-4" />
-          Best Case Scenario
+          Optimistic Case
         </button>
       </div>
     </div>
@@ -3270,7 +2199,7 @@ const EnhancedOrthopedicDashboard = () => {
           </div>
 
           {/* Key Context Metrics with Real Data */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
             <div className="p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg border-2 border-purple-200">
               <div className="text-sm text-purple-700 mb-1">Current State</div>
               <div className="text-2xl font-bold text-purple-900">
@@ -3280,17 +2209,42 @@ const EnhancedOrthopedicDashboard = () => {
             </div>
 
             <div className="p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-lg border-2 border-green-200">
-              <div className="text-sm text-green-700 mb-1">Selected Scenario</div>
-              <div className="text-2xl font-bold text-green-900">Scenario {selectedScenario}</div>
-              <div className="text-xs text-green-600">{SCENARIOS[selectedScenario]?.shortName}</div>
+              <div className="text-sm text-green-700 mb-2 font-semibold">Selected Scenario</div>
+              <select
+                value={selectedScenario}
+                onChange={(e) => setSelectedScenario(e.target.value)}
+                className="w-full px-3 py-2 border-2 border-green-300 rounded-lg font-bold text-green-900 bg-white hover:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500 cursor-pointer text-sm"
+              >
+                {Object.values(SCENARIOS).map(scenario => (
+                  <option key={scenario.id} value={scenario.id}>
+                    {scenario.shortName}
+                  </option>
+                ))}
+              </select>
+              <div className="text-xs text-green-600 mt-1">
+                ${SCENARIOS[selectedScenario]?.annualSavings.toFixed(2)}M savings
+              </div>
             </div>
 
             <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border-2 border-blue-200">
               <div className="text-sm text-blue-700 mb-1">Annual Savings</div>
               <div className="text-2xl font-bold text-blue-900">
-                ${SCENARIOS[selectedScenario]?.annualSavings.toFixed(2)}M
+                ${getAdjustedMetrics(selectedScenario)?.annualSavings.toFixed(2)}M
               </div>
-              <div className="text-xs text-blue-600">Expected value</div>
+              <div className="text-xs text-blue-600">
+                {whatIfParams.savingsAdjustment !== 0 || whatIfParams.volumeGrowth !== 0 || whatIfParams.negotiationLeverage !== 0 ? (
+                  <>
+                    Baseline: ${SCENARIOS[selectedScenario]?.annualSavings.toFixed(2)}M
+                    {whatIfParams.savingsAdjustment !== 0 && (
+                      <span className={whatIfParams.savingsAdjustment > 0 ? 'text-green-600' : 'text-orange-600'}>
+                        {' '}({whatIfParams.savingsAdjustment > 0 ? '+' : ''}{whatIfParams.savingsAdjustment}% adj)
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  `${SCENARIOS[selectedScenario]?.savingsPercent}% reduction from baseline`
+                )}
+              </div>
             </div>
 
             <div className="p-4 bg-gradient-to-r from-amber-50 to-amber-100 rounded-lg border-2 border-amber-200">
@@ -3320,30 +2274,21 @@ const EnhancedOrthopedicDashboard = () => {
               </div>
               <div className="text-xs text-red-600">Annual baseline</div>
             </div>
+
+            <div className="p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg border-2 border-orange-300">
+              <div className="text-sm text-orange-700 mb-1">Cases at Risk</div>
+              <div className="text-2xl font-bold text-orange-900">
+                {SCENARIOS[selectedScenario]?.volumeWeightedRisk?.casesAtRisk?.toLocaleString() || '0'}
+              </div>
+              <div className="text-xs text-orange-600">
+                High-volume loyalists
+              </div>
+            </div>
           </div>
         </div>
 
         {/* What-If Tools */}
         {renderWhatIfTools()}
-
-        {/* Scenario Selector + Tab Navigation */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          {/* Scenario Selector */}
-          <div className="flex items-center gap-3">
-            <label className="text-sm font-semibold text-gray-700">Active Scenario:</label>
-            <select
-              value={selectedScenario}
-              onChange={(e) => setSelectedScenario(e.target.value)}
-              className="px-4 py-2 border-2 border-purple-300 rounded-lg font-medium text-gray-900 bg-white hover:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer"
-            >
-              {Object.values(SCENARIOS).map(scenario => (
-                <option key={scenario.id} value={scenario.id}>
-                  {scenario.shortName} - ${scenario.annualSavings.toFixed(2)}M ({scenario.savingsPercent}%)
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
 
         {/* Tab Navigation */}
         {renderTabs()}
@@ -3354,9 +2299,6 @@ const EnhancedOrthopedicDashboard = () => {
           {activeTab === 'financial' && renderFinancialTab()}
           {activeTab === 'clinical' && renderClinicalTab()}
           {activeTab === 'components' && renderComponentTab()}
-          {activeTab === 'risk' && renderRiskTab()}
-          {activeTab === 'mission' && renderMissionTab()}
-          {activeTab === 'industry' && renderIndustryTab()}
         </div>
 
         {/* Footer with Data Source */}

@@ -83,14 +83,34 @@ export const calculateVolumeWeightedRisk = (surgeons, scenarioVendors, totalCase
   let loyalistsAffected = 0;
 
   surgeons.forEach(surgeon => {
+    // Calculate primary vendor from vendors object
+    let primaryVendor = 'Unknown';
+    let primaryVendorCases = 0;
+    let primaryVendorPercent = 0;
+
+    if (surgeon.vendors && typeof surgeon.vendors === 'object') {
+      // Find vendor with most cases
+      Object.entries(surgeon.vendors).forEach(([vendorName, vendorData]) => {
+        const cases = vendorData.cases || 0;
+        if (cases > primaryVendorCases) {
+          primaryVendorCases = cases;
+          primaryVendor = vendorName;
+        }
+      });
+
+      // Calculate percentage
+      const totalCases = surgeon.totalCases || 0;
+      if (totalCases > 0) {
+        primaryVendorPercent = primaryVendorCases / totalCases;
+      }
+    }
+
     // Determine if surgeon needs to switch vendors
-    const primaryVendor = surgeon.primaryVendor;
-    const primaryVendorPercent = surgeon.primaryVendorPercent || 0;
     const mustSwitch = !scenarioVendors.includes(primaryVendor);
 
     if (mustSwitch) {
-      const annualVolume = surgeon.annualVolume || 0;
-      const annualSpend = surgeon.annualSpend || 0;
+      const annualVolume = surgeon.totalCases || 0;
+      const annualSpend = surgeon.totalSpend || 0;
 
       // Categorize by volume
       if (annualVolume >= VOLUME_THRESHOLDS.HIGH) {
@@ -308,6 +328,18 @@ export const generateScenarios = (realData) => {
     );
     scenarios[scenarioId].volumeWeightedRisk = volumeWeightedRisk;
     scenarios[scenarioId].riskScore = volumeWeightedRisk.riskScore;
+
+    // Derive riskLevel from calculated riskScore for consistency
+    const score = volumeWeightedRisk.riskScore;
+    if (score <= 3) {
+      scenarios[scenarioId].riskLevel = 'low';
+    } else if (score <= 5) {
+      scenarios[scenarioId].riskLevel = 'medium';
+    } else if (score <= 7) {
+      scenarios[scenarioId].riskLevel = 'medium-high';
+    } else {
+      scenarios[scenarioId].riskLevel = 'high';
+    }
 
     // Calculate pricing cap metrics
     const pricingCapMetrics = calculatePricingCapMetrics(scenario.vendors, realData);
