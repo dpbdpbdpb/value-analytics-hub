@@ -1,10 +1,8 @@
 {
-  "timestamp": "2025-10-24T04:21:59.159Z",
+  "timestamp": "2025-10-24T04:27:47.515Z",
   "dataFile": "/Users/doug/CommonSpirit/orthopedic-dashboard/public/data/hip-knee-data.json",
-  "passed": false,
-  "errors": [
-    "CRITICAL: 100.0% of components are \"Unknown\". Component column not detected in CSV. Check column mapping."
-  ],
+  "passed": true,
+  "errors": [],
   "warnings": [
     "4 surgeons have cost/case outside normal range ($500-$50000)"
   ],
@@ -33,11 +31,11 @@
       "NORTHWEST"
     ],
     "totalComponents": 217839,
-    "unknownComponents": 217839,
-    "knownComponents": 0,
-    "unknownPercent": "100.0%",
+    "unknownComponents": 0,
+    "knownComponents": 217839,
+    "unknownPercent": "0.0%",
     "totalVendors": 42,
     "totalScenarios": 7
   },
-  "healthScore": 70
+  "healthScore": 95
 }

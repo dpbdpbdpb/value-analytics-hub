@@ -154,30 +154,57 @@ const AdminDataUpload = () => {
   };
 
   // Helper: Identify if component is a primary component (one per surgery)
-  const isPrimaryComponent = (componentName) => {
+  // Uses cpc_category field for accurate identification
+  const isPrimaryComponent = (componentCategory, componentName) => {
+    // If we have category data, use it (most accurate)
+    if (componentCategory) {
+      const category = componentCategory.toUpperCase();
+
+      // Hip primary components (1 per surgery)
+      const hipPrimaryCategories = [
+        'ACETABULAR CUPS',
+        'ACETABULAR SHELLS',
+        'FEMORAL HIP STEMS',
+        'TOTAL HIP REPLACEMENT KITS',
+        'HIP REPLACEMENT SYSTEMS'
+      ];
+
+      // Knee primary components (1 per surgery)
+      const kneePrimaryCategories = [
+        'TIBIAL BASEPLATES',
+        'TIBIAL TRAYS',
+        'TIBIAL BASEPLATE',
+        'FEMORAL KNEE COMPONENTS',
+        'TOTAL KNEE REPLACEMENT KITS',
+        'KNEE REPLACEMENT SYSTEMS'
+      ];
+
+      // Check for exact or partial matches
+      const isPrimaryCategory =
+        hipPrimaryCategories.some(cat => category.includes(cat)) ||
+        kneePrimaryCategories.some(cat => category.includes(cat));
+
+      if (isPrimaryCategory) return true;
+    }
+
+    // Fallback to name pattern matching if no category (for backwards compatibility)
     if (!componentName) return false;
     const name = componentName.toUpperCase();
 
     // Hip primary component indicators (typically 1 per surgery)
     const isHipPrimary =
-      // Acetabular components (cup, shell, liner combinations)
       (name.includes('ACETABULAR') && (name.includes('CUP') || name.includes('SHELL'))) ||
       (name.includes('ACETAB') && (name.includes('CUP') || name.includes('SHELL'))) ||
-      // Femoral hip components (stem, head)
       (name.includes('FEMORAL') && name.includes('STEM') && !name.includes('KNEE')) ||
       (name.includes('FEM') && name.includes('STEM') && !name.includes('KNEE')) ||
-      // Standalone hip indicators
       (name.includes('HIP') && (name.includes('CUP') || name.includes('SHELL') || name.includes('STEM')));
 
     // Knee primary component indicators (typically 1 per surgery)
     const isKneePrimary =
-      // Tibial components (tray, baseplate, plate)
       (name.includes('TIBIAL') && (name.includes('TRAY') || name.includes('BASEPLATE') || name.includes('BASE PLATE') || name.includes('PLATE'))) ||
       (name.includes('TIB') && (name.includes('TRAY') || name.includes('BASEPLATE') || name.includes('BASE PLATE') || name.includes('PLATE'))) ||
-      // Femoral knee components
       (name.includes('FEMORAL') && (name.includes('KNEE') || name.includes('COMP'))) ||
       (name.includes('FEM') && name.includes('KNEE')) ||
-      // Knee-specific patterns
       (name.includes('KNEE') && name.includes('FEMORAL')) ||
       (name.includes('KNEE') && name.includes('TIBIAL'));
 
@@ -214,7 +241,8 @@ const AdminDataUpload = () => {
         getFieldValue(row, 'vendor', ['Vendor', 'vendor', 'VENDOR', 'Vendor Name', 'Manufacturer']) || 'UNKNOWN'
       );
       const surgeon = getFieldValue(row, 'surgeon', ['Surgeon', 'surgeon', 'SURGEON', 'Doctor', 'Physician']) || 'Unknown';
-      const componentRaw = getFieldValue(row, 'component', ['Component', 'component', 'COMPONENT', 'Item', 'Description', 'Product']) || 'Unknown';
+      const componentRaw = getFieldValue(row, 'component', ['item_description', 'Item_Description', 'Component', 'component', 'COMPONENT', 'Item', 'Description', 'Product']) || 'Unknown';
+      const componentCategory = getFieldValue(row, 'componentCategory', ['cpc_category', 'CPC_Category', 'cpc category', 'CPC Category', 'Category', 'Item Category']) || null;
       const facility = getFieldValue(row, 'facility', ['Facility Name', 'facility name', 'Facility', 'Hospital', 'Hospital Name']) || null;
       const region = getFieldValue(row, 'region', ['Region Name', 'region name', 'Region', 'Area', 'District']) || null;
 
@@ -227,7 +255,8 @@ const AdminDataUpload = () => {
 
       // Count cases only from primary components (acetabular cups, femoral/tibial components)
       // This estimates actual surgical procedures rather than counting all component SKUs
-      if (isPrimaryComponent(component)) {
+      // Use category field for most accurate detection
+      if (isPrimaryComponent(componentCategory, component)) {
         totalCases += quantity;
       }
       totalSpend += spend;
@@ -258,7 +287,7 @@ const AdminDataUpload = () => {
         surgeonMap[surgeon].region = region;
       }
       // Count cases only from primary components for accurate surgery count
-      if (isPrimaryComponent(component)) {
+      if (isPrimaryComponent(componentCategory, component)) {
         surgeonMap[surgeon].totalCases += quantity;
       }
       surgeonMap[surgeon].totalSpend += spend;
@@ -266,7 +295,7 @@ const AdminDataUpload = () => {
         surgeonMap[surgeon].vendors[vendor] = { cases: 0, spend: 0 };
       }
       // Count cases only from primary components
-      if (isPrimaryComponent(component)) {
+      if (isPrimaryComponent(componentCategory, component)) {
         surgeonMap[surgeon].vendors[vendor].cases += quantity;
       }
       surgeonMap[surgeon].vendors[vendor].spend += spend;
@@ -281,7 +310,7 @@ const AdminDataUpload = () => {
             vendors: new Set()
           };
         }
-        if (isPrimaryComponent(component)) {
+        if (isPrimaryComponent(componentCategory, component)) {
           hospitalMap[facility].totalCases += quantity;
         }
         hospitalMap[facility].totalSpend += spend;
@@ -300,7 +329,7 @@ const AdminDataUpload = () => {
             vendors: new Set()
           };
         }
-        if (isPrimaryComponent(component)) {
+        if (isPrimaryComponent(componentCategory, component)) {
           regionMap[region].totalCases += quantity;
         }
         regionMap[region].totalSpend += spend;
@@ -887,11 +916,90 @@ const AdminDataUpload = () => {
       });
     }
 
+    // === ADVANCED DATA QUALITY ANALYSIS ===
+
+    // Case count analysis
+    const withCases = data.surgeons?.filter(s => s.totalCases > 0) || [];
+    const zeroCases = data.surgeons?.filter(s => s.totalCases === 0) || [];
+    const zeroCasePercent = data.surgeons?.length > 0 ? zeroCases.length / data.surgeons.length : 0;
+
+    if (zeroCasePercent > 0.5) {
+      warnings.push(`${(zeroCasePercent * 100).toFixed(1)}% of surgeons have 0 cases. This may indicate component column mapping issues.`);
+    }
+
+    if (withCases.length === 0 && data.surgeons?.length > 0) {
+      errors.push('CRITICAL: All surgeons have 0 cases! Component names are not being detected.');
+    }
+
+    // Cost per case analysis
+    let outliers = [];
+    let medianCost = 0;
+    let avgCost = 0;
+    if (withCases.length > 0) {
+      const costPerCase = withCases.map(s => ({
+        name: s.name,
+        cases: s.totalCases,
+        costPerCase: s.totalSpend / s.totalCases
+      })).sort((a, b) => a.costPerCase - b.costPerCase);
+
+      medianCost = costPerCase[Math.floor(costPerCase.length / 2)].costPerCase;
+      avgCost = costPerCase.reduce((sum, s) => sum + s.costPerCase, 0) / costPerCase.length;
+
+      outliers = costPerCase.filter(s => s.costPerCase < 500 || s.costPerCase > 50000);
+
+      if (outliers.length > 0) {
+        warnings.push(`${outliers.length} surgeons have cost/case outside normal range ($500-$50,000)`);
+      }
+    }
+
+    // Component data quality
+    const unknownComponents = data.components?.filter(c => !c.name || c.name === 'Unknown').length || 0;
+    const knownComponents = (data.components?.length || 0) - unknownComponents;
+    const unknownPercent = data.components?.length > 0 ? unknownComponents / data.components.length : 0;
+
+    if (unknownPercent > 0.9) {
+      errors.push(`CRITICAL: ${(unknownPercent * 100).toFixed(1)}% of components are "Unknown". Component column not detected in CSV.`);
+    } else if (unknownPercent > 0.5) {
+      warnings.push(`${(unknownPercent * 100).toFixed(1)}% of components are unknown. Check component column mapping.`);
+    }
+
+    // Regional coverage
+    const withRegion = data.surgeons?.filter(s => s.region) || [];
+    const regionalCoverage = data.surgeons?.length > 0 ? withRegion.length / data.surgeons.length : 0;
+
+    if (regionalCoverage < 0.8 && regionalCoverage > 0) {
+      warnings.push(`Only ${(regionalCoverage * 100).toFixed(1)}% regional coverage. Consider adding Region column to CSV.`);
+    }
+
+    // Calculate health score
+    let healthScore = 100;
+    healthScore -= errors.length * 25; // Errors are critical
+    healthScore -= warnings.length * 5; // Warnings reduce score
+    healthScore = Math.max(0, Math.min(100, healthScore));
+
+    let healthStatus = 'EXCELLENT - Data is production-ready';
+    let healthColor = 'green';
+    if (healthScore < 90) {
+      healthStatus = 'GOOD - Data is usable with minor issues';
+      healthColor = 'blue';
+    }
+    if (healthScore < 75) {
+      healthStatus = 'FAIR - Data has notable issues';
+      healthColor = 'yellow';
+    }
+    if (healthScore < 60) {
+      healthStatus = 'POOR - Data needs significant fixes';
+      healthColor = 'red';
+    }
+
     return {
       isValid: errors.length === 0,
       errors,
       warnings,
       info,
+      healthScore,
+      healthStatus,
+      healthColor,
       summary: {
         vendors: Object.keys(data.vendors || {}).length,
         components: (data.components || []).length,
@@ -899,12 +1007,24 @@ const AdminDataUpload = () => {
         totalSpend: data.metadata?.totalSpend || 0,
         totalCases: data.metadata?.totalCases || 0,
         multiVendorCategories,
-        singleVendorCategories
+        singleVendorCategories,
+        totalSurgeons: data.surgeons?.length || 0,
+        surgeonsWithCases: withCases.length,
+        surgeonsWithZeroCases: zeroCases.length,
+        zeroCasePercent: (zeroCasePercent * 100).toFixed(1) + '%',
+        medianCostPerCase: Math.round(medianCost),
+        avgCostPerCase: Math.round(avgCost),
+        outliers: outliers.length,
+        unknownComponents,
+        knownComponents,
+        unknownPercent: (unknownPercent * 100).toFixed(1) + '%',
+        regionalCoverage: (regionalCoverage * 100).toFixed(1) + '%'
       },
       matrixDetails: {
         topCategories: matrixCategories.slice(0, 10),
         allCategories: matrixCategories.length
-      }
+      },
+      outlierDetails: outliers.slice(0, 10)
     };
   };
 
