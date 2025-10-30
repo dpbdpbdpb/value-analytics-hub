@@ -25289,6 +25289,72 @@
         "timeline": 6,
         "costMillions": 1
       }
+    },
+    "construct-price-cap": {
+      "shortName": "Construct Price Cap",
+      "description": "Set maximum prices for complete shoulder constructs across all vendors",
+      "vendors": [
+        "VENDOR-ALPHA",
+        "VENDOR-BETA",
+        "VENDOR-GAMMA",
+        "VENDOR-DELTA",
+        "VENDOR-EPSILON",
+        "VENDOR-ZETA",
+        "VENDOR-ETA",
+        "VENDOR-THETA",
+        "VENDOR-IOTA",
+        "VENDOR-KAPPA",
+        "VENDOR-LAMBDA",
+        "VENDOR-MU",
+        "VENDOR-NU",
+        "VENDOR-XI"
+      ],
+      "savingsPercent": 0.09,
+      "annualSavings": 1756543,
+      "adoptionRate": 0.94,
+      "riskLevel": "low",
+      "riskScore": 2.4,
+      "quintupleMissionScore": 77,
+      "npv5Year": 8094397,
+      "implementation": {
+        "complexity": "Medium",
+        "timeline": 6,
+        "costMillions": 0.9
+      },
+      "pricingStrategy": "construct-based"
+    },
+    "component-price-cap": {
+      "shortName": "Component Price Cap",
+      "description": "Set maximum prices for individual shoulder components across all vendors",
+      "vendors": [
+        "VENDOR-ALPHA",
+        "VENDOR-BETA",
+        "VENDOR-GAMMA",
+        "VENDOR-DELTA",
+        "VENDOR-EPSILON",
+        "VENDOR-ZETA",
+        "VENDOR-ETA",
+        "VENDOR-THETA",
+        "VENDOR-IOTA",
+        "VENDOR-KAPPA",
+        "VENDOR-LAMBDA",
+        "VENDOR-MU",
+        "VENDOR-NU",
+        "VENDOR-XI"
+      ],
+      "savingsPercent": 0.11,
+      "annualSavings": 2147326,
+      "adoptionRate": 0.91,
+      "riskLevel": "low",
+      "riskScore": 2.8,
+      "quintupleMissionScore": 74,
+      "npv5Year": 9880150,
+      "implementation": {
+        "complexity": "Medium",
+        "timeline": 8,
+        "costMillions": 1.1
+      },
+      "pricingStrategy": "component-based"
     }
   }
 }

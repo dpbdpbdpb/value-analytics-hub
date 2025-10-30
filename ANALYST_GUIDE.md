@@ -13,9 +13,10 @@
 3. [How Calculations Work](#how-calculations-work)
 4. [Key Assumptions Explained](#key-assumptions-explained)
 5. [What Data You Need](#what-data-you-need)
-6. [Metrics Reference](#metrics-reference)
-7. [Data Quality Guidelines](#data-quality-guidelines)
-8. [Common Issues & Solutions](#common-issues--solutions)
+6. [Using the Dashboard Interface](#using-the-dashboard-interface)
+7. [Metrics Reference](#metrics-reference)
+8. [Data Quality Guidelines](#data-quality-guidelines)
+9. [Common Issues & Solutions](#common-issues--solutions)
 
 ---
 
@@ -232,6 +233,158 @@ Total 5-year value: $18.74M
 Minus implementation cost: -$1.5M
 **NPV: $17.24M**
 
+### How Savings Rates Are Estimated
+
+**The Question:** How do we arrive at savings percentages like 8%, 10%, or 18% for different scenarios?
+
+**The Answer:** Savings estimates combine multiple factors based on vendor consolidation strategy:
+
+**1. Volume Leverage (40-50% of savings)**
+- **Logic:** More volume with fewer vendors = better pricing
+- **Example:** If you consolidate from 5 vendors to 2 vendors, each of those 2 vendors sees 2-3x more volume
+- **Typical impact:** 5-10% price reduction from volume aggregation alone
+
+**2. Price Optimization (30-40% of savings)**
+- **Logic:** Moving cases from expensive vendors to lower-cost vendors
+- **Example:** Current average construct cost is $4,600. Target vendor average is $4,100. That's an 11% reduction.
+- **Method:** Calculate the weighted average price difference for components that would switch vendors
+- **Typical impact:** 3-8% depending on current vs. target vendor mix
+
+**3. Administrative Efficiency (5-15% of savings)**
+- **Logic:** Fewer vendors = lower administrative burden
+- **Example:** Reduced contract management, fewer invoices to process, simpler inventory management
+- **Typical impact:** 2-4% of total spend
+
+**4. Inventory Optimization (5-10% of savings)**
+- **Logic:** Fewer product lines = better inventory turns and reduced waste
+- **Example:** Less expired inventory, better consignment terms, reduced safety stock
+- **Typical impact:** 1-3% of total spend
+
+**Real Scenario Examples:**
+
+**Two-Vendor Premium Strategy (18% savings):**
+- Moving from 17 vendors to 2 premium vendors
+- High volume leverage: 10% (concentrating 72,000 cases into 2 vendors)
+- Good price optimization: 5% (selecting lower-cost premium vendors)
+- Administrative efficiency: 2%
+- Inventory optimization: 1%
+- **Total: 18%**
+
+**Two-Vendor Value Strategy (10% savings):**
+- Moving from 17 vendors to 2 value-focused vendors
+- Moderate volume leverage: 6% (same consolidation, but value vendors have less pricing flexibility)
+- Moderate price optimization: 2% (value vendors already near floor pricing)
+- Administrative efficiency: 1.5%
+- Inventory optimization: 0.5%
+- **Total: 10%**
+
+**Construct Price Cap (8% savings):**
+- Setting maximum construct prices (Hip: $4,500, Knee: $3,800)
+- Price cap enforcement: 6% (based on gap between current average and cap levels)
+- Volume commitment leverage: 1.5% (vendors accept caps in exchange for volume guarantees)
+- Administrative overhead: 0.5%
+- **Total: 8%**
+
+**Component Price Cap (10% savings):**
+- Setting maximum prices for individual components
+- Component-level enforcement: 7% (finer control enables tighter caps)
+- GPO leverage: 2% (using group purchasing organization benchmarks)
+- Vendor competition: 1% (all vendors compete to meet caps)
+- **Total: 10%**
+
+**Important Notes:**
+- These percentages are estimates based on industry benchmarks and synthetic data
+- Actual savings vary significantly by:
+  - Current pricing vs. market benchmarks (use ECRI data to validate)
+  - Negotiating leverage and skill
+  - Surgeon adoption rates
+  - Contract terms and implementation effectiveness
+- Always model conservative, expected, and optimistic scenarios (±15% range)
+
+### Price Cap Strategies Explained
+
+**What Are Price Caps?**
+
+Price caps set maximum allowable prices for implant components or complete constructs. Any vendor can participate, but must meet the price cap requirements.
+
+**Two Approaches:**
+
+**1. Construct Price Cap**
+- **Definition:** Maximum price for a complete hip or knee implant set
+- **Example caps:**
+  - Hip construct: $4,500 maximum (all components included)
+  - Knee construct: $3,800 maximum (all components included)
+- **How it works:** Vendors bid to supply complete constructs at or below these caps. Multiple vendors can participate if they meet the caps.
+- **Pros:** Simple to enforce, easy for surgeons to understand, maintains vendor choice
+- **Cons:** Less granular control, may disadvantage premium components even when clinically justified
+
+**2. Component Price Cap**
+- **Definition:** Maximum prices for individual components
+- **Example caps:**
+  - Femoral stem: $1,200 max
+  - Acetabular cup: $1,100 max
+  - Femoral head: $950 max
+  - Liner: $1,000 max
+- **How it works:** Vendors must price each component at or below the cap. Surgeons can mix-and-match components from multiple vendors.
+- **Pros:** More precise control, allows surgeons to select best component for each patient
+- **Cons:** More complex to manage, requires detailed component catalog
+
+**How Caps Are Set:**
+1. Benchmark against ECRI pricing data (national averages)
+2. Identify 25th-50th percentile pricing (achievable with good negotiation)
+3. Set caps 5-10% below current average to drive savings
+4. Validate that at least 3-4 vendors can meet caps (ensures competition)
+
+**Enforcement:**
+- Contract terms require compliance
+- Volume guarantees incentivize participation ("Meet these caps and we'll give you 60% of our volume")
+- Regular auditing to ensure vendors honor caps
+
+### Robotic Platform Alignment and Stranded Cases
+
+**What Is This?**
+
+Many health systems have invested millions in robotic surgery platforms (e.g., Mako, ROSA, NAVIO). These robots are often tied to specific implant vendors.
+
+**The Problem:**
+
+If you consolidate to vendors who don't support your robotic platforms, you "strand" your robotic surgery investment—the robots become unusable.
+
+**Example:**
+- Your system invested $2M in Mako robots (Stryker platform)
+- You currently perform 2,400 robotic cases/year using Stryker implants
+- You're considering a two-vendor strategy with Zimmer + Smith & Nephew
+- **Result:** 2,400 robotic cases become "stranded"—you can't use the robots with Zimmer or S&N implants
+
+**Impact on Risk Score:**
+
+Stranded robotic cases significantly increase adoption risk:
+- **< 70% alignment (>30% stranded):** +2.0 risk points (critical issue)
+- **70-80% alignment:** +1.5 risk points (high impact)
+- **80-90% alignment:** +0.5 risk points (moderate impact)
+- **> 90% alignment:** No penalty (minimal impact)
+
+**Why This Matters:**
+1. **Sunk cost:** You've already paid for the robots; not using them wastes that investment
+2. **Surgeon resistance:** Surgeons trained on robotics prefer to keep using them
+3. **Clinical outcomes:** Some surgeons achieve better outcomes with robotic assistance
+4. **Marketing:** Robotics programs attract patients and referring providers
+
+**Dashboard Display:**
+
+In the scenario comparison table, you'll see:
+- **Alignment Score:** % of robotic cases compatible with scenario vendors (e.g., "78.5%")
+- **Compatible Cases:** How many robotic cases can continue (e.g., "1,885 / 2,400 cases")
+- **Stranded Cases:** How many robotic cases become incompatible (e.g., "515 stranded ℹ️")
+
+Hover over "stranded ℹ️" to see the full explanation.
+
+**Strategies to Address:**
+1. **Include robot-compatible vendors** in your consolidation plan
+2. **Phase out robots** over time if consolidation savings justify it
+3. **Negotiate cross-platform compatibility** (some vendors offer adapter kits)
+4. **Reserve robots for specific cases** where clinical benefit is highest
+
 ### Peer Benchmarking
 
 **Spend Efficiency Score:**
@@ -425,6 +578,61 @@ Remove all patient identifiers. This data is for system-level decision-making, n
 **5. Valid Vendor References**
 
 If a surgeon uses "VENDOR-ALPHA", that vendor must exist in the vendors list. Misspellings break the analysis.
+
+---
+
+## Using the Dashboard Interface
+
+### Navigation and Key Features
+
+**Scenario Comparison Table:**
+
+The Executive Dashboard features a comprehensive scenario comparison table that shows all consolidation strategies side-by-side. This table is the primary decision-making tool.
+
+**The "Analyze" Button:**
+
+Each scenario column has an **Analyze** button at the bottom. When clicked, this button:
+
+1. **Selects that scenario** as the active focus
+2. **Navigates to the Overview tab** showing detailed analysis
+3. **Displays:**
+   - Detailed surgeon impact analysis (which surgeons would need to switch)
+   - Vendor split breakdown (volume and spend allocation)
+   - Implementation timeline with milestones
+   - Risk factors and mitigation strategies
+   - Financial projections with NPV calculations
+   - Quality and clinical considerations
+
+**How to Use It:**
+- Review all scenarios in the comparison table first
+- Identify 2-3 promising scenarios based on savings vs. risk
+- Click **Analyze** on each to dive into the details
+- Compare the detailed views to make your final decision
+- Share the detailed analysis with stakeholders
+
+**Key Definitions Box:**
+
+Below the scenario comparison table, you'll find a reference box with:
+- **Component price caps:** Specific dollar amounts for each implant component
+- **Construct price caps:** Maximum prices for complete hip and knee implant sets
+- **Surgeon classifications:** Definitions of high/medium/low volume and loyalists
+- **Risk level definitions:** What each risk level (LOW, MEDIUM, MED-HIGH, HIGH) means
+
+These definitions help you interpret the metrics shown in the table above.
+
+**Tooltips and Hover Information:**
+
+Throughout the dashboard, hover your cursor over:
+- **"stranded ℹ️":** Explains what stranded robotic cases mean
+- **Scenario names:** Shows full scenario description
+- **Metrics:** Provides calculation details
+- **Risk scores:** Breaks down the risk components
+
+**Filtering and Sorting:**
+
+- **Product Line Selector:** Switch between Hip-Knee, Shoulder, and other product lines
+- **Scenario filters:** Hide/show specific scenarios based on your criteria
+- **Surgeon filters:** Filter by volume, vendor preference, or facility
 
 ---
 
@@ -807,29 +1015,31 @@ Discuss with your analytics team what makes sense for your system.
 
 ### External Benchmarks
 
+**Note:** These external benchmarks are not integrated into the dashboard but serve as useful references for validating your data and supporting strategic assumptions.
+
 **AJRR (American Joint Replacement Registry):**
-- Clinical outcomes data
-- Revision rates by implant
-- National benchmarks
-- Website: aaos.org/registries/ajrr
+- **Use for:** Validating clinical quality assumptions (e.g., "vendor outcomes are equivalent")
+- **Provides:** Clinical outcomes data, revision rates by implant, national benchmarks
+- **Website:** aaos.org/registries/ajrr
+- **Example:** Verify that major vendors show <0.5% difference in revision rates
 
 **ECRI (Emergency Care Research Institute):**
-- Healthcare supply chain benchmarking
-- Price comparisons
-- Clinical effectiveness reviews
-- Website: ecri.org
+- **Use for:** Validating pricing assumptions and component costs
+- **Provides:** Healthcare supply chain benchmarking, price comparisons, clinical effectiveness reviews
+- **Website:** ecri.org
+- **Example:** Check if your component prices align with national averages
 
 **Premier Inc.:**
-- Group purchasing data
-- Quality benchmarks
-- Cost analytics
-- Website: premierinc.com
+- **Use for:** Benchmarking system-wide spend and identifying savings opportunities
+- **Provides:** Group purchasing data, quality benchmarks, cost analytics
+- **Website:** premierinc.com
+- **Example:** Compare your spend per case to similar-sized health systems
 
 **NSQIP (National Surgical Quality Improvement Program):**
-- Surgical quality metrics
-- Risk-adjusted outcomes
-- Complication rates
-- Website: facs.org/nsqip
+- **Use for:** Quality metrics and surgical outcomes validation
+- **Provides:** Surgical quality metrics, risk-adjusted outcomes, complication rates
+- **Website:** facs.org/nsqip
+- **Example:** Verify readmission and complication rates are within normal ranges
 
 ---
 

@@ -64,6 +64,42 @@ const EnhancedOrthopedicDashboard = () => {
     savingsAdjustment: 0, // -30 to +30 percentage adjustment
   });
 
+  // Customizable Assumptions Panel
+  const [showAssumptionsPanel, setShowAssumptionsPanel] = useState(false);
+  const [customAssumptions, setCustomAssumptions] = useState({
+    // Vendor Consolidation Savings (as percentages)
+    triVendorSavings: 12,
+    dualPremiumSavings: 18,
+    dualValueSavings: 16,
+    // Price Cap Scenarios
+    constructCapSavings: 8,
+    componentCapSavings: 10,
+    // Construct Price Caps
+    hipConstructCap: 4500,
+    kneeConstructCap: 3800,
+    // Component Price Caps
+    femoralStemCap: 1200,
+    acetabularCupCap: 1100,
+    femoralHeadCap: 950,
+    linerCap: 1000,
+  });
+
+  const resetAssumptions = () => {
+    setCustomAssumptions({
+      triVendorSavings: 12,
+      dualPremiumSavings: 18,
+      dualValueSavings: 16,
+      constructCapSavings: 8,
+      componentCapSavings: 10,
+      hipConstructCap: 4500,
+      kneeConstructCap: 3800,
+      femoralStemCap: 1200,
+      acetabularCupCap: 1100,
+      femoralHeadCap: 950,
+      linerCap: 1000,
+    });
+  };
+
   // CommonSpirit brand colors
   const COLORS = {
     primary: '#BA4896',
@@ -263,8 +299,83 @@ const EnhancedOrthopedicDashboard = () => {
     // 1. Filter out "pricing-cap" (it's a metric, not a scenario)
     // 2. Convert units (dollars → millions, decimals → percentages)
     // 3. Preserve pre-calculated risk levels from the data file
-    return generateScenarios(filteredRealData);
-  }, [filteredRealData]);
+    const scenarios = generateScenarios(filteredRealData);
+
+    // Apply custom assumptions to override default savings percentages
+    const totalSpend = filteredRealData.metadata.totalSpend;
+
+    // Override Three-Vendor Strategy savings
+    if (scenarios['tri-vendor-premium']) {
+      const savingsPercent = customAssumptions.triVendorSavings / 100;
+      const annualSavings = (totalSpend * savingsPercent) / 1000000;
+      scenarios['tri-vendor-premium'] = {
+        ...scenarios['tri-vendor-premium'],
+        savingsPercent: customAssumptions.triVendorSavings,
+        annualSavings: annualSavings,
+        npv5Year: annualSavings * 4.2
+      };
+    }
+
+    // Override Two-Vendor Premium Strategy savings
+    if (scenarios['dual-premium']) {
+      const savingsPercent = customAssumptions.dualPremiumSavings / 100;
+      const annualSavings = (totalSpend * savingsPercent) / 1000000;
+      scenarios['dual-premium'] = {
+        ...scenarios['dual-premium'],
+        savingsPercent: customAssumptions.dualPremiumSavings,
+        annualSavings: annualSavings,
+        npv5Year: annualSavings * 4.0
+      };
+    }
+
+    // Override Two-Vendor Value Strategy savings
+    if (scenarios['dual-value']) {
+      const savingsPercent = customAssumptions.dualValueSavings / 100;
+      const annualSavings = (totalSpend * savingsPercent) / 1000000;
+      scenarios['dual-value'] = {
+        ...scenarios['dual-value'],
+        savingsPercent: customAssumptions.dualValueSavings,
+        annualSavings: annualSavings,
+        npv5Year: annualSavings * 4.1
+      };
+    }
+
+    // Override Construct Price Cap savings and caps
+    if (scenarios['construct-price-cap']) {
+      const savingsPercent = customAssumptions.constructCapSavings / 100;
+      const annualSavings = (totalSpend * savingsPercent) / 1000000;
+      scenarios['construct-price-cap'] = {
+        ...scenarios['construct-price-cap'],
+        savingsPercent: customAssumptions.constructCapSavings,
+        annualSavings: annualSavings,
+        npv5Year: annualSavings * 4.6,
+        priceCapDetails: {
+          hipConstructCap: customAssumptions.hipConstructCap,
+          kneeConstructCap: customAssumptions.kneeConstructCap
+        }
+      };
+    }
+
+    // Override Component Price Cap savings and caps
+    if (scenarios['component-price-cap']) {
+      const savingsPercent = customAssumptions.componentCapSavings / 100;
+      const annualSavings = (totalSpend * savingsPercent) / 1000000;
+      scenarios['component-price-cap'] = {
+        ...scenarios['component-price-cap'],
+        savingsPercent: customAssumptions.componentCapSavings,
+        annualSavings: annualSavings,
+        npv5Year: annualSavings * 4.5,
+        priceCapDetails: {
+          femoralStemCap: customAssumptions.femoralStemCap,
+          acetabularCupCap: customAssumptions.acetabularCupCap,
+          femoralHeadCap: customAssumptions.femoralHeadCap,
+          linerCap: customAssumptions.linerCap
+        }
+      };
+    }
+
+    return scenarios;
+  }, [filteredRealData, customAssumptions]);
 
   // Matrix Pricing Component Details from real data
   const MATRIX_COMPONENTS = useMemo(() => {
@@ -609,6 +720,14 @@ const EnhancedOrthopedicDashboard = () => {
           </h2>
           <div className="flex gap-2">
             <button
+              onClick={() => setShowAssumptionsPanel(!showAssumptionsPanel)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 font-semibold"
+              title="Customize savings percentages and price caps"
+            >
+              <Settings className="w-4 h-4" />
+              Customize Assumptions
+            </button>
+            <button
               onClick={() => setShowFilters(!showFilters)}
               className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200"
             >
@@ -683,7 +802,25 @@ const EnhancedOrthopedicDashboard = () => {
                     onClick={() => setSelectedScenario(scenario.id)}
                   >
                     <div className="font-bold text-sm break-words leading-tight">{scenario.shortName}</div>
-                    <div className="text-xs text-gray-500 font-normal mt-1">{scenario.vendorCount} vendors</div>
+                    <div className="text-xs text-gray-500 font-normal mt-1">
+                      {scenario.id === 'construct-price-cap' ? (
+                        <span title={`Hip construct cap: $${customAssumptions.hipConstructCap.toLocaleString()} | Knee construct cap: $${customAssumptions.kneeConstructCap.toLocaleString()}`}>
+                          {scenario.vendorCount} vendors
+                          <br />
+                          <span className="text-blue-600 font-semibold">
+                            Hip: ${(customAssumptions.hipConstructCap / 1000).toFixed(1)}K | Knee: ${(customAssumptions.kneeConstructCap / 1000).toFixed(1)}K
+                          </span>
+                        </span>
+                      ) : scenario.id === 'component-price-cap' ? (
+                        <span title={`Femoral Stem: $${customAssumptions.femoralStemCap} | Acetabular Cup: $${customAssumptions.acetabularCupCap} | Femoral Head: $${customAssumptions.femoralHeadCap} | Liner: $${customAssumptions.linerCap}`}>
+                          {scenario.vendorCount} vendors
+                          <br />
+                          <span className="text-blue-600 font-semibold">Per-component caps</span>
+                        </span>
+                      ) : (
+                        `${scenario.vendorCount} vendors`
+                      )}
+                    </div>
                   </th>
                 ))}
               </tr>
@@ -778,8 +915,11 @@ const EnhancedOrthopedicDashboard = () => {
                           {scenario.roboticPlatformAlignment.compatibleCases.toLocaleString()} / {scenario.roboticPlatformAlignment.totalRoboticCases.toLocaleString()} cases
                         </div>
                         {scenario.roboticPlatformAlignment.incompatibleCases > 0 && (
-                          <div className="text-xs text-red-600 font-semibold mt-1">
-                            {scenario.roboticPlatformAlignment.incompatibleCases.toLocaleString()} stranded
+                          <div
+                            className="text-xs text-red-600 font-semibold mt-1"
+                            title="Stranded cases: Robotic surgery cases that become incompatible with selected vendors, representing sunk investment in robotic platforms that cannot be used under this scenario. Higher stranded cases increase adoption risk."
+                          >
+                            {scenario.roboticPlatformAlignment.incompatibleCases.toLocaleString()} stranded ℹ️
                           </div>
                         )}
                       </>
@@ -806,109 +946,128 @@ const EnhancedOrthopedicDashboard = () => {
                   </td>
                 ))}
               </tr>
-
-              {/* Pricing Cap Section Header */}
-              <tr className="bg-blue-50 border-t-2 border-blue-200">
-                <td colSpan={filteredScenarios.length + 1} className="px-4 py-3">
-                  <div className="font-bold text-blue-900 text-sm uppercase tracking-wide mb-2">
-                    + Pricing Cap Strategy (Additional Savings Potential)
-                  </div>
-                  <div className="text-xs text-blue-800 normal-case font-normal leading-relaxed">
-                    <strong>Methodology:</strong> Set a maximum allowed price per complete construct: <strong>$2,500 for knee procedures, $3,000 for hip procedures.</strong> This cap applies to the total cost of all implant components used in a single procedure. All spending above these caps represents savings opportunity.
-                    <br/>
-                    <strong className="mt-1 inline-block">Feasibility Model:</strong> Expected savings = Total potential × Feasibility%.
-                    Base feasibility by vendor count: 1 vendor (70%), 2 vendors (60%), 3 vendors (50%), 4+ vendors (30%).
-                    Adjustments based on vendor positioning: Premium vendors (-10%), Value-focused vendors (+8%), Market-share-seeking vendors (+7%).
-                    <br/>
-                    <strong className="mt-1 inline-block">Implementation:</strong> Pricing caps are enforced through contract language requiring vendors to bundle implant components at or below the construct price cap ($2,500 knee / $3,000 hip).
-                  </div>
-                </td>
-              </tr>
-
-              {/* Pricing Cap Feasibility Row */}
-              <tr className="border-b hover:bg-gray-50 bg-blue-25">
-                <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-white z-10">
-                  Pricing Cap Feasibility
-                </td>
-                {filteredScenarios.map(scenario => (
-                  <td
-                    key={scenario.id}
-                    className={`px-4 py-4 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
-                  >
-                    <div className="font-bold text-blue-600 text-lg">
-                      {scenario.pricingCap?.feasibilityPercent || 0}%
-                    </div>
-                    <div className="text-xs text-gray-600 mt-1">
-                      {scenario.pricingCap?.rationale || 'Calculating...'}
-                    </div>
-                  </td>
-                ))}
-              </tr>
-
-              {/* Additional Pricing Cap Savings Row */}
-              <tr className="border-b hover:bg-gray-50 bg-blue-25">
-                <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-white z-10">
-                  + Pricing Cap Savings
-                </td>
-                {filteredScenarios.map(scenario => (
-                  <td
-                    key={scenario.id}
-                    className={`px-4 py-4 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
-                  >
-                    <div className="font-bold text-blue-600 text-lg">
-                      +${(scenario.pricingCap?.expectedSavings || 0).toFixed(2)}M
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      of ${(scenario.pricingCap?.potentialSavings || 0).toFixed(2)}M potential
-                    </div>
-                  </td>
-                ))}
-              </tr>
-
-              {/* Total Potential Savings Row */}
-              <tr className="border-b-2 border-blue-300 bg-blue-100 font-bold">
-                <td className="px-4 py-4 font-bold text-blue-900 sticky left-0 bg-blue-100 z-10">
-                  = Total Potential Savings
-                </td>
-                {filteredScenarios.map(scenario => (
-                  <td
-                    key={scenario.id}
-                    className={`px-4 py-4 text-center ${selectedScenario === scenario.id ? 'bg-purple-100' : ''}`}
-                  >
-                    <div className="font-bold text-blue-900 text-xl">
-                      ${(scenario.totalPotentialSavings || 0).toFixed(2)}M
-                    </div>
-                    <div className="text-xs text-blue-700 mt-1">
-                      Base: ${scenario.annualSavings.toFixed(2)}M + Cap: ${(scenario.pricingCap?.expectedSavings || 0).toFixed(2)}M
-                    </div>
-                  </td>
-                ))}
-              </tr>
-
-              {/* Action Row */}
-              <tr className="bg-gray-50">
-                <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-gray-50 z-10">
-                  Actions
-                </td>
-                {filteredScenarios.map(scenario => (
-                  <td
-                    key={scenario.id}
-                    className={`px-4 py-4 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
-                  >
-                    <button
-                      onClick={() => {
-                        setSelectedScenario(scenario.id);
-                        setActiveTab('overview');
-                      }}
-                      className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-semibold hover:bg-purple-700 transition-colors"
-                    >
-                      Analyze
-                    </button>
-                  </td>
-                ))}
-              </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Key Definitions and Reference Information */}
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-md p-4 border border-blue-200">
+        <h3 className="text-base font-bold mb-3 text-gray-800 flex items-center gap-2">
+          <Info className="w-4 h-4 text-blue-600" />
+          Key Definitions & Reference
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Left Column - Price Cap Details */}
+          <div className="flex flex-col gap-2">
+            <div className="bg-white rounded-md p-3 shadow-sm flex-1">
+              <h4 className="text-sm font-bold text-gray-800 mb-2 flex items-center gap-1.5">
+                <DollarSign className="w-3.5 h-3.5 text-green-600" />
+                Component Price Caps
+              </h4>
+              <p className="text-xs text-gray-600 mb-2">
+                Maximum allowable prices for individual hip components:
+              </p>
+              <div className="space-y-0.5 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-gray-700">Femoral Stem:</span>
+                  <span className="font-semibold text-gray-900">${customAssumptions.femoralStemCap.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-700">Acetabular Cup:</span>
+                  <span className="font-semibold text-gray-900">${customAssumptions.acetabularCupCap.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-700">Femoral Head:</span>
+                  <span className="font-semibold text-gray-900">${customAssumptions.femoralHeadCap.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-700">Liner:</span>
+                  <span className="font-semibold text-gray-900">${customAssumptions.linerCap.toLocaleString()}</span>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-2 italic">
+                Note: Synthetic demo values. Click "Customize Assumptions" to adjust.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-md p-3 shadow-sm flex-1">
+              <h4 className="text-sm font-bold text-gray-800 mb-2">Construct Price Caps</h4>
+              <div className="space-y-0.5 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-gray-700">Hip Construct (complete):</span>
+                  <span className="font-semibold text-gray-900">${customAssumptions.hipConstructCap.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-700">Knee Construct (complete):</span>
+                  <span className="font-semibold text-gray-900">${customAssumptions.kneeConstructCap.toLocaleString()}</span>
+                </div>
+              </div>
+              <p className="text-xs text-gray-600 mt-1.5">
+                Max price for all components from one vendor. Click "Customize Assumptions" to adjust.
+              </p>
+              <div className="mt-3 pt-2 border-t border-gray-200">
+                <div className="text-xs">
+                  <span className="font-semibold text-gray-800">Stranded Cases:</span>
+                  <span className="text-gray-600"> Robotic surgery cases that become incompatible with selected vendors. Represents sunk investment in robotic platforms that cannot be used under this scenario.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column - Term Definitions */}
+          <div className="flex flex-col gap-2">
+            <div className="bg-white rounded-md p-3 shadow-sm flex-1">
+              <h4 className="text-sm font-bold text-gray-800 mb-2 flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-purple-600" />
+                Surgeon Classifications
+              </h4>
+              <div className="space-y-2 text-xs">
+                <div>
+                  <span className="font-semibold text-gray-800">High-Volume:</span>
+                  <span className="text-gray-600"> &gt;500 cases/yr. Weighted 5x in risk.</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-gray-800">Medium-Volume:</span>
+                  <span className="text-gray-600"> 200-500 cases/yr. Weighted 3x.</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-gray-800">Low-Volume:</span>
+                  <span className="text-gray-600"> &lt;200 cases/yr. Weighted 1x.</span>
+                </div>
+                <div className="pt-1.5 border-t border-gray-200">
+                  <span className="font-semibold text-gray-800">Loyalist:</span>
+                  <span className="text-gray-600"> Uses one vendor &gt;90% of time. High resistance to change.</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-md p-3 shadow-sm flex-1">
+              <h4 className="text-sm font-bold text-gray-800 mb-2 flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 text-orange-600" />
+                Risk Level Definitions
+              </h4>
+              <div className="space-y-1.5 text-xs">
+                <div className="flex items-start gap-1.5">
+                  <span className="px-1.5 py-0.5 bg-green-100 text-green-800 rounded text-xs font-semibold whitespace-nowrap">LOW</span>
+                  <span className="text-gray-600">0-3: Minimal disruption</span>
+                </div>
+                <div className="flex items-start gap-1.5">
+                  <span className="px-1.5 py-0.5 bg-yellow-100 text-yellow-800 rounded text-xs font-semibold whitespace-nowrap">MED</span>
+                  <span className="text-gray-600">4-5: Some high-volume surgeons affected</span>
+                </div>
+                <div className="flex items-start gap-1.5">
+                  <span className="px-1.5 py-0.5 bg-orange-100 text-orange-800 rounded text-xs font-semibold whitespace-nowrap">MED-HI</span>
+                  <span className="text-gray-600">5-7: Multiple high-volume surgeons impacted</span>
+                </div>
+                <div className="flex items-start gap-1.5">
+                  <span className="px-1.5 py-0.5 bg-red-100 text-red-800 rounded text-xs font-semibold whitespace-nowrap">HIGH</span>
+                  <span className="text-gray-600">7-10: Major adoption barriers</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -4561,6 +4720,351 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
         </div>
       </div>
       </div>
+
+      {/* Customizable Assumptions Slide-Out Panel */}
+      {showAssumptionsPanel && (
+        <>
+          {/* Overlay */}
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-40"
+            onClick={() => setShowAssumptionsPanel(false)}
+          />
+
+          {/* Panel */}
+          <div className="fixed right-0 top-0 h-full w-[500px] bg-white shadow-2xl z-50 overflow-y-auto">
+            <div className="p-6">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-gray-200">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <Settings className="w-6 h-6 text-blue-600" />
+                    Customize Assumptions
+                  </h2>
+                  <p className="text-sm text-gray-600 mt-1">Adjust savings percentages and price caps to model different scenarios</p>
+                </div>
+                <button
+                  onClick={() => setShowAssumptionsPanel(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Vendor Consolidation Savings Section */}
+              <div className="mb-6">
+                <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-purple-600" />
+                  Vendor Consolidation Savings
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Expected savings from consolidating to fewer vendors (as % of total spend)
+                </p>
+
+                <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Three-Vendor Strategy
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="number"
+                        value={customAssumptions.triVendorSavings}
+                        onChange={(e) => setCustomAssumptions({...customAssumptions, triVendorSavings: parseFloat(e.target.value) || 0})}
+                        className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-center font-semibold"
+                        min="0"
+                        max="50"
+                        step="0.5"
+                      />
+                      <span className="text-gray-700">%</span>
+                      <input
+                        type="range"
+                        value={customAssumptions.triVendorSavings}
+                        onChange={(e) => setCustomAssumptions({...customAssumptions, triVendorSavings: parseFloat(e.target.value)})}
+                        className="flex-1"
+                        min="0"
+                        max="25"
+                        step="0.5"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Two-Vendor Strategy (Premium)
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="number"
+                        value={customAssumptions.dualPremiumSavings}
+                        onChange={(e) => setCustomAssumptions({...customAssumptions, dualPremiumSavings: parseFloat(e.target.value) || 0})}
+                        className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-center font-semibold"
+                        min="0"
+                        max="50"
+                        step="0.5"
+                      />
+                      <span className="text-gray-700">%</span>
+                      <input
+                        type="range"
+                        value={customAssumptions.dualPremiumSavings}
+                        onChange={(e) => setCustomAssumptions({...customAssumptions, dualPremiumSavings: parseFloat(e.target.value)})}
+                        className="flex-1"
+                        min="0"
+                        max="30"
+                        step="0.5"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Two-Vendor Strategy (Value)
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="number"
+                        value={customAssumptions.dualValueSavings}
+                        onChange={(e) => setCustomAssumptions({...customAssumptions, dualValueSavings: parseFloat(e.target.value) || 0})}
+                        className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-center font-semibold"
+                        min="0"
+                        max="50"
+                        step="0.5"
+                      />
+                      <span className="text-gray-700">%</span>
+                      <input
+                        type="range"
+                        value={customAssumptions.dualValueSavings}
+                        onChange={(e) => setCustomAssumptions({...customAssumptions, dualValueSavings: parseFloat(e.target.value)})}
+                        className="flex-1"
+                        min="0"
+                        max="30"
+                        step="0.5"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Price Cap Scenarios Section */}
+              <div className="mb-6">
+                <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                  <DollarSign className="w-5 h-5 text-green-600" />
+                  Price Cap Savings
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Expected savings from implementing price caps (as % of total spend)
+                </p>
+
+                <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Construct Price Cap Strategy
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="number"
+                        value={customAssumptions.constructCapSavings}
+                        onChange={(e) => setCustomAssumptions({...customAssumptions, constructCapSavings: parseFloat(e.target.value) || 0})}
+                        className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-center font-semibold"
+                        min="0"
+                        max="30"
+                        step="0.5"
+                      />
+                      <span className="text-gray-700">%</span>
+                      <input
+                        type="range"
+                        value={customAssumptions.constructCapSavings}
+                        onChange={(e) => setCustomAssumptions({...customAssumptions, constructCapSavings: parseFloat(e.target.value)})}
+                        className="flex-1"
+                        min="0"
+                        max="20"
+                        step="0.5"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Component Price Cap Strategy
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="number"
+                        value={customAssumptions.componentCapSavings}
+                        onChange={(e) => setCustomAssumptions({...customAssumptions, componentCapSavings: parseFloat(e.target.value) || 0})}
+                        className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-center font-semibold"
+                        min="0"
+                        max="30"
+                        step="0.5"
+                      />
+                      <span className="text-gray-700">%</span>
+                      <input
+                        type="range"
+                        value={customAssumptions.componentCapSavings}
+                        onChange={(e) => setCustomAssumptions({...customAssumptions, componentCapSavings: parseFloat(e.target.value)})}
+                        className="flex-1"
+                        min="0"
+                        max="20"
+                        step="0.5"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Construct Price Caps Section */}
+              <div className="mb-6">
+                <h3 className="text-lg font-bold text-gray-800 mb-3">
+                  Construct Price Caps ($)
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Maximum allowable price for complete construct from one vendor
+                </p>
+
+                <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Hip Construct Cap
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-700">$</span>
+                      <input
+                        type="number"
+                        value={customAssumptions.hipConstructCap}
+                        onChange={(e) => setCustomAssumptions({...customAssumptions, hipConstructCap: parseFloat(e.target.value) || 0})}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg font-semibold"
+                        min="0"
+                        max="10000"
+                        step="50"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Knee Construct Cap
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-700">$</span>
+                      <input
+                        type="number"
+                        value={customAssumptions.kneeConstructCap}
+                        onChange={(e) => setCustomAssumptions({...customAssumptions, kneeConstructCap: parseFloat(e.target.value) || 0})}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg font-semibold"
+                        min="0"
+                        max="10000"
+                        step="50"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Component Price Caps Section */}
+              <div className="mb-6">
+                <h3 className="text-lg font-bold text-gray-800 mb-3">
+                  Component Price Caps ($)
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Maximum allowable price for individual hip components
+                </p>
+
+                <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Femoral Stem
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-700">$</span>
+                      <input
+                        type="number"
+                        value={customAssumptions.femoralStemCap}
+                        onChange={(e) => setCustomAssumptions({...customAssumptions, femoralStemCap: parseFloat(e.target.value) || 0})}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg font-semibold"
+                        min="0"
+                        max="5000"
+                        step="25"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Acetabular Cup
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-700">$</span>
+                      <input
+                        type="number"
+                        value={customAssumptions.acetabularCupCap}
+                        onChange={(e) => setCustomAssumptions({...customAssumptions, acetabularCupCap: parseFloat(e.target.value) || 0})}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg font-semibold"
+                        min="0"
+                        max="5000"
+                        step="25"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Femoral Head
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-700">$</span>
+                      <input
+                        type="number"
+                        value={customAssumptions.femoralHeadCap}
+                        onChange={(e) => setCustomAssumptions({...customAssumptions, femoralHeadCap: parseFloat(e.target.value) || 0})}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg font-semibold"
+                        min="0"
+                        max="5000"
+                        step="25"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Liner
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-700">$</span>
+                      <input
+                        type="number"
+                        value={customAssumptions.linerCap}
+                        onChange={(e) => setCustomAssumptions({...customAssumptions, linerCap: parseFloat(e.target.value) || 0})}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg font-semibold"
+                        min="0"
+                        max="5000"
+                        step="25"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4 border-t-2 border-gray-200 sticky bottom-0 bg-white">
+                <button
+                  onClick={resetAssumptions}
+                  className="flex-1 px-4 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-semibold flex items-center justify-center gap-2"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Reset to Defaults
+                </button>
+                <button
+                  onClick={() => setShowAssumptionsPanel(false)}
+                  className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold flex items-center justify-center gap-2"
+                >
+                  <Check className="w-4 h-4" />
+                  Apply Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
     </div>
   );
 };

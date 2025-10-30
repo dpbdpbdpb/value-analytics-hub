@@ -54041,32 +54041,104 @@
         "incompatibleCases": 14571
       }
     },
-    "single-vendor": {
-      "shortName": "Single-Vendor Strategy",
-      "description": "Maximum consolidation to single preferred vendor",
+    "construct-price-cap": {
+      "shortName": "Construct Price Cap",
+      "description": "Set maximum prices for complete hip and knee constructs across all vendors",
       "vendors": [
-        "VENDOR-ALPHA"
+        "VENDOR-GAMMA",
+        "VENDOR-BETA",
+        "VENDOR-EPSILON",
+        "VENDOR-DELTA",
+        "VENDOR-UPSILON",
+        "VENDOR-PHI",
+        "VENDOR-ALPHA",
+        "VENDOR-MU",
+        "VENDOR-OMEGA",
+        "VENDOR-THETA",
+        "VENDOR-NU",
+        "VENDOR-ZETA",
+        "VENDOR-PSI",
+        "VENDOR-ETA",
+        "VENDOR-OMICRON",
+        "VENDOR-IOTA",
+        "VENDOR-LAMBDA",
+        "VENDOR-RHO",
+        "VENDOR-XI",
+        "VENDOR-CHI",
+        "VENDOR-KAPPA",
+        "VENDOR-SIGMA",
+        "VENDOR-PI",
+        "VENDOR-TAU",
+        "VENDOR-25"
       ],
-      "savingsPercent": 0.22,
-      "annualSavings": 9022257.2,
-      "adoptionRate": 0.5,
-      "riskLevel": "high",
-      "riskScore": 8.5,
-      "quintupleMissionScore": 75,
-      "npv5Year": 31577900.199999996,
+      "savingsPercent": 0.08,
+      "annualSavings": 3280821,
+      "adoptionRate": 0.95,
+      "riskLevel": "low",
+      "riskScore": 2.3,
+      "quintupleMissionScore": 78,
+      "npv5Year": 15123904,
       "implementation": {
-        "complexity": "Very High",
-        "timeline": 18,
-        "costMillions": 4.5
+        "complexity": "Medium",
+        "timeline": 6,
+        "costMillions": 1.2
       },
-      "vendorSplit": {
-        "VENDOR-ALPHA": 1
+      "pricingStrategy": "construct-based",
+      "priceCapDetails": {
+        "hipConstructCap": 4500,
+        "kneeConstructCap": 3800,
+        "enforcementMethod": "Contract terms with volume guarantees"
+      }
+    },
+    "component-price-cap": {
+      "shortName": "Component Price Cap",
+      "description": "Set maximum prices for individual components across all vendors",
+      "vendors": [
+        "VENDOR-GAMMA",
+        "VENDOR-BETA",
+        "VENDOR-EPSILON",
+        "VENDOR-DELTA",
+        "VENDOR-UPSILON",
+        "VENDOR-PHI",
+        "VENDOR-ALPHA",
+        "VENDOR-MU",
+        "VENDOR-OMEGA",
+        "VENDOR-THETA",
+        "VENDOR-NU",
+        "VENDOR-ZETA",
+        "VENDOR-PSI",
+        "VENDOR-ETA",
+        "VENDOR-OMICRON",
+        "VENDOR-IOTA",
+        "VENDOR-LAMBDA",
+        "VENDOR-RHO",
+        "VENDOR-XI",
+        "VENDOR-CHI",
+        "VENDOR-KAPPA",
+        "VENDOR-SIGMA",
+        "VENDOR-PI",
+        "VENDOR-TAU",
+        "VENDOR-25"
+      ],
+      "savingsPercent": 0.1,
+      "annualSavings": 4101026,
+      "adoptionRate": 0.92,
+      "riskLevel": "low",
+      "riskScore": 2.7,
+      "quintupleMissionScore": 75,
+      "npv5Year": 18856619,
+      "implementation": {
+        "complexity": "Medium",
+        "timeline": 8,
+        "costMillions": 1.5
       },
-      "roboticPlatformAlignment": {
-        "alignmentScore": 65,
-        "compatibleCases": 47356,
-        "totalRoboticCases": 72856,
-        "incompatibleCases": 25500
+      "pricingStrategy": "component-based",
+      "priceCapDetails": {
+        "femoralStemCap": 1200,
+        "acetabularCupCap": 1100,
+        "femoralHeadCap": 950,
+        "linerCap": 1000,
+        "enforcementMethod": "Component-level contract pricing with GPO leverage"
       }
     }
   }

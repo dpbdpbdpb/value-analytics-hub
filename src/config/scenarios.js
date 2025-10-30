@@ -12,7 +12,8 @@ export const SCENARIO_IDS = {
   TRI_VENDOR: 'tri-vendor',
   DUAL_PREMIUM: 'dual-premium',
   DUAL_VALUE: 'dual-value',
-  DUAL_INNOVATION: 'dual-innovation'
+  CONSTRUCT_PRICE_CAP: 'construct-price-cap',
+  COMPONENT_PRICE_CAP: 'component-price-cap'
 };
 
 // Helper to format vendor names for display (using generic names for synthetic data)
@@ -29,7 +30,8 @@ export const SCENARIO_NAMES = {
   [SCENARIO_IDS.TRI_VENDOR]: 'Three-Vendor Strategy',
   [SCENARIO_IDS.DUAL_PREMIUM]: 'Two-Vendor Strategy (Premium)',
   [SCENARIO_IDS.DUAL_VALUE]: 'Two-Vendor Strategy (Value)',
-  [SCENARIO_IDS.DUAL_INNOVATION]: 'Two-Vendor Strategy (Innovation)'
+  [SCENARIO_IDS.CONSTRUCT_PRICE_CAP]: 'Construct Price Cap',
+  [SCENARIO_IDS.COMPONENT_PRICE_CAP]: 'Component Price Cap'
 };
 
 const DEFAULT_AGENT_SCORES = {
@@ -37,7 +39,8 @@ const DEFAULT_AGENT_SCORES = {
   [SCENARIO_IDS.TRI_VENDOR]: 3.8,
   [SCENARIO_IDS.DUAL_PREMIUM]: 4.3,
   [SCENARIO_IDS.DUAL_VALUE]: 4.5,
-  [SCENARIO_IDS.DUAL_INNOVATION]: 4.0
+  [SCENARIO_IDS.CONSTRUCT_PRICE_CAP]: 3.2,
+  [SCENARIO_IDS.COMPONENT_PRICE_CAP]: 2.8
 };
 
 /**
@@ -361,14 +364,6 @@ export const generateScenarios = (realData) => {
     } else {
       scenarios[scenarioId].riskLevel = 'high';
     }
-
-    // Calculate pricing cap metrics
-    const pricingCapMetrics = calculatePricingCapMetrics(scenario.vendors, realData);
-    scenarios[scenarioId].pricingCap = pricingCapMetrics;
-
-    // Update total potential savings (base consolidation + pricing cap)
-    scenarios[scenarioId].totalPotentialSavings =
-      scenario.annualSavings + pricingCapMetrics.expectedSavings;
   });
 
   return scenarios;
