@@ -37,8 +37,8 @@ const ComponentComparisonView = ({ surgeon, allSurgeonData }) => {
       });
     });
 
-    // Calculate median for each vendor
-    const vendors = ['ZIMMER BIOMET', 'STRYKER', 'J&J', 'SMITH & NEPHEW'];
+    // Calculate median for each vendor (using top 4 synthetic vendors)
+    const vendors = ['VENDOR-ALPHA', 'VENDOR-BETA', 'VENDOR-GAMMA', 'VENDOR-DELTA'];
     return vendors
       .filter(v => vendorData[v] && vendorData[v].length > 0)
       .map(vendor => {
@@ -153,10 +153,10 @@ const ComponentComparisonView = ({ surgeon, allSurgeonData }) => {
               <th className="px-4 py-3 text-left font-bold">Component</th>
               <th className="px-4 py-3 text-center font-bold">Your Vendor</th>
               <th className="px-4 py-3 text-center font-bold">Your Price</th>
-              <th className="px-4 py-3 text-center font-bold">Zimmer</th>
-              <th className="px-4 py-3 text-center font-bold">Stryker</th>
-              <th className="px-4 py-3 text-center font-bold">J&J</th>
-              <th className="px-4 py-3 text-center font-bold">S&N</th>
+              <th className="px-4 py-3 text-center font-bold">Vendor-Alpha</th>
+              <th className="px-4 py-3 text-center font-bold">Vendor-Beta</th>
+              <th className="px-4 py-3 text-center font-bold">Vendor-Gamma</th>
+              <th className="px-4 py-3 text-center font-bold">Vendor-Delta</th>
               <th className="px-4 py-3 text-right font-bold">Annual Qty</th>
               <th className="px-4 py-3 text-right font-bold">Savings Opp.</th>
             </tr>
@@ -172,9 +172,9 @@ const ComponentComparisonView = ({ surgeon, allSurgeonData }) => {
               components.map((comp, idx) => {
                 const vendorPricing = getVendorPricing(comp.category);
                 const yourVendorData = vendorPricing.find(v => v.vendor === comp.vendor);
-                const yourPrice = yourVendorData?.medianPrice || comp.avgPrice;
-                const bestPrice = vendorPricing[0]?.medianPrice || yourPrice;
-                const savings = comp.quantity * Math.max(0, yourPrice - bestPrice);
+                const yourPrice = yourVendorData?.medianPrice || comp.avgPrice || 0;
+                const bestPrice = vendorPricing[0]?.medianPrice || yourPrice || 0;
+                const savings = comp.quantity * Math.max(0, (yourPrice || 0) - (bestPrice || 0));
                 const isUsingBest = yourPrice === bestPrice;
 
                 const getVendorPrice = (vendorName) => {
@@ -200,7 +200,7 @@ const ComponentComparisonView = ({ surgeon, allSurgeonData }) => {
                     <td className="px-4 py-3 text-center">
                       <div className="font-bold text-gray-900">${yourPrice.toFixed(2)}</div>
                     </td>
-                    {['ZIMMER BIOMET', 'STRYKER', 'J&J', 'SMITH & NEPHEW'].map(vendor => {
+                    {['VENDOR-ALPHA', 'VENDOR-BETA', 'VENDOR-GAMMA', 'VENDOR-DELTA'].map(vendor => {
                       const price = getVendorPrice(vendor);
                       const isYourVendor = comp.vendor === vendor;
                       const isBest = price === bestPrice;

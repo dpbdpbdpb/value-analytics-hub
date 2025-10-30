@@ -5,6 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import NavigationHeader from '../components/shared/NavigationHeader';
 import ComponentComparisonView from '../components/ComponentComparisonView';
 import ComingSoonBadge from '../components/shared/ComingSoonBadge';
+import SyntheticDataBanner from '../components/shared/SyntheticDataBanner';
 
 const SurgeonTool = () => {
   // Get specialty from URL params
@@ -12,6 +13,7 @@ const SurgeonTool = () => {
   const productLine = specialty || 'hipknee'; // default to hipknee if not specified
 
   const [surgeonData, setSurgeonData] = useState([]);
+  const [globalComponents, setGlobalComponents] = useState([]);
   const [scenarios, setScenarios] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -127,6 +129,7 @@ const SurgeonTool = () => {
           };
         });
         setSurgeonData(surgeons);
+        setGlobalComponents(globalComponents);
 
         // Load scenarios from the data
         if (data.scenarios) {
@@ -135,7 +138,7 @@ const SurgeonTool = () => {
           Object.entries(data.scenarios).forEach(([key, scenario]) => {
             transformedScenarios[key] = {
               name: scenario.shortName || scenario.name,
-              vendors: scenario.preferredVendors || [],
+              vendors: scenario.preferredVendors || scenario.vendors || [],
               savingsPercent: scenario.savingsPercent || 0,
               annualSavings: scenario.annualSavings || 0
             };
@@ -1009,6 +1012,10 @@ const SurgeonTool = () => {
       {/* Navigation Header */}
       <NavigationHeader role="surgeon" specialty={productLine} specialtyName={specialtyDisplayName} />
 
+      <div className="max-w-6xl mx-auto px-4">
+        <SyntheticDataBanner compact={true} />
+      </div>
+
       <div className="p-4">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
@@ -1199,7 +1206,7 @@ const SurgeonTool = () => {
               <div className="bg-gradient-to-r from-blue-600 to-slate-700 rounded-2xl shadow-xl p-5 text-white">
                 <h2 className="text-2xl font-bold mb-2">CommonSpirit's Current Situation & Goals</h2>
                 <p className="text-lg opacity-90 mb-3">
-                  Understanding where we are, where we're going, and the different paths to reach our vendor consolidation goals
+                  Understanding where we are, where we're going, and the different paths to reach our cost reduction targets
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                   <div className="bg-white/20 rounded-lg p-4">
@@ -1293,6 +1300,16 @@ const SurgeonTool = () => {
                   }`}
                 >
                   Components
+                </button>
+                <button
+                  onClick={() => setIndividualTab('constructs')}
+                  className={`py-3 px-4 rounded-lg font-semibold transition-all text-sm ${
+                    individualTab === 'constructs'
+                      ? 'bg-gradient-to-r from-green-600 to-blue-600 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Construct Pricing
                 </button>
                 <button
                   onClick={() => setIndividualTab('scenarios')}
@@ -2183,6 +2200,363 @@ const SurgeonTool = () => {
                 allSurgeonData={surgeonData}
               />
             )}
+
+            {/* CONSTRUCT PRICING TAB */}
+            {individualTab === 'constructs' && selectedSurgeon && (() => {
+              // Calculate construct pricing using global component data
+              // Show vendors across columns, components down rows
+
+              // Use the global components loaded from state
+              if (!globalComponents || globalComponents.length === 0) {
+                return (
+                  <div className="bg-white rounded-xl shadow-lg p-6">
+                    <h3 className="text-xl font-bold text-gray-900 mb-4">Construct Pricing</h3>
+                    <div className="text-gray-600">Loading component data...</div>
+                  </div>
+                );
+              }
+
+              // Top 4 vendors to compare
+              const topVendors = ['VENDOR-ALPHA', 'VENDOR-BETA', 'VENDOR-GAMMA', 'VENDOR-DELTA'];
+
+              // Determine surgeon's primary vendor
+              const surgeonVendors = Object.keys(selectedSurgeon.vendors || {});
+              const primaryVendor = surgeonVendors.length > 0 ? surgeonVendors[0] : null;
+
+              // Group components by name and vendor
+              const componentsByName = {};
+              globalComponents.forEach(comp => {
+                if (!componentsByName[comp.name]) {
+                  componentsByName[comp.name] = {
+                    name: comp.name,
+                    bodyPart: comp.bodyPart,
+                    vendors: {}
+                  };
+                }
+                componentsByName[comp.name].vendors[comp.vendor] = comp.avgPrice || 0;
+              });
+
+              // Separate hip and knee components
+              const hipComponents = Object.values(componentsByName).filter(c =>
+                c.bodyPart === 'Hip' || c.name.toLowerCase().includes('hip')
+              );
+              const kneeComponents = Object.values(componentsByName).filter(c =>
+                c.bodyPart === 'Knee' || c.name.toLowerCase().includes('knee')
+              );
+
+              // Calculate construct totals for each vendor
+              const calculateConstructTotal = (components, vendor) => {
+                return components.reduce((sum, comp) => sum + (comp.vendors[vendor] || 0), 0);
+              };
+
+              const constructTotals = {};
+              topVendors.forEach(vendor => {
+                constructTotals[vendor] = {
+                  hip: calculateConstructTotal(hipComponents, vendor),
+                  knee: calculateConstructTotal(kneeComponents, vendor),
+                  total: calculateConstructTotal(hipComponents, vendor) + calculateConstructTotal(kneeComponents, vendor)
+                };
+              });
+
+              // Find lowest cost vendor
+              const lowestCostVendor = topVendors.reduce((min, vendor) =>
+                constructTotals[vendor].total < constructTotals[min].total ? vendor : min
+              , topVendors[0]);
+
+              const savings = primaryVendor && constructTotals[primaryVendor] && constructTotals[lowestCostVendor]
+                ? (constructTotals[primaryVendor].total - constructTotals[lowestCostVendor].total) * selectedSurgeon.totalCases
+                : 0;
+
+              return (
+                <div className="space-y-4">
+                  {/* Explanation */}
+                  <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="font-bold text-blue-900 mb-1">What is Construct Pricing?</h4>
+                        <p className="text-sm text-blue-800 leading-relaxed">
+                          A "construct" is the complete set of implant components needed for one procedure from a single vendor.
+                          For hip replacements, this typically includes 5 components (femoral stem, femoral head, acetabular shell, liner, and fixation).
+                          For knee replacements, this includes 3-4 components (femoral component, tibial tray, insert, and patellar button).
+                          This analysis shows what a complete single-vendor construct would cost, enabling true apples-to-apples comparison.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Your Current Practice */}
+                  {primaryVendor && constructTotals[primaryVendor] && (
+                    <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200 rounded-lg p-4">
+                      <h4 className="font-bold text-purple-900 mb-3">Your Current Practice</h4>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div>
+                          <div className="text-sm text-gray-600 mb-1">Primary Vendor</div>
+                          <div className="font-bold text-purple-900">{primaryVendor}</div>
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-600 mb-1">Avg Construct Cost</div>
+                          <div className="text-2xl font-bold text-purple-900">
+                            ${(constructTotals[primaryVendor].total / 2).toFixed(0)}
+                          </div>
+                          <div className="text-xs text-gray-500">(Hip + Knee avg)</div>
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-600 mb-1">Annual Volume</div>
+                          <div className="text-2xl font-bold text-purple-900">{selectedSurgeon.totalCases.toLocaleString()}</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Hip Construct Pricing Table */}
+                  <div className="bg-white rounded-xl shadow-lg p-6">
+                    <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-4">
+                      <Package className="text-purple-600" />
+                      Hip Construct Pricing Comparison
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Component-by-component pricing for a complete hip replacement from each vendor.
+                    </p>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse text-sm">
+                        <thead>
+                          <tr className="bg-gradient-to-r from-purple-100 to-blue-100 border-b-2 border-purple-300">
+                            <th className="px-4 py-3 text-left font-bold">Component</th>
+                            {topVendors.map(vendor => (
+                              <th
+                                key={vendor}
+                                className={`px-4 py-3 text-center font-bold ${
+                                  vendor === primaryVendor ? 'bg-purple-200' : ''
+                                }`}
+                              >
+                                {vendor}
+                                {vendor === primaryVendor && (
+                                  <div className="text-xs text-purple-700 font-bold mt-1">YOUR VENDOR</div>
+                                )}
+                                {vendor === lowestCostVendor && constructTotals[vendor].hip === Math.min(...topVendors.map(v => constructTotals[v].hip)) && (
+                                  <div className="text-xs text-green-700 font-bold mt-1">LOWEST</div>
+                                )}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {hipComponents.map((comp, idx) => (
+                            <tr key={idx} className="border-b hover:bg-purple-50">
+                              <td className="px-4 py-3 font-semibold text-gray-900">{comp.name}</td>
+                              {topVendors.map(vendor => {
+                                const price = comp.vendors[vendor] || 0;
+                                const lowestPrice = Math.min(...topVendors.map(v => comp.vendors[v] || Infinity));
+                                const isLowest = price === lowestPrice && price > 0;
+                                const isYourVendor = vendor === primaryVendor;
+
+                                return (
+                                  <td
+                                    key={vendor}
+                                    className={`px-4 py-3 text-center ${
+                                      isYourVendor ? 'bg-purple-50' : ''
+                                    }`}
+                                  >
+                                    {price > 0 ? (
+                                      <div className={`font-semibold ${
+                                        isLowest ? 'text-green-600' :
+                                        isYourVendor ? 'text-purple-700' :
+                                        'text-gray-900'
+                                      }`}>
+                                        ${price.toFixed(0)}
+                                      </div>
+                                    ) : (
+                                      <div className="text-gray-400">—</div>
+                                    )}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                          <tr className="bg-gradient-to-r from-purple-100 to-blue-100 border-t-2 border-purple-300 font-bold">
+                            <td className="px-4 py-3 text-gray-900">HIP CONSTRUCT TOTAL</td>
+                            {topVendors.map(vendor => (
+                              <td
+                                key={vendor}
+                                className={`px-4 py-3 text-center ${
+                                  vendor === primaryVendor ? 'bg-purple-200' : ''
+                                }`}
+                              >
+                                <div className={`text-lg font-bold ${
+                                  vendor === lowestCostVendor && constructTotals[vendor].hip === Math.min(...topVendors.map(v => constructTotals[v].hip)) ? 'text-green-600' :
+                                  vendor === primaryVendor ? 'text-purple-700' :
+                                  'text-gray-900'
+                                }`}>
+                                  ${constructTotals[vendor].hip.toFixed(0)}
+                                </div>
+                                <div className="text-xs text-gray-600 font-normal">
+                                  {hipComponents.length} components
+                                </div>
+                              </td>
+                            ))}
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Knee Construct Pricing Table */}
+                  <div className="bg-white rounded-xl shadow-lg p-6">
+                    <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-4">
+                      <Package className="text-blue-600" />
+                      Knee Construct Pricing Comparison
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Component-by-component pricing for a complete knee replacement from each vendor.
+                    </p>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse text-sm">
+                        <thead>
+                          <tr className="bg-gradient-to-r from-blue-100 to-purple-100 border-b-2 border-blue-300">
+                            <th className="px-4 py-3 text-left font-bold">Component</th>
+                            {topVendors.map(vendor => (
+                              <th
+                                key={vendor}
+                                className={`px-4 py-3 text-center font-bold ${
+                                  vendor === primaryVendor ? 'bg-purple-200' : ''
+                                }`}
+                              >
+                                {vendor}
+                                {vendor === primaryVendor && (
+                                  <div className="text-xs text-purple-700 font-bold mt-1">YOUR VENDOR</div>
+                                )}
+                                {vendor === lowestCostVendor && constructTotals[vendor].knee === Math.min(...topVendors.map(v => constructTotals[v].knee)) && (
+                                  <div className="text-xs text-green-700 font-bold mt-1">LOWEST</div>
+                                )}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {kneeComponents.map((comp, idx) => (
+                            <tr key={idx} className="border-b hover:bg-blue-50">
+                              <td className="px-4 py-3 font-semibold text-gray-900">{comp.name}</td>
+                              {topVendors.map(vendor => {
+                                const price = comp.vendors[vendor] || 0;
+                                const lowestPrice = Math.min(...topVendors.map(v => comp.vendors[v] || Infinity));
+                                const isLowest = price === lowestPrice && price > 0;
+                                const isYourVendor = vendor === primaryVendor;
+
+                                return (
+                                  <td
+                                    key={vendor}
+                                    className={`px-4 py-3 text-center ${
+                                      isYourVendor ? 'bg-purple-50' : ''
+                                    }`}
+                                  >
+                                    {price > 0 ? (
+                                      <div className={`font-semibold ${
+                                        isLowest ? 'text-green-600' :
+                                        isYourVendor ? 'text-purple-700' :
+                                        'text-gray-900'
+                                      }`}>
+                                        ${price.toFixed(0)}
+                                      </div>
+                                    ) : (
+                                      <div className="text-gray-400">—</div>
+                                    )}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                          <tr className="bg-gradient-to-r from-blue-100 to-purple-100 border-t-2 border-blue-300 font-bold">
+                            <td className="px-4 py-3 text-gray-900">KNEE CONSTRUCT TOTAL</td>
+                            {topVendors.map(vendor => (
+                              <td
+                                key={vendor}
+                                className={`px-4 py-3 text-center ${
+                                  vendor === primaryVendor ? 'bg-purple-200' : ''
+                                }`}
+                              >
+                                <div className={`text-lg font-bold ${
+                                  vendor === lowestCostVendor && constructTotals[vendor].knee === Math.min(...topVendors.map(v => constructTotals[v].knee)) ? 'text-green-600' :
+                                  vendor === primaryVendor ? 'text-purple-700' :
+                                  'text-gray-900'
+                                }`}>
+                                  ${constructTotals[vendor].knee.toFixed(0)}
+                                </div>
+                                <div className="text-xs text-gray-600 font-normal">
+                                  {kneeComponents.length} components
+                                </div>
+                              </td>
+                            ))}
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Summary and Savings */}
+                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200 rounded-lg p-6">
+                    <h4 className="text-xl font-bold text-gray-900 mb-4">Construct Cost Summary</h4>
+                    <div className="grid grid-cols-4 gap-4">
+                      {topVendors.map(vendor => (
+                        <div
+                          key={vendor}
+                          className={`p-4 rounded-lg border-2 ${
+                            vendor === lowestCostVendor ? 'bg-green-50 border-green-300' :
+                            vendor === primaryVendor ? 'bg-purple-100 border-purple-300' :
+                            'bg-white border-gray-200'
+                          }`}
+                        >
+                          <div className="text-sm font-semibold text-gray-700 mb-2">
+                            {vendor}
+                            {vendor === primaryVendor && <div className="text-xs text-purple-600">YOUR VENDOR</div>}
+                            {vendor === lowestCostVendor && <div className="text-xs text-green-600">LOWEST COST</div>}
+                          </div>
+                          <div className={`text-2xl font-bold mb-1 ${
+                            vendor === lowestCostVendor ? 'text-green-600' :
+                            vendor === primaryVendor ? 'text-purple-700' :
+                            'text-gray-900'
+                          }`}>
+                            ${(constructTotals[vendor].total / 2).toFixed(0)}
+                          </div>
+                          <div className="text-xs text-gray-600">Avg construct</div>
+                          <div className="text-sm text-gray-700 mt-2">
+                            Hip: ${constructTotals[vendor].hip.toFixed(0)}
+                          </div>
+                          <div className="text-sm text-gray-700">
+                            Knee: ${constructTotals[vendor].knee.toFixed(0)}
+                          </div>
+                          {primaryVendor === vendor && (
+                            <div className="mt-3 pt-3 border-t border-purple-300">
+                              <div className="text-xs text-gray-600">Your Annual Cost</div>
+                              <div className="text-lg font-bold text-purple-700">
+                                ${((constructTotals[vendor].total / 2) * selectedSurgeon.totalCases / 1000).toFixed(0)}K
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Key Insights */}
+                  {savings > 0 && (
+                    <div className="bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-300 rounded-lg p-4">
+                      <h4 className="font-bold text-orange-900 mb-2 flex items-center gap-2">
+                        <TrendingDown className="w-5 h-5" />
+                        Savings Opportunity
+                      </h4>
+                      <p className="text-sm text-orange-800">
+                        By switching to <strong>{lowestCostVendor}</strong> for all components, you could save approximately{' '}
+                        <strong className="text-xl">${(savings / 1000).toFixed(0)}K annually</strong> based on your current volume of{' '}
+                        {selectedSurgeon.totalCases.toLocaleString()} cases.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* SCENARIOS TAB */}
             {individualTab === 'scenarios' && (

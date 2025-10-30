@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import NavigationHeader from '../components/shared/NavigationHeader';
 import RegionSwitchingHeatmap from '../components/RegionSwitchingHeatmap';
+import SyntheticDataBanner from '../components/shared/SyntheticDataBanner';
 
 const EnhancedOrthopedicDashboard = () => {
   // Get specialty from URL params (e.g., /executive/shoulder -> specialty = 'shoulder')
@@ -4342,6 +4343,8 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Navigation Header */}
       <NavigationHeader role="executive" specialty={productLine} specialtyName={specialtyDisplayName} persona={persona} />
+
+      <SyntheticDataBanner compact={true} />
 
       <div className="p-6">
         <div className="w-full">
