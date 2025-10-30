@@ -8,780 +8,878 @@
 
 ## Table of Contents
 
-1. [Overview](#overview)
-2. [Data Schema Reference](#data-schema-reference)
-3. [Calculations & Formulas](#calculations--formulas)
-4. [Key Assumptions](#key-assumptions)
-5. [Data Requirements](#data-requirements)
-6. [Metrics Definitions](#metrics-definitions)
-7. [Quality Assurance](#quality-assurance)
-8. [Troubleshooting](#troubleshooting)
+1. [What This Dashboard Does](#what-this-dashboard-does)
+2. [Understanding the Data](#understanding-the-data)
+3. [How Calculations Work](#how-calculations-work)
+4. [Key Assumptions Explained](#key-assumptions-explained)
+5. [What Data You Need](#what-data-you-need)
+6. [Metrics Reference](#metrics-reference)
+7. [Data Quality Guidelines](#data-quality-guidelines)
+8. [Common Issues & Solutions](#common-issues--solutions)
 
 ---
 
-## Overview
+## What This Dashboard Does
 
-The Value Analytics Hub is a decision support dashboard for orthopedic vendor consolidation. It helps healthcare systems analyze vendor spending, model consolidation scenarios, and track implementation progress.
+The Value Analytics Hub helps healthcare systems make data-driven decisions about orthopedic vendor consolidation. Think of it as a decision support tool that answers three key questions:
 
-### Data Model Philosophy
+1. **Where are we now?** Shows current vendor spending, surgeon preferences, and system-wide patterns
+2. **What if we consolidate?** Models different consolidation scenarios (3 vendors, 2 vendors, 1 vendor) with projected savings and risks
+3. **How's it going?** Tracks implementation progress and compares actual results to projections
 
-- **Product Line Based:** Each orthopedic specialty (hip-knee, shoulder, spine, etc.) has its own data file
-- **Time Series Support:** Baseline data at decision point, lookback data at implementation milestones
-- **Synthetic Data:** Current deployment uses 100% synthetic data for demonstration
-- **Real-Time Calculations:** Most metrics calculated client-side from raw data
+### Who Uses This
 
-### Key Entities
-
-```
-System
-  ├── Product Lines (Hip-Knee, Shoulder, etc.)
-  │     ├── Metadata (totals, dates, sources)
-  │     ├── Vendors (spend, volume, surgeon count)
-  │     ├── Surgeons (cases, spend, vendor preferences)
-  │     ├── Components (pricing by vendor & category)
-  │     ├── Scenarios (consolidation strategies)
-  │     └── Workflow (project status, milestones)
-  └── Strategic Framework (assumptions, objectives)
-```
+- **Executives:** See system-wide impact, savings opportunities, and risk assessment
+- **Surgeons:** Compare their practice patterns to peers, explore construct pricing options
+- **Supply Chain:** Analyze vendor spend, component pricing, and consolidation opportunities
+- **Project Managers:** Track implementation milestones and adoption rates
 
 ---
 
-## Data Schema Reference
+## Understanding the Data
 
-### File Location
+### The Big Picture
 
-```
-/public/data/
-  ├── hip-knee-data.json      # Hip & Knee product line
-  ├── shoulder-data.json       # Shoulder product line
-  └── [future product lines]
-```
+The dashboard organizes data by **product line** (hip-knee, shoulder, spine, etc.). Each product line has its own data file that contains:
 
-### Complete JSON Schema
+- **System totals:** Total cases, total spend, number of surgeons
+- **Vendor information:** How much you spend with each vendor, which surgeons use them
+- **Surgeon details:** Each surgeon's case volume, spending, and vendor preferences
+- **Component pricing:** What different implant components cost from each vendor
+- **Scenarios:** Different consolidation strategies with projected savings
+- **Project status:** Where you are in the decision/implementation process
 
-```json
-{
-  "metadata": {
-    "productLine": "hip-knee",           // Product line identifier
-    "dataType": "baseline",              // "baseline" or "lookback"
-    "dataCollectionDate": "2025-10-XX",  // YYYY-MM-DD format
-    "lastUpdated": "2025-10-XX",         // YYYY-MM-DD format
-    "dataSource": "string",              // Description of data sources
-    "version": "1.0",                    // Schema version
-    "totalCases": 72856,                 // Total annual case volume
-    "totalSpend": 41010260,              // Total annual spend in dollars
-    "totalSurgeons": 443,                // Active surgeon count
-    "note": "string",                    // Data disclaimers
-    "regions": 5,                        // Number of geographic regions
-    "facilities": 20                     // Number of facilities
-  },
+### How Data Files Are Structured
 
-  "vendors": {
-    "VENDOR-ALPHA": {                    // Vendor name (key)
-      "totalSpend": 14908670.57,         // Annual spend in dollars
-      "totalQuantity": 30224,            // Total units purchased
-      "uniqueSurgeons": 217              // Surgeons using this vendor
-    }
-    // ... additional vendors
-  },
+**File Location:** Data files live in `/public/data/` folder:
+- `hip-knee-data.json` = Hip & Knee product line
+- `shoulder-data.json` = Shoulder product line
+- Future product lines will be added here
 
-  "surgeons": [
-    {
-      "name": "SURG-0001",               // Surgeon identifier
-      "id": "SURG-0001",                 // Unique ID (same as name)
-      "totalCases": 1431,                // Annual case volume
-      "totalSpend": 1231506,             // Annual spend in dollars
-      "region": "Region A",              // Geographic region
-      "facility": "Facility A1",         // Primary facility
-      "vendors": {                       // Vendor usage breakdown
-        "VENDOR-GAMMA": {
-          "cases": 1464,                 // Cases with this vendor
-          "spend": 1188650               // Spend with this vendor
-        }
-        // ... additional vendors
-      }
-    }
-    // ... additional surgeons
-  ],
+**Current Status:** The dashboard is using 100% synthetic data for demonstration. When you're ready to use real data, you'll replace these files with your actual system data.
 
-  "components": [
-    {
-      "name": "FEMORAL HIP STEMS",       // Component category name
-      "vendor": "VENDOR-GAMMA",          // Vendor for this component
-      "bodyPart": "Hip",                 // "Hip", "Knee", or "General"
-      "quantity": 5375,                  // System-wide annual quantity
-      "totalSpend": 5890000,             // System-wide annual spend
-      "avgPrice": 1096                   // Average price per unit
-    }
-    // ... additional components
-  ],
+### The Main Data Sections
 
-  "scenarios": {
-    "status-quo": {
-      "name": "Status Quo",              // Display name
-      "shortName": "Status Quo",         // Abbreviated name
-      "description": "string",           // Scenario description
-      "vendors": ["VENDOR-A", "VENDOR-B"], // Vendors in this scenario
-      "preferredVendors": [...],         // Alias for "vendors"
-      "annualSavings": 0,                // Projected annual savings ($)
-      "savingsPercent": 0,               // Savings as % of baseline
-      "adoptionRate": 1.0,               // Expected surgeon adoption (0-1)
-      "riskLevel": "Low",                // "Low", "Medium", or "High"
-      "riskScore": 1.0,                  // Calculated risk score (0-10)
-      "quintupleMissionScore": 50,       // Overall quintuple aim score
-      "quintupleScores": {               // Individual pillar scores
-        "patientExperience": "50",
-        "populationHealth": "50",
-        "costReduction": "0",
-        "providerExperience": "100",
-        "healthEquity": "50"
-      },
-      "implementation": {
-        "timeline": 0,                   // Months to implement
-        "complexity": "Low",             // Implementation complexity
-        "costMillions": 0                // Implementation cost ($M)
-      },
-      "npv5Year": 0,                     // 5-year net present value ($M)
-      "roboticPlatformAlignment": {      // Optional robotic surgery data
-        "alignmentScore": 85,
-        "compatibleCases": 450,
-        "totalRoboticCases": 500
-      }
-    }
-    // ... additional scenarios (tri-vendor, dual-premium, dual-value, single-vendor)
-  },
+#### 1. Metadata (The Summary)
 
-  "matrixPricing": [                     // Optional: Component price matrix
-    {
-      "component": "Acetabular Cup",
-      "currentVendor": "VENDOR-A",
-      "currentPrice": 1500,
-      "alternateVendors": [
-        {"vendor": "VENDOR-B", "price": 1400},
-        {"vendor": "VENDOR-C", "price": 1550}
-      ]
-    }
-  ],
+This section contains your system-wide totals and should match your finance reports:
 
-  "workflowTracking": {                  // Optional: Project status
-    "currentStage": "decision",          // Workflow stage
-    "lastUpdated": "2025-10-XX",
-    "stages": {
-      "decision": {
-        "status": "active",              // "active", "completed", "upcoming"
-        "selectedScenario": "dual-premium"
-      }
-    }
-  }
-}
-```
+- **Total Cases:** Total annual surgical procedures (e.g., 72,856 cases)
+- **Total Spend:** Total annual implant spending in actual dollars (e.g., $41,010,260)
+- **Total Surgeons:** Number of active orthopedic surgeons (e.g., 443 surgeons)
+- **Data Collection Date:** When this data snapshot was taken
+- **Version:** Helps track which version of the data structure you're using
+
+**Important:** These totals act as validation checks. The sum of all surgeon cases should equal your total cases. If they don't match, something's wrong with the data.
+
+#### 2. Vendors
+
+Lists each vendor you purchase from and their system-wide totals:
+
+- **Total Spend:** How much you spent with this vendor annually (in dollars)
+- **Total Quantity:** How many implant components you bought
+- **Unique Surgeons:** How many surgeons used this vendor
+
+**Example:** Vendor-Alpha might show $14.9M spend, 30,224 units, used by 217 surgeons.
+
+This section helps you understand vendor concentration. If 80% of spend is with 2 vendors, you're already somewhat consolidated.
+
+#### 3. Surgeons
+
+This is the heart of the data. Each surgeon has:
+
+- **Name/ID:** Unique identifier (can be anonymized like "SURG-0001" or real names)
+- **Total Cases:** How many surgeries this surgeon performs annually
+- **Total Spend:** Total implant costs for this surgeon's cases
+- **Region/Facility:** Where they practice
+- **Vendor Breakdown:** How their cases and spending split across vendors
+
+**Example:** Dr. Smith performs 1,431 cases annually, spending $1.2M on implants. 95% of cases use Vendor-Gamma, 5% use Vendor-Beta.
+
+This granular surgeon data enables peer comparison, risk assessment, and targeted engagement strategies.
+
+#### 4. Components
+
+Breaks down implant costs by specific component types:
+
+- **Component Name:** Like "Femoral Hip Stems" or "Tibial Knee Components"
+- **Vendor:** Which vendor supplies this component
+- **Body Part:** Hip, Knee, or General
+- **Quantity:** System-wide annual usage
+- **Average Price:** Cost per unit
+
+**Why This Matters:** Component-level data enables construct pricing analysis, showing what a complete single-vendor implant set would cost.
+
+#### 5. Scenarios
+
+Different consolidation strategies you might pursue:
+
+- **Status Quo:** Keep all current vendors (baseline for comparison)
+- **Tri-Vendor:** Consolidate to 3 preferred vendors
+- **Dual-Vendor (Premium):** 2 vendors focusing on quality/innovation
+- **Dual-Vendor (Value):** 2 vendors focusing on cost efficiency
+- **Single-Vendor:** Maximum consolidation with one vendor
+
+Each scenario includes:
+- **Vendors List:** Which vendors are included
+- **Annual Savings:** Projected cost reduction in dollars
+- **Savings Percent:** Savings as % of baseline spend
+- **Adoption Rate:** Expected surgeon participation (0-100%)
+- **Risk Level:** Low, Medium, or High
+- **Risk Score:** Calculated 0-10 scale based on volume-weighted surgeon impact
 
 ---
 
-## Calculations & Formulas
+## How Calculations Work
 
-### 1. Surgeon-Level Metrics
+### Understanding Risk Scores
 
-#### Primary Vendor
-```javascript
-// Vendor with highest case volume for a surgeon
-primaryVendor = max(vendors, by: cases)
-```
+The risk score answers: "How hard will it be to get surgeons to adopt this scenario?"
 
-#### Primary Vendor Percentage
-```javascript
-primaryVendorPercent = primaryVendorCases / totalCases
-```
+**The Method:**
 
-#### Average Spend Per Case
-```javascript
-avgSpendPerCase = totalSpend / totalCases
-```
+We look at surgeons who would need to switch vendors in each scenario. Not all surgeons are equal—losing a high-volume surgeon is much riskier than losing a low-volume surgeon. Here's how we weight them:
 
-#### Vendor Breakdown
-```javascript
-// For each vendor:
-vendorPercentage = vendorSpend / surgeonTotalSpend * 100
-```
+- **High-volume surgeons** (>500 cases/year): Weighted 5x
+  - Why: They have significant revenue impact and negotiating power
+  - Example: A 600-case surgeon leaving would hurt more than 5 low-volume surgeons leaving
 
-### 2. Volume-Weighted Risk Score
+- **Medium-volume surgeons** (200-500 cases/year): Weighted 3x
+  - Why: Solid contributors to volume and revenue
+  - Example: Losing 3-4 of these surgeons would be noticeable
 
-**Purpose:** Calculate adoption risk based on surgeon volume and loyalty patterns
+- **Low-volume surgeons** (<200 cases/year): Weighted 1x
+  - Why: Smaller individual impact
+  - Example: System can absorb turnover more easily
 
-**Formula:**
-```javascript
-// Step 1: Categorize surgeons who must switch vendors
-highVolumeSurgeonsAffected = count where (
-  primaryVendor NOT IN scenarioVendors AND
-  totalCases >= 500
-)
+**Additional Risk Factors:**
 
-mediumVolumeSurgeonsAffected = count where (
-  primaryVendor NOT IN scenarioVendors AND
-  200 <= totalCases < 500
-)
+- **Loyalists (90%+ single-vendor users):** These surgeons have strong vendor preferences. If their preferred vendor isn't in the scenario, they're much more likely to resist or leave.
 
-lowVolumeSurgeonsAffected = count where (
-  primaryVendor NOT IN scenarioVendors AND
-  totalCases < 200
-)
+- **Cases at Risk:** What percentage of your total case volume comes from surgeons who must switch?
 
-// Step 2: Calculate loyalists (>90% single-vendor preference)
-loyalistsAffected = count where (
-  primaryVendorPercent >= 0.90 AND
-  primaryVendor NOT IN scenarioVendors
-)
+**Risk Score Scale:**
+- **0-3 = Low Risk:** Mostly affects low-volume surgeons, minimal loyalists impacted
+- **4-6 = Medium Risk:** Some high-volume or many medium-volume surgeons affected
+- **7-10 = High Risk:** Multiple high-volume surgeons or many loyalists must switch
 
-// Step 3: Volume-weighted scoring
-volumeWeightedScore = (
-  (highVolumeSurgeonsAffected * 5) +
-  (mediumVolumeSurgeonsAffected * 3) +
-  (lowVolumeSurgeonsAffected * 1)
-) / totalSurgeons
+**Real Example:**
 
-loyaltyScore = (loyalistsAffected / totalSurgeonsAffected) * 3
+A dual-vendor scenario might affect:
+- 2 high-volume surgeons (×5 weight = 10 points)
+- 8 medium-volume surgeons (×3 weight = 24 points)
+- 15 low-volume surgeons (×1 weight = 15 points)
+- Total of 49 points across 443 surgeons
+- Plus 5 loyalists affected adds 3 more points
+- Plus 18% of cases at risk adds 0.36 points
+- **Final Risk Score: 4.2 (Medium Risk)**
 
-caseRiskScore = (casesAtRiskPercent / 100) * 2
+### Construct Pricing Explained
 
-// Step 4: Final risk score (0-10 scale)
-riskScore = min(10, volumeWeightedScore + loyaltyScore + caseRiskScore)
-```
+Construct pricing shows what it would cost if all implant components for one procedure came from the same vendor.
 
-**Risk Level Interpretation:**
-- **0-3:** Low Risk (mostly affects low-volume surgeons)
-- **4-6:** Medium Risk (affects some high-volume or many medium-volume surgeons)
-- **7-10:** High Risk (affects multiple high-volume or highly loyal surgeons)
+**Why This Matters:** Vendors often offer better pricing when you use their complete system rather than mixing components from multiple vendors. This analysis helps you see true apples-to-apples pricing.
 
-### 3. Construct Pricing
+**How It Works:**
 
-**Purpose:** Calculate total cost of complete single-vendor implant set
+For Hip Replacement:
+- Femoral stem from Vendor-Alpha: $1,296
+- Femoral head from Vendor-Alpha: $1,203
+- Acetabular cup from Vendor-Alpha: $975
+- Hip liner from Vendor-Alpha: $1,369
+- **Total Hip Construct: $4,843**
 
-**Formula:**
-```javascript
-// Hip Construct (all hip components from one vendor)
-hipConstructCost = sum(
-  component.avgPrice
-  WHERE component.bodyPart = "Hip"
-  AND component.vendor = targetVendor
-)
+For Knee Replacement:
+- Femoral component from Vendor-Alpha: $798
+- Tibial component from Vendor-Alpha: $2,397
+- Patellar component from Vendor-Alpha: $729
+- **Total Knee Construct: $3,924**
 
-// Knee Construct (all knee components from one vendor)
-kneeConstructCost = sum(
-  component.avgPrice
-  WHERE component.bodyPart = "Knee"
-  AND component.vendor = targetVendor
-)
+**Average Construct Cost:** (Hip + Knee) ÷ 2 = $4,384
 
-// Average Construct Cost
-avgConstructCost = (hipConstructCost + kneeConstructCost) / 2
+The dashboard shows this for every vendor, ranked from lowest to highest cost. If your current vendor charges $4,800 average construct and the lowest is $4,200, you could save $600 per case. Multiply by 1,400 annual cases = $840,000 annual savings potential.
 
-// Annual Cost for Surgeon
-annualConstructCost = avgConstructCost * surgeonTotalCases
+### Savings Calculations
 
-// Savings Opportunity
-savingsVsBest = (currentVendorConstructCost - lowestVendorConstructCost) * surgeonTotalCases
-```
+**Projected Annual Savings:**
 
-**Component Categorization:**
-```javascript
-// Hip components include:
-- bodyPart = "Hip"
-- name contains: "hip", "femoral head", "acetabular", "femoral stem"
+Method 1 - Percentage-Based:
+If a scenario shows 12% savings and your baseline spend is $41M, then:
+Annual Savings = $41M × 0.12 = $4.92M
 
-// Knee components include:
-- bodyPart = "Knee"
-- name contains: "knee", "tibial", "patellar", "femoral component"
-```
+Method 2 - Component-Level:
+Calculate savings for each component that would switch vendors, summing the price differences times quantities purchased.
 
-### 4. Scenario Savings Calculations
+**Adoption-Adjusted Savings:**
 
-#### Projected Annual Savings
-```javascript
-// Method 1: Percentage-based
-projectedSavings = baselineSpend * savingsPercent
+Projected savings assume 100% participation. But what if only 88% of surgeons adopt?
 
-// Method 2: Component-level calculation
-projectedSavings = sum(
-  (currentPrice - targetPrice) * quantity
-  FOR each component switching vendors
-)
-```
+Adjusted Savings = $4.92M × 0.88 = $4.33M
 
-#### Net Present Value (NPV)
-```javascript
-// 5-year NPV with implementation costs
-implementationCost = implementationCostMillions * 1000000
-annualSavings = scenarios[id].annualSavings
+This is your more realistic savings estimate.
 
-npv5Year = sum(
-  annualSavings / (1 + discountRate)^year
-  FOR year 1 to 5
-) - implementationCost
+**Net Present Value (NPV):**
 
-// Typical discount rate: 5-7%
-```
+NPV accounts for the time value of money and implementation costs. If you spend $1.5M to implement and save $4.33M annually for 5 years, with a 5% discount rate:
 
-#### Adoption-Adjusted Savings
-```javascript
-// Actual savings accounting for surgeon adoption
-adjustedSavings = projectedSavings * adoptionRate
+Year 1 savings: $4.33M ÷ 1.05 = $4.12M
+Year 2 savings: $4.33M ÷ 1.05² = $3.93M
+Year 3 savings: $4.33M ÷ 1.05³ = $3.74M
+Year 4 savings: $4.33M ÷ 1.05⁴ = $3.56M
+Year 5 savings: $4.33M ÷ 1.05⁵ = $3.39M
 
-// Example:
-// Projected: $5M, Adoption: 92% → Adjusted: $4.6M
-```
+Total 5-year value: $18.74M
+Minus implementation cost: -$1.5M
+**NPV: $17.24M**
 
-### 5. Surgeon Component Allocation
+### Peer Benchmarking
 
-**Purpose:** Allocate system-wide component data to individual surgeons
+**Spend Efficiency Score:**
 
-**Formula:**
-```javascript
-// For each component used by surgeon's vendors:
-surgeonVendorProportion = surgeonVendorSpend / surgeonTotalSpend
+Compares a surgeon's cost per case to the median of all peers.
 
-systemVolumeRatio = surgeonTotalCases / systemTotalCases
+Example:
+- Dr. Smith: $860 per case
+- Peer median: $920 per case
+- Efficiency = ($920 - $860) ÷ $920 = 6.5% more efficient than peers
 
-allocatedQuantity = componentQuantity *
-                    surgeonVendorProportion *
-                    systemVolumeRatio
-
-allocatedSpend = componentTotalSpend *
-                 surgeonVendorProportion *
-                 (surgeonTotalSpend / systemTotalSpend)
-
-// Round quantities to integers for display
-displayQuantity = Math.round(allocatedQuantity)
-```
-
-### 6. Peer Benchmarking Metrics
-
-#### Spend Efficiency Score
-```javascript
-// Compare surgeon's cost per case to peers
-peerMedianCost = median(allSurgeons.avgSpendPerCase)
-
-efficiencyScore = (peerMedianCost - surgeonAvgSpendPerCase) / peerMedianCost * 100
-
-// Positive score = more efficient than peers
-// Negative score = less efficient than peers
-```
-
-#### Volume Category
-```javascript
-volumeCategory = {
-  "High": totalCases >= 500,
-  "Medium": 200 <= totalCases < 500,
-  "Low": totalCases < 200
-}
-```
+A positive score means the surgeon is more cost-efficient than average. A negative score means less efficient.
 
 ---
 
-## Key Assumptions
+## Key Assumptions Explained
 
-### Volume & Pricing Assumptions
+### Why We Make Assumptions
 
-1. **Case Volume Stability**
-   - **Assumption:** Annual case volumes remain stable year-over-year
-   - **Impact:** Used for projecting savings and calculating risk
-   - **Validation:** Compare to 3-year rolling average
+Real-world outcomes depend on factors we can't perfectly predict (surgeon behavior, contract negotiations, market changes). Assumptions help us model likely outcomes while being transparent about uncertainty.
 
-2. **Component Pricing**
-   - **Assumption:** Average prices represent system-wide negotiated rates
-   - **Impact:** Used for construct pricing and savings calculations
-   - **Validation:** Verify against contract pricing sheets
+### Critical Assumptions to Understand
 
-3. **Surgeon Volume Distribution**
-   - **High Volume:** >500 cases/year (typically 5-10% of surgeons)
-   - **Medium Volume:** 200-500 cases/year (typically 20-30% of surgeons)
-   - **Low Volume:** <200 cases/year (typically 60-75% of surgeons)
+#### 1. Case Volumes Stay Stable
 
-### Adoption & Risk Assumptions
+**Assumption:** Next year's case volumes will be similar to this year's.
 
-4. **Loyalty Threshold**
-   - **Assumption:** >90% single-vendor usage indicates strong loyalty
-   - **Impact:** Higher risk if these surgeons must switch
-   - **Rationale:** Surgeons with strong preferences more resistant to change
+**Why It Matters:** If a high-volume surgeon leaves because we eliminated their preferred vendor, we lose both that surgeon's cases AND the revenue. Projections assume surgeons stay.
 
-5. **Volume-Weighted Risk**
-   - **Assumption:** High-volume surgeon resistance is 5x riskier than low-volume
-   - **Rationale:**
-     - Higher revenue impact
-     - Greater negotiating power
-     - Potential competitive recruitment risk
+**Reality Check:** Look at your 3-year trend. If volumes have been growing 5% annually, adjust projections accordingly.
 
-6. **Adoption Rate Assumptions by Scenario**
-   - **Status Quo:** 100% (no change required)
-   - **Tri-Vendor:** 92-95% (moderate consolidation)
-   - **Dual-Vendor:** 85-92% (significant consolidation)
-   - **Single-Vendor:** 75-85% (highest risk)
+#### 2. Vendor Pricing Represents Contract Rates
 
-### Financial Assumptions
+**Assumption:** The average prices in the data reflect your actual negotiated contracts.
 
-7. **Discount Rate**
-   - **Standard:** 5-7% for NPV calculations
-   - **Rationale:** Typical healthcare system cost of capital
+**Why It Matters:** If actual prices vary by 10-15% from averages, savings calculations will be off by that amount.
 
-8. **Implementation Costs**
-   - **Low Complexity:** $0.5-1M (training, IT integration)
-   - **Medium Complexity:** $1-2M (plus inventory transition)
-   - **High Complexity:** $2-4M (plus surgeon retention incentives)
+**Validation:** Compare component prices in the data file to your current contracts. Flag any discrepancies >10%.
 
-9. **Savings Realization Timeline**
-   - **Immediate:** Contract pricing changes (0-3 months)
-   - **Ramp-up:** Surgeon adoption curve (3-12 months)
-   - **Full Run-Rate:** Typically achieved by month 12-18
+#### 3. Surgeon Loyalty Threshold
 
-### Clinical Quality Assumptions
+**Assumption:** Surgeons using one vendor >90% of the time have strong loyalty.
 
-10. **Vendor Equivalence**
-    - **Assumption:** Major vendors (Stryker, Zimmer, J&J, S&N) have clinically equivalent outcomes
-    - **Evidence:** AJRR registry data shows <0.5% revision rate difference
-    - **Note:** Surgeon training and technique matter more than implant brand
+**Why It Matters:** These surgeons are most likely to resist change or leave if forced to switch.
 
-11. **Learning Curve**
-    - **Assumption:** 10-20 cases needed for surgeon to achieve proficiency with new system
-    - **Impact:** Temporary 5-10 minute OR time increase during transition
-    - **Mitigation:** Structured training program and vendor support
+**Flexibility:** This threshold (90%) can be adjusted to 80% or 95% based on your experience with surgeon engagement.
 
----
+#### 4. Volume-Weighted Risk Factors
 
-## Data Requirements
+**Assumption:** A high-volume surgeon (>500 cases) is 5x more impactful than a low-volume surgeon (<200 cases).
 
-### Required Data Fields
+**Why It Matters:** Drives the risk score calculation and should reflect your system's reality.
 
-#### Minimum Viable Dataset
-```
-metadata:
-  ✓ productLine
-  ✓ totalCases
-  ✓ totalSpend
-  ✓ totalSurgeons
+**Adjustment:** If your system is more academic (harder to replace high-volume surgeons), increase the weight. If community-based (more fungible), decrease it.
 
-vendors:
-  ✓ vendorName (key)
-  ✓ totalSpend
-  ✓ totalQuantity
-  ✓ uniqueSurgeons
+#### 5. Adoption Rates by Scenario
 
-surgeons:
-  ✓ name or id
-  ✓ totalCases
-  ✓ totalSpend
-  ✓ vendors.{vendorName}.cases
-  ✓ vendors.{vendorName}.spend
+**Assumption:** More vendors = higher adoption.
 
-scenarios:
-  ✓ status-quo scenario
-  ✓ at least one consolidation scenario
-  ✓ vendors list
-  ✓ annualSavings OR savingsPercent
-```
+Typical adoption rates:
+- Status Quo (no change): 100%
+- Tri-Vendor (3 vendors): 92-95%
+- Dual-Vendor (2 vendors): 85-92%
+- Single-Vendor (1 vendor): 75-85%
 
-### Optional But Recommended
+**Why It Matters:** A 10-point drop in adoption can reduce savings by $500K-$1M in a typical system.
 
-```
-components:           # Enables construct pricing analysis
-region/facility:      # Enables geographic analysis
-quality metrics:      # Enables outcomes tracking
-workflow tracking:    # Enables project management features
-matrixPricing:        # Enables detailed price comparison
-```
+**Customization:** Adjust based on your culture. Strong surgeon engagement and buy-in can achieve higher rates. Poor relationships or past failed initiatives might require lower rates.
 
-### Data Quality Rules
+#### 6. Clinical Quality Equivalence
 
-1. **No PHI (Protected Health Information)**
-   - Patient names, MRNs, dates of birth
-   - Surgeon names can be de-identified (SURG-0001) or real names (with permission)
+**Assumption:** Major vendors (Stryker, Zimmer, J&J, Smith & Nephew) produce clinically equivalent outcomes.
 
-2. **Consistent Naming**
-   - Vendor names: Use full official names (ZIMMER BIOMET, not Zimmer)
-   - Facilities: Standardize across all records
-   - Components: Use consistent category names
+**Evidence:** American Joint Replacement Registry (AJRR) shows revision rates within 0.5% across major vendors at 2 years post-op.
 
-3. **Data Validation**
-   ```javascript
-   // Totals must reconcile:
-   sum(surgeons.totalCases) ≈ metadata.totalCases (within 1%)
-   sum(surgeons.totalSpend) ≈ metadata.totalSpend (within 1%)
-   sum(vendors.totalSpend) ≈ metadata.totalSpend (within 1%)
+**Why It Matters:** Justifies vendor consolidation from a clinical standpoint. Surgeons can switch vendors without compromising patient outcomes.
 
-   // Each surgeon vendor breakdown must sum:
-   sum(surgeon.vendors.*.cases) ≈ surgeon.totalCases
-   sum(surgeon.vendors.*.spend) ≈ surgeon.totalSpend
-   ```
+**Important Note:** Surgeon training and technique matter more than implant brand. A well-trained surgeon using their less-preferred vendor will still have good outcomes.
 
-4. **Unit Consistency**
-   - All dollar amounts in actual dollars (not millions)
-   - All percentages as decimals (0.18 = 18%) in calculations
-   - All percentages as whole numbers (18) in display strings
-   - All dates in YYYY-MM-DD format
+#### 7. Implementation Timeline
+
+**Assumption:** Full savings realized within 12-18 months.
+
+**Reality:**
+- Months 0-3: Contract signed, immediate pricing changes
+- Months 3-12: Surgeon training, gradual adoption ramp-up
+- Months 12-18: Full run-rate savings achieved
+
+**Why It Matters:** Affects NPV calculations and when you can count on the savings hitting your budget.
 
 ---
 
-## Metrics Definitions
+## What Data You Need
+
+### Absolute Minimum (Required)
+
+To get the dashboard functioning, you must have:
+
+**System Totals:**
+- Total annual case volume (e.g., 72,856 cases)
+- Total annual implant spend (e.g., $41,010,260)
+- Number of active surgeons (e.g., 443 surgeons)
+
+**Vendor Summary:**
+- List of all vendors you purchase from
+- Annual spend with each vendor
+- Annual quantity purchased from each vendor
+- Number of surgeons using each vendor
+
+**Surgeon Details:**
+- Unique identifier for each surgeon (can be anonymized)
+- Annual case volume per surgeon
+- Annual implant spend per surgeon
+- Breakdown showing which vendors each surgeon uses and how much
+
+**At Least One Scenario:**
+- Status quo (current state) scenario
+- At least one consolidation scenario showing:
+  - Which vendors would be included
+  - Expected savings (either as a dollar amount or percentage)
+
+### Strongly Recommended
+
+These aren't required for the dashboard to work, but significantly enhance its value:
+
+**Component-Level Pricing:**
+- Specific implant components (femoral stems, acetabular cups, etc.)
+- Which vendor supplies each component
+- Average price per component
+- Annual usage volume
+
+**Benefit:** Enables construct pricing analysis, showing true vendor cost comparisons.
+
+**Geographic Data:**
+- Which region each surgeon practices in
+- Which facility/hospital each surgeon works at
+
+**Benefit:** Enables geographic analysis and regional consolidation strategies.
+
+**Quality Metrics:**
+- Revision rates (% requiring additional surgery)
+- 30-day and 90-day readmission rates
+- Length of stay averages
+- Complication rates
+
+**Benefit:** Demonstrates clinical safety of consolidation decisions.
+
+**Multiple Scenarios:**
+- Tri-vendor strategy
+- Dual-vendor options (premium vs. value focused)
+- Single-vendor option (if applicable)
+
+**Benefit:** Gives leadership multiple options to evaluate and choose from.
+
+### Data You Don't Need
+
+**Protected Health Information (PHI):**
+- Never include patient names, medical record numbers, or dates of birth
+- Surgeon names can be de-identified if preferred (SURG-0001, SURG-0002, etc.)
+
+**Granular Transaction Data:**
+- Individual purchase orders or invoices
+- Case-by-case detail
+
+**Note:** The dashboard works with aggregated annual data. You sum everything up before loading it.
+
+### Data Quality Requirements
+
+**1. Consistent Naming**
+
+Bad:
+- "Zimmer", "ZIMMER", "Zimmer Biomet", "ZB"
+
+Good:
+- "ZIMMER BIOMET" (pick one format and stick with it)
+
+**2. Totals Must Reconcile**
+
+If your metadata says 72,856 total cases, the sum of all surgeon cases should equal 72,856 (within 1% tolerance for rounding).
+
+**3. No PHI**
+
+Remove all patient identifiers. This data is for system-level decision-making, not patient care.
+
+**4. Units Consistency**
+
+- Dollar amounts: Always in actual dollars (41010260, not 41.01M)
+- Dates: Always YYYY-MM-DD format (2025-10-30)
+- Percentages: Store as decimals for calculations (0.18 = 18%)
+
+**5. Valid Vendor References**
+
+If a surgeon uses "VENDOR-ALPHA", that vendor must exist in the vendors list. Misspellings break the analysis.
+
+---
+
+## Metrics Reference
 
 ### System-Level Metrics
 
-| Metric | Definition | Calculation | Units |
-|--------|------------|-------------|-------|
-| **Total Cases** | Annual procedure volume | Sum of all surgeon cases | Count |
-| **Total Spend** | Annual implant spend | Sum of all vendor spend | Dollars |
-| **Avg Cost Per Case** | System average implant cost | totalSpend / totalCases | Dollars |
-| **Vendor Concentration** | % of spend with top vendor | topVendorSpend / totalSpend | Percent |
-| **Surgeon Count** | Active surgeons | Count of unique surgeons | Count |
-| **Vendor Count** | Active vendors | Count of unique vendors | Count |
+**Total Cases**
+- Definition: Total annual surgical procedures across all surgeons
+- Use: Baseline for volume projections and market share analysis
+- Example: 72,856 cases
+
+**Total Spend**
+- Definition: Total annual implant expenditure across all surgeons
+- Use: Baseline for savings calculations
+- Example: $41,010,260
+
+**Average Cost Per Case**
+- Definition: Total spend divided by total cases
+- Calculation: $41,010,260 ÷ 72,856 = $563 per case
+- Use: High-level efficiency metric, good for executive summaries
+
+**Vendor Concentration**
+- Definition: Percentage of spend with top vendor(s)
+- Example: If top vendor represents $15M of $41M spend = 36.6% concentration
+- Use: Shows current consolidation level; higher = already consolidated
+
+**Active Vendors**
+- Definition: Number of vendors currently purchased from
+- Use: Starting point for consolidation; dropping from 25 to 3 vendors is dramatic
 
 ### Surgeon-Level Metrics
 
-| Metric | Definition | Calculation | Units |
-|--------|------------|-------------|-------|
-| **Annual Volume** | Cases per year | surgeon.totalCases | Count |
-| **Annual Spend** | Implant spend per year | surgeon.totalSpend | Dollars |
-| **Cost Per Case** | Average implant cost | totalSpend / totalCases | Dollars |
-| **Primary Vendor** | Most-used vendor | max(vendors, by: cases) | Name |
-| **Vendor Loyalty** | Single-vendor preference | primaryVendorCases / totalCases | Percent |
-| **Vendor Count** | Number of vendors used | count(vendors) | Count |
+**Annual Volume**
+- Definition: Number of cases a surgeon performs per year
+- Categories: High (>500), Medium (200-500), Low (<200)
+- Use: Risk weighting and recruitment impact assessment
+
+**Cost Per Case**
+- Definition: Surgeon's annual implant spend ÷ their case volume
+- Example: $1,231,506 ÷ 1,431 cases = $860 per case
+- Use: Identify efficiency outliers (high or low cost)
+
+**Primary Vendor**
+- Definition: Vendor the surgeon uses most frequently
+- Calculation: Vendor with highest case count for that surgeon
+- Use: Determines if surgeon must switch vendors in each scenario
+
+**Vendor Loyalty**
+- Definition: Percentage of cases using primary vendor
+- Example: 1,360 cases with Vendor-Gamma ÷ 1,431 total cases = 95% loyalty
+- Use: Identifies surgeons most resistant to change
+
+**Vendor Diversity**
+- Definition: Number of different vendors a surgeon uses
+- Example: Uses 3 vendors (Gamma 95%, Beta 4%, Alpha 1%)
+- Use: Low diversity suggests strong preference; high diversity suggests flexibility
 
 ### Scenario Metrics
 
-| Metric | Definition | Calculation | Units |
-|--------|------------|-------------|-------|
-| **Projected Savings** | Annual cost reduction | Various methods | Dollars |
-| **Savings Percent** | Savings as % of baseline | savings / baselineSpend | Percent |
-| **Adoption Rate** | Expected surgeon participation | Based on risk analysis | Percent (0-1) |
-| **Risk Score** | Volume-weighted adoption risk | See formula above | 0-10 scale |
-| **NPV 5-Year** | Net present value | See formula above | $Millions |
-| **Surgeons Affected** | Must switch vendors | Count where primaryVendor NOT IN scenario.vendors | Count |
-| **Cases At Risk** | Volume from affected surgeons | Sum of affected surgeon cases | Count |
+**Projected Annual Savings**
+- Definition: Expected cost reduction if scenario is adopted
+- Units: Dollars per year
+- Example: $5,049,681 annual savings
+- Use: Primary financial metric for decision-making
 
-### Quality Metrics (Optional)
+**Savings Percentage**
+- Definition: Savings as percent of baseline spend
+- Calculation: $5,049,681 ÷ $41,010,260 = 12.3%
+- Use: Normalizes savings for comparison across product lines
 
-| Metric | Definition | Source | Units |
-|--------|------------|--------|-------|
-| **Revision Rate** | % requiring revision within 1-2 years | AJRR/Internal | Percent |
-| **30-Day Readmission** | % readmitted within 30 days | CMS/Internal | Percent |
-| **90-Day Readmission** | % readmitted within 90 days | CMS/Internal | Percent |
-| **Length of Stay** | Average days in hospital | Internal EMR | Days |
-| **Complication Rate** | % with any adverse event | Internal EMR | Percent |
-| **SSI Rate** | Surgical site infection rate | NHSN | Percent |
+**Adoption Rate**
+- Definition: Expected percentage of surgeons who will participate
+- Range: 0% to 100% (expressed as 0.75 to 1.0 in data)
+- Example: 88% adoption rate
+- Use: Reality check on savings; 88% adoption = only 88% of savings realized
 
----
+**Risk Score**
+- Definition: Volume-weighted measure of adoption difficulty
+- Range: 0-10 scale
+- Categories: 0-3 Low, 4-6 Medium, 7-10 High
+- Use: Flags scenarios requiring intensive change management
 
-## Quality Assurance
+**Surgeons Affected**
+- Definition: Number of surgeons who must switch vendors
+- Example: 45 surgeons out of 443 total
+- Use: Size of engagement/training effort required
 
-### Pre-Deployment Checklist
+**Cases at Risk**
+- Definition: Annual case volume from affected surgeons
+- Example: 12,500 cases out of 72,856 total (17%)
+- Use: Revenue risk if surgeons leave rather than adopt
 
-```
-Data Validation:
-  [ ] JSON syntax is valid (use jsonlint.com)
-  [ ] All required fields present
-  [ ] Totals reconcile (surgeons sum to metadata)
-  [ ] No negative numbers where inappropriate
-  [ ] Dates in YYYY-MM-DD format
-  [ ] No PHI present
-
-Data Quality:
-  [ ] Vendor names consistent and standardized
-  [ ] Facility names consistent across surgeons
-  [ ] Component categories follow naming convention
-  [ ] All dollar amounts in dollars (not millions)
-  [ ] Percentages as decimals in calculations
-
-Logic Checks:
-  [ ] At least one scenario has status-quo
-  [ ] Scenario vendor lists are valid vendor names
-  [ ] Surgeon vendor breakdown vendors exist in global vendor list
-  [ ] Component vendors exist in global vendor list
-  [ ] Risk levels align with risk scores (Low: 0-3, Med: 4-6, High: 7-10)
-
-Dashboard Testing:
-  [ ] Dashboard loads without console errors
-  [ ] All views render correctly
-  [ ] Metrics display reasonable values
-  [ ] Charts populate with data
-  [ ] Scenario selection changes metrics appropriately
-  [ ] Surgeon search returns results
-```
-
-### Common Data Issues
-
-| Issue | Symptom | Fix |
-|-------|---------|-----|
-| **Totals don't sum** | Metadata totals ≠ surgeon totals | Recalculate and update metadata |
-| **Missing vendor** | Surgeon uses vendor not in vendor list | Add vendor to vendors object |
-| **Duplicate vendors** | "Zimmer" and "ZIMMER BIOMET" | Standardize all vendor names |
-| **Incorrect units** | Spend shows as $41 instead of $41M | Change dollars to actual value (41010260) |
-| **Broken scenario** | Scenario doesn't show data | Check vendors array matches actual vendor names |
-| **Component mismatch** | Components don't show for surgeon | Verify component vendors match surgeon's vendor usage |
+**Net Present Value (NPV)**
+- Definition: 5-year present value of savings minus implementation costs
+- Units: Millions of dollars
+- Example: $17.2M over 5 years
+- Use: ROI metric that accounts for time value of money
 
 ---
 
-## Troubleshooting
+## Data Quality Guidelines
+
+### Before You Submit Data
+
+Run through this checklist every time you prepare data for the dashboard:
+
+**1. PHI Check**
+- [ ] No patient names, MRNs, or dates of birth
+- [ ] Surgeon names are either approved for use or anonymized
+- [ ] No identifiable facility information if anonymization is required
+
+**2. Naming Consistency**
+- [ ] All vendor names spelled identically throughout file
+- [ ] All facility names spelled identically throughout file
+- [ ] Component categories follow consistent naming convention
+
+**3. Mathematical Reconciliation**
+- [ ] Sum of surgeon cases ≈ metadata total cases (within 1%)
+- [ ] Sum of surgeon spend ≈ metadata total spend (within 1%)
+- [ ] Sum of vendor spend ≈ metadata total spend (within 1%)
+- [ ] Each surgeon's vendor spend sums to their total spend
+- [ ] Each surgeon's vendor cases sum to their total cases
+
+**4. Unit Consistency**
+- [ ] All dollar amounts in actual dollars, not millions
+- [ ] All dates in YYYY-MM-DD format
+- [ ] No negative numbers where inappropriate (cases, spend)
+- [ ] Percentages stored as decimals (0.18) not whole numbers (18) in calculations
+
+**5. Referential Integrity**
+- [ ] Every surgeon's vendor exists in the global vendors list
+- [ ] Every component's vendor exists in the global vendors list
+- [ ] Every scenario's vendors exist in the global vendors list
+- [ ] No "orphan" references to vendors that don't exist
+
+**6. Completeness**
+- [ ] All required fields present (see "What Data You Need" section)
+- [ ] No empty or null values for required fields
+- [ ] At least one scenario defined (status quo at minimum)
+
+**7. Reasonableness Checks**
+- [ ] Average cost per case between $200-$1,500 (typical range)
+- [ ] No surgeon has >2,000 cases/year (would be unusual)
+- [ ] No component costs >$10,000 (flag for review if so)
+- [ ] Savings percentages between 0-25% (higher needs explanation)
+
+### Common Data Quality Issues
+
+**Issue: Totals Don't Match**
+
+Symptom: Metadata says 72,856 cases but surgeons sum to 68,420 cases.
+
+Causes:
+- Missing surgeons in the data file
+- Included non-orthopedic cases in total
+- Counted some cases twice
+
+Fix: Recalculate totals. Either add missing surgeons or adjust metadata to match actual sum.
+
+**Issue: Vendor Name Mismatches**
+
+Symptom: Surgeon uses "Zimmer" but vendors list has "ZIMMER BIOMET".
+
+Causes:
+- Inconsistent data entry
+- Different source systems using different names
+- Typos or abbreviations
+
+Fix: Standardize all vendor names. Pick one official name (usually full legal name) and find-and-replace all variants.
+
+**Issue: Construct Pricing Shows Gaps**
+
+Symptom: Some vendors show hip prices but no knee prices.
+
+Causes:
+- That vendor doesn't make knee components (possible)
+- Component data incomplete (more likely)
+- Component categorization wrong (bodyPart field incorrect)
+
+Fix: Verify with procurement team whether vendor actually makes those components. If yes, add missing data. If no, this is expected.
+
+**Issue: Risk Score Seems Wrong**
+
+Symptom: Scenario marked "Low Risk" but affects 5 high-volume surgeons.
+
+Causes:
+- Risk thresholds don't match your system
+- Volume categories misconfigured
+- Calculation error
+
+Fix: Review risk calculation assumptions. Adjust volume thresholds (currently 500+ high, 200-500 medium) to match your system's reality.
+
+**Issue: Savings Look Too High**
+
+Symptom: Scenario shows 25% savings which seems unrealistic.
+
+Causes:
+- Data error (wrong prices or volumes)
+- Overly optimistic assumptions
+- Comparing to inflated baseline
+
+Fix: Manually verify a few component price differences. If a $1,500 component would drop to $1,000, that's 33% savings on that component. Aggregate across all components to see if 25% is feasible.
+
+---
+
+## Common Issues & Solutions
 
 ### Dashboard Shows "No Data Available"
 
+**What's Wrong:** The dashboard can't find or load your data file.
+
+**Troubleshooting Steps:**
+
+1. Check the file exists:
+   - Open the project folder
+   - Navigate to `/public/data/`
+   - Verify `hip-knee-data.json` (or relevant file) is there
+
+2. Validate JSON syntax:
+   - Open the file in a text editor
+   - Copy all contents
+   - Paste into jsonlint.com to check for syntax errors
+   - Common errors: missing comma, extra comma, unclosed bracket
+
+3. Check browser console:
+   - Open the dashboard in browser
+   - Press F12 to open Developer Tools
+   - Click Console tab
+   - Look for red error messages indicating what went wrong
+
+**Common Fixes:**
+- Missing comma between fields → Add comma
+- File in wrong location → Move to `/public/data/` folder
+- File named incorrectly → Rename to match expected name
+
+### Numbers Look Completely Wrong
+
+**What's Wrong:** Calculations appear incorrect or nonsensical.
+
+**Troubleshooting Steps:**
+
+1. Check unit mismatch:
+   - Is spend showing as $41 instead of $41M?
+   - Fix: Change values to actual dollars (41010260) not millions (41.01)
+
+2. Verify source data:
+   - Pick one surgeon randomly
+   - Manually add up their vendor spend
+   - Does it equal their total spend in the file?
+   - If not, data error in source
+
+3. Check percentages:
+   - Are savings showing as 0.12% instead of 12%?
+   - Fix: In calculations, 0.12 = 12%; in display strings, show "12%"
+
+**Common Fixes:**
+- Convert millions to dollars: 41.01 → 41010260
+- Fix percentage: Change display from 0.12 to 12
+- Recalculate totals from source invoices
+
+### Scenarios Don't Show Savings
+
+**What's Wrong:** All scenarios show $0 savings or missing savings data.
+
+**Troubleshooting Steps:**
+
+1. Check scenario configuration:
+   - Open data file
+   - Find "scenarios" section
+   - Verify each scenario has either "annualSavings" OR "savingsPercent"
+   - If both missing, add one
+
+2. Verify vendor lists:
+   - Does each scenario list which vendors are included?
+   - Do those vendor names match exactly the vendors in "vendors" section?
+
+**Common Fixes:**
+- Add savings values to each scenario
+- Fix vendor name mismatches (case-sensitive!)
+- Ensure status-quo scenario shows $0 savings (baseline)
+
+### Construct Pricing Tab Is Empty
+
+**What's Wrong:** The construct pricing feature shows no data.
+
+**Troubleshooting Steps:**
+
+1. Check if components exist:
+   - Open data file
+   - Look for "components" array
+   - If missing, construct pricing won't work (this is optional feature)
+
+2. Check bodyPart field:
+   - Components should have bodyPart: "Hip", "Knee", or "General"
+   - If blank or wrong, categorization fails
+
+3. Verify vendor names:
+   - Component vendors must match surgeon vendors exactly
+   - "Vendor-Alpha" ≠ "VENDOR-ALPHA" (case sensitive)
+
+**Common Fixes:**
+- Add components array with sample data to enable feature
+- Standardize bodyPart values to "Hip", "Knee", or "General"
+- Fix vendor name capitalization mismatches
+
+### Peer Comparisons Show Everyone as Average
+
+**What's Wrong:** No surgeons appear as outliers; all show similar efficiency.
+
+**Possible Reasons:**
+
+1. Real pattern: Your surgeons actually are similar (this happens)
+
+2. Data limitation: If all surgeons use same vendors at same prices, there won't be much variation
+
+3. Missing cost drivers: If you're not capturing premium vs. standard implants, costs will look artificially similar
+
+**What To Do:**
+- This might be accurate; confirm with supply chain team
+- Consider adding component-level detail to capture pricing variation
+- Look at case complexity—are you comparing complex revisions to simple primaries?
+
+### Risk Scores Seem Backwards
+
+**What's Wrong:** A scenario marked "High Risk" seems easier than one marked "Low Risk".
+
 **Possible Causes:**
-1. JSON file not found at expected path
-2. JSON syntax error
-3. File path mismatch in code
 
-**Solution:**
-```bash
-# Verify file exists
-ls -la public/data/hip-knee-data.json
+1. Volume thresholds don't match your reality
+   - Current: High = >500 cases, Medium = 200-500, Low = <200
+   - Your system might be different
 
-# Validate JSON syntax
-cat public/data/hip-knee-data.json | python -m json.tool
+2. Loyalty threshold too strict
+   - Current: 90%+ single-vendor = loyalist
+   - Adjust to 80% or 95% based on your experience
 
-# Check browser console for specific error
-# Open browser DevTools → Console tab
-```
+3. Weighting doesn't match your priorities
+   - Current: High-volume = 5x weight
+   - Academic systems might need 7-8x; community might need 3-4x
 
-### Numbers Look Wrong
+**How To Fix:**
 
-**Possible Causes:**
-1. Unit mismatch (dollars vs. millions)
-2. Calculation error in source data
-3. Incorrect aggregation
+The risk calculation lives in the code, but you can request adjustments to:
+- Volume category thresholds
+- Loyalty percentage cutoff
+- Weighting factors for different volume surgeons
 
-**Solution:**
-```javascript
-// Manual verification:
-// 1. Pick a surgeon, verify their totals:
-sum(surgeon.vendors.*.spend) should equal surgeon.totalSpend
-
-// 2. Verify system totals:
-sum(all surgeons.totalSpend) should equal metadata.totalSpend
-
-// 3. Check component prices:
-component.avgPrice = component.totalSpend / component.quantity
-```
-
-### Construct Pricing Shows Missing Data
-
-**Possible Causes:**
-1. Missing `components` array in data file
-2. Component `bodyPart` field incorrect
-3. Vendor names don't match
-
-**Solution:**
-1. Verify `components` array exists in JSON
-2. Check `bodyPart` values are "Hip", "Knee", or "General"
-3. Ensure component vendors match surgeon vendor names exactly
-
-### Risk Score Seems Incorrect
-
-**Possible Causes:**
-1. Volume thresholds don't match your system
-2. Loyalty threshold too strict/lenient
-3. Missing surgeon volume data
-
-**Solution:**
-1. Adjust thresholds in `src/config/scenarios.js`:
-   ```javascript
-   VOLUME_THRESHOLDS = {
-     HIGH: 500,    // Adjust based on your system
-     MEDIUM: 200
-   }
-   LOYALTY_THRESHOLD = 0.90  // Adjust 0.80-0.95
-   ```
-
-### Scenario Savings Don't Match Expectations
-
-**Possible Causes:**
-1. `savingsPercent` vs. `annualSavings` conflict
-2. Adoption rate not factored in
-3. Implementation costs not considered
-
-**Solution:**
-1. Use one method consistently:
-   ```javascript
-   // Method 1: Percentage
-   annualSavings = baselineSpend * savingsPercent
-
-   // Method 2: Absolute
-   annualSavings = [calculated value]
-   // Don't set savingsPercent if using absolute
-   ```
+Discuss with your analytics team what makes sense for your system.
 
 ---
 
-## Appendix: Example Scenarios
+## Getting Help
 
-### Scenario Configuration Examples
+### Internal Resources
 
-#### Status Quo (Baseline)
-```json
-{
-  "name": "Status Quo",
-  "vendors": ["VENDOR-ALPHA", "VENDOR-BETA", "VENDOR-GAMMA", "VENDOR-DELTA", "VENDOR-EPSILON"],
-  "annualSavings": 0,
-  "savingsPercent": 0,
-  "adoptionRate": 1.0,
-  "riskLevel": "Low",
-  "riskScore": 1.0
-}
-```
+**For Data Questions:**
+- Supply Chain Team: Vendor spend, purchase orders, contract pricing
+- Quality Department: Clinical outcomes, readmission rates, complication data
+- Finance: Revenue cycle data, contribution margins, reimbursement
+- Medical Staff Office: Surgeon roster, credentialing, hospital affiliations
 
-#### Tri-Vendor (Moderate Consolidation)
-```json
-{
-  "name": "Three-Vendor Strategy",
-  "vendors": ["VENDOR-ALPHA", "VENDOR-BETA", "VENDOR-GAMMA"],
-  "annualSavings": 3200000,
-  "savingsPercent": 7.8,
-  "adoptionRate": 0.94,
-  "riskLevel": "Low",
-  "riskScore": 2.5
-}
-```
+**For Technical Issues:**
+- IT Department: File access, server issues, browser problems
+- Analytics Team: Data validation, calculation questions, metric interpretation
 
-#### Dual-Vendor Premium (High Consolidation)
-```json
-{
-  "name": "Two-Vendor Strategy (Premium)",
-  "vendors": ["VENDOR-ALPHA", "VENDOR-BETA"],
-  "annualSavings": 5000000,
-  "savingsPercent": 12.2,
-  "adoptionRate": 0.88,
-  "riskLevel": "Medium",
-  "riskScore": 4.2
-}
-```
+**For Strategic Questions:**
+- Strategic Sourcing Lead: Vendor consolidation strategy, negotiation approach
+- Value Analysis Committee: Clinical decision-making, surgeon engagement
+- Executive Leadership: Final decision authority, budget approval
 
-#### Single-Vendor (Maximum Consolidation)
-```json
-{
-  "name": "Single-Vendor Strategy",
-  "vendors": ["VENDOR-ALPHA"],
-  "annualSavings": 7500000,
-  "savingsPercent": 18.3,
-  "adoptionRate": 0.78,
-  "riskLevel": "High",
-  "riskScore": 7.8
-}
-```
+### Documentation
 
----
+**This Guide:** Comprehensive reference for data structure and calculations
 
-## Support & Resources
-
-### Internal Documentation
-- [DATA_ARCHITECTURE.md](DATA_ARCHITECTURE.md) - Schema deep-dive
-- [DATA_COLLECTION_GUIDE.md](DATA_COLLECTION_GUIDE.md) - What data to collect
-- [DATA_MANAGEMENT_OVERVIEW.md](DATA_MANAGEMENT_OVERVIEW.md) - Update workflows
-
-### Code References
-- Scenario calculations: `src/config/scenarios.js`
-- Surgeon metrics: `src/views/SurgeonTool.jsx`
-- Executive dashboard: `src/views/ExecutiveDashboard.jsx`
+**Other Available Documentation:**
+- DATA_ARCHITECTURE.md: Technical schema deep-dive
+- DATA_COLLECTION_GUIDE.md: What data to collect from which systems
+- DATA_MANAGEMENT_OVERVIEW.md: How to update data regularly
 
 ### External Benchmarks
-- **AJRR:** American Joint Replacement Registry (clinical outcomes)
-- **ECRI:** Healthcare supply chain benchmarking
-- **Premier:** Group purchasing and quality data
-- **NSQIP:** National Surgical Quality Improvement Program
+
+**AJRR (American Joint Replacement Registry):**
+- Clinical outcomes data
+- Revision rates by implant
+- National benchmarks
+- Website: aaos.org/registries/ajrr
+
+**ECRI (Emergency Care Research Institute):**
+- Healthcare supply chain benchmarking
+- Price comparisons
+- Clinical effectiveness reviews
+- Website: ecri.org
+
+**Premier Inc.:**
+- Group purchasing data
+- Quality benchmarks
+- Cost analytics
+- Website: premierinc.com
+
+**NSQIP (National Surgical Quality Improvement Program):**
+- Surgical quality metrics
+- Risk-adjusted outcomes
+- Complication rates
+- Website: facs.org/nsqip
+
+---
+
+## Quick Reference
+
+### Metric Quick Lookup
+
+| Metric | Normal Range | Red Flag |
+|--------|--------------|----------|
+| Cost per case | $400-$800 | >$1,000 or <$300 |
+| Vendor concentration | 60-80% | >90% (too concentrated) or <40% (too fragmented) |
+| Surgeon loyalty | 70-90% | >95% (very resistant to change) |
+| Risk score | 2-5 | >7 (high risk, proceed cautiously) |
+| Adoption rate | 85-95% | <75% (savings won't materialize) |
+| Savings % | 8-15% | >20% (verify data, seems high) |
+
+### Data File Checklist
+
+✅ Required:
+- Metadata with totals
+- Vendors list
+- Surgeons with cases and spend
+- At least one scenario
+
+⭐ Recommended:
+- Components for construct pricing
+- Regions/facilities for geographic analysis
+- Multiple scenarios for comparison
+
+❌ Never Include:
+- Patient names or identifiers
+- Detailed transaction records
+- Raw invoice data
+
+### Common Calculations
+
+**Cost per case:**
+Total spend ÷ Total cases
+
+**Vendor loyalty:**
+Primary vendor cases ÷ Total cases
+
+**Savings percentage:**
+Annual savings ÷ Baseline spend
+
+**Risk score:**
+Volume-weighted affected surgeons + Loyalists factor + Cases at risk %
+
+**Efficiency vs peers:**
+(Peer median cost - Your cost) ÷ Peer median cost
 
 ---
 
@@ -789,11 +887,12 @@ component.avgPrice = component.totalSpend / component.quantity
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 2.0 | 2025-10 | Added construct pricing, synthetic data updates |
-| 1.5 | 2025-10 | Updated risk calculation methodology |
-| 1.0 | 2025-10 | Initial consolidated analyst guide |
+| 2.0 | Oct 2025 | Rewrote for plain-text narrative style; removed heavy JSON/code formatting |
+| 1.5 | Oct 2025 | Added construct pricing explanations |
+| 1.0 | Oct 2025 | Initial consolidated analyst guide |
 
 ---
 
 **Questions or Issues?**
-Contact: Strategic Sourcing Lead or Value Analytics Administrator
+
+Contact your Strategic Sourcing Lead or Value Analytics Administrator for support with this dashboard.
