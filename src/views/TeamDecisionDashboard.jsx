@@ -1230,64 +1230,78 @@ const TeamDecisionDashboard = () => {
               </div>
 
               {/* Hospital Summary Stats */}
-              <div className="grid grid-cols-4 gap-4 mb-8">
+              <div className="grid grid-cols-5 gap-3 mb-8">
                 {(() => {
                   const targetVendors = SCENARIOS[hospitalScenarioFilter]?.preferredVendors || [];
                   const hospitals = Object.values(realData.hospitals || {});
 
-                  // Calculate alignment: % of cases using target vendors
-                  const alignedHospitals = hospitals.filter(h => {
-                    const targetCases = targetVendors.reduce((sum, vendor) => {
-                      return sum + (h.vendors?.[vendor]?.cases || 0);
-                    }, 0);
+                  // Calculate alignment with 5-level granular scale
+                  const excellentAlignment = hospitals.filter(h => {
+                    const targetCases = targetVendors.reduce((sum, vendor) => sum + (h.vendors?.[vendor]?.cases || 0), 0);
                     const alignmentPct = h.totalCases > 0 ? targetCases / h.totalCases : 0;
-                    return alignmentPct >= 0.50;
+                    return alignmentPct >= 0.75;
                   });
 
-                  const partiallyAligned = hospitals.filter(h => {
-                    const targetCases = targetVendors.reduce((sum, vendor) => {
-                      return sum + (h.vendors?.[vendor]?.cases || 0);
-                    }, 0);
+                  const goodAlignment = hospitals.filter(h => {
+                    const targetCases = targetVendors.reduce((sum, vendor) => sum + (h.vendors?.[vendor]?.cases || 0), 0);
+                    const alignmentPct = h.totalCases > 0 ? targetCases / h.totalCases : 0;
+                    return alignmentPct >= 0.50 && alignmentPct < 0.75;
+                  });
+
+                  const moderateAlignment = hospitals.filter(h => {
+                    const targetCases = targetVendors.reduce((sum, vendor) => sum + (h.vendors?.[vendor]?.cases || 0), 0);
                     const alignmentPct = h.totalCases > 0 ? targetCases / h.totalCases : 0;
                     return alignmentPct >= 0.25 && alignmentPct < 0.50;
                   });
 
-                  const needSupport = hospitals.filter(h => {
-                    const targetCases = targetVendors.reduce((sum, vendor) => {
-                      return sum + (h.vendors?.[vendor]?.cases || 0);
-                    }, 0);
+                  const lowAlignment = hospitals.filter(h => {
+                    const targetCases = targetVendors.reduce((sum, vendor) => sum + (h.vendors?.[vendor]?.cases || 0), 0);
                     const alignmentPct = h.totalCases > 0 ? targetCases / h.totalCases : 0;
-                    return alignmentPct < 0.25;
+                    return alignmentPct >= 0.10 && alignmentPct < 0.25;
+                  });
+
+                  const criticalAlignment = hospitals.filter(h => {
+                    const targetCases = targetVendors.reduce((sum, vendor) => sum + (h.vendors?.[vendor]?.cases || 0), 0);
+                    const alignmentPct = h.totalCases > 0 ? targetCases / h.totalCases : 0;
+                    return alignmentPct < 0.10;
                   });
 
                   return (
                     <>
-                      <div className="bg-slate-50 border-2 border-slate-200 rounded-lg p-4">
-                        <div className="text-sm text-slate-600 mb-1">Total Hospitals</div>
-                        <div className="text-3xl font-bold text-slate-900">
-                          {hospitals.length}
+                      <div className="bg-green-100 border-2 border-green-300 rounded-lg p-3">
+                        <div className="text-xs text-green-800 mb-1 font-semibold">Excellent</div>
+                        <div className="text-2xl font-bold text-green-900">
+                          {excellentAlignment.length}
                         </div>
+                        <div className="text-xs text-green-700 mt-1">&ge;75%</div>
                       </div>
-                      <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
-                        <div className="text-sm text-green-700 mb-1">Already Aligned</div>
-                        <div className="text-3xl font-bold text-green-900">
-                          {alignedHospitals.length}
+                      <div className="bg-green-50 border-2 border-green-200 rounded-lg p-3">
+                        <div className="text-xs text-green-700 mb-1 font-semibold">Good</div>
+                        <div className="text-2xl font-bold text-green-900">
+                          {goodAlignment.length}
                         </div>
-                        <div className="text-xs text-green-600 mt-1">&ge;50% target vendors</div>
+                        <div className="text-xs text-green-600 mt-1">50-74%</div>
                       </div>
-                      <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-4">
-                        <div className="text-sm text-amber-700 mb-1">Partially Aligned</div>
-                        <div className="text-3xl font-bold text-amber-900">
-                          {partiallyAligned.length}
+                      <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-3">
+                        <div className="text-xs text-yellow-800 mb-1 font-semibold">Moderate</div>
+                        <div className="text-2xl font-bold text-yellow-900">
+                          {moderateAlignment.length}
                         </div>
-                        <div className="text-xs text-amber-600 mt-1">25-49% target vendors</div>
+                        <div className="text-xs text-yellow-700 mt-1">25-49%</div>
                       </div>
-                      <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4">
-                        <div className="text-sm text-red-700 mb-1">Need Support</div>
-                        <div className="text-3xl font-bold text-red-900">
-                          {needSupport.length}
+                      <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-3">
+                        <div className="text-xs text-orange-800 mb-1 font-semibold">Low</div>
+                        <div className="text-2xl font-bold text-orange-900">
+                          {lowAlignment.length}
                         </div>
-                        <div className="text-xs text-red-600 mt-1">&lt;25% target vendors</div>
+                        <div className="text-xs text-orange-700 mt-1">10-24%</div>
+                      </div>
+                      <div className="bg-red-50 border-2 border-red-200 rounded-lg p-3">
+                        <div className="text-xs text-red-800 mb-1 font-semibold">Critical</div>
+                        <div className="text-2xl font-bold text-red-900">
+                          {criticalAlignment.length}
+                        </div>
+                        <div className="text-xs text-red-700 mt-1">&lt;10%</div>
                       </div>
                     </>
                   );
@@ -1299,7 +1313,7 @@ const TeamDecisionDashboard = () => {
                 <h3 className="text-xl font-bold text-slate-900 mb-4">Hospital Alignment with {SCENARIOS[hospitalScenarioFilter]?.name}</h3>
                 <p className="text-sm text-gray-600 mb-4">
                   Hospitals sorted by alignment (low to high) with target vendors: {SCENARIOS[hospitalScenarioFilter]?.preferredVendors?.join(' + ')}.
-                  Red rows = need most support, Green rows = already aligned. Target vendors highlighted in blue.
+                  Color scale: <span className="font-semibold text-red-700">Red (&lt;10%)</span> → <span className="font-semibold text-orange-700">Orange (10-24%)</span> → <span className="font-semibold text-yellow-700">Yellow (25-49%)</span> → <span className="font-semibold text-green-700">Light Green (50-74%)</span> → <span className="font-semibold text-green-800">Dark Green (≥75%)</span>. Target vendors highlighted in blue.
                 </p>
                 <div className="overflow-x-auto max-h-[600px] overflow-y-auto border border-gray-200 rounded-lg">
                   <table className="w-full border-collapse">
@@ -1329,16 +1343,24 @@ const TeamDecisionDashboard = () => {
                           }, 0);
                           const alignmentPct = hospital.totalCases > 0 ? (targetCases / hospital.totalCases) * 100 : 0;
 
-                          // Color-code by alignment with scenario
-                          const bgColor = alignmentPct >= 50
-                            ? 'bg-green-50'
+                          // Color-code by alignment with scenario - 5-level granular scale
+                          const bgColor = alignmentPct >= 75
+                            ? 'bg-green-100'  // Excellent alignment
+                            : alignmentPct >= 50
+                            ? 'bg-green-50'   // Good alignment
                             : alignmentPct >= 25
-                            ? 'bg-amber-50'
-                            : 'bg-red-50';
-                          const alignmentColor = alignmentPct >= 50
-                            ? 'text-green-900 bg-green-100 border-green-300'
+                            ? 'bg-yellow-50'  // Moderate - needs some support
+                            : alignmentPct >= 10
+                            ? 'bg-orange-50'  // Needs significant support
+                            : 'bg-red-50';    // Critical - needs intensive support
+                          const alignmentColor = alignmentPct >= 75
+                            ? 'text-green-900 bg-green-200 border-green-400'
+                            : alignmentPct >= 50
+                            ? 'text-green-800 bg-green-100 border-green-300'
                             : alignmentPct >= 25
-                            ? 'text-amber-900 bg-amber-100 border-amber-300'
+                            ? 'text-yellow-900 bg-yellow-100 border-yellow-300'
+                            : alignmentPct >= 10
+                            ? 'text-orange-900 bg-orange-100 border-orange-300'
                             : 'text-red-900 bg-red-100 border-red-300';
 
                           const vendorCount = Object.keys(hospital.vendors || {}).length;

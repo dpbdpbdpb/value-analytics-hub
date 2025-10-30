@@ -98,8 +98,8 @@ const ProductLineView = () => {
   const decisionCanvases = [
     {
       id: 'team-decision',
-      name: 'Integrated',
-      description: 'Executive dashboard with scenario comparison and strategic insights',
+      name: 'Outcomes',
+      description: 'Executive dashboard with comprehensive outcome metrics across finance, clinical, and operations',
       icon: Users,
       color: 'from-blue-600 to-blue-700',
       bgColor: 'bg-blue-50',
@@ -122,8 +122,8 @@ const ProductLineView = () => {
     },
     {
       id: 'surgeon-tool',
-      name: 'Physician',
-      description: 'Individual surgeon profiles, search, sherpas, and transition planning',
+      name: 'Implementation',
+      description: 'Surgeon profiles, hospital analysis, peer influence mapping, and strategic transition planning',
       icon: BarChart3,
       color: 'from-teal-600 to-teal-700',
       bgColor: 'bg-teal-50',
@@ -380,12 +380,12 @@ const ProductLineView = () => {
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Decision Canvases</h2>
             <p className="text-gray-600 mb-6">
-              Choose between strategic overview or detailed physician analysis
+              Choose between outcome-focused metrics or implementation execution planning
             </p>
           </div>
 
           {/* Decision Canvas Cards */}
-          <div className="grid grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <div className="grid grid-cols-2 gap-6">
             {decisionCanvases.map((canvas) => {
               const IconComponent = canvas.icon;
               const isActive = canvas.status === 'active';
@@ -456,10 +456,10 @@ const ProductLineView = () => {
               <div>
                 <h3 className="font-bold text-blue-900 mb-2">How to Use Decision Canvases</h3>
                 <div className="text-blue-800 text-sm space-y-2">
-                  <p>Two streamlined views for efficient decision-making:</p>
+                  <p>Two complementary views for comprehensive decision-making:</p>
                   <ul className="space-y-1 ml-4">
-                    <li>• <strong>Integrated</strong> - Executive dashboard with scenario comparison, hospital risk analysis, and key metrics for strategic decisions</li>
-                    <li>• <strong>Physician</strong> - Individual surgeon profiles, search capabilities, sherpa recommendations, and transition planning</li>
+                    <li>• <strong>Outcomes</strong> - Executive dashboard focused on projected results across financial, clinical, and operational metrics for strategic scenario evaluation</li>
+                    <li>• <strong>Implementation</strong> - Execution-focused view with surgeon profiles, hospital alignment analysis, peer influence mapping, and tactical transition planning</li>
                   </ul>
                   <p className="mt-3 italic">
                     Both canvases use the same underlying data to ensure consistency across all analyses.

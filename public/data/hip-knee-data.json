@@ -3,7 +3,7 @@
     "productLine": "hip-knee",
     "dataType": "baseline",
     "dataCollectionDate": "2025-10-XX",
-    "lastUpdated": "2025-10-XX",
+    "lastUpdated": "2025-10-30T23:05:18.582Z",
     "dataSource": "Synthetic Dataset - Statistical Model Based on Real Distributions",
     "version": "1.0",
     "totalCases": 72856,
@@ -11,7 +11,8 @@
     "totalSurgeons": 443,
     "note": "All identifiers anonymized. Statistical distributions preserved.",
     "regions": 5,
-    "facilities": 20
+    "facilities": 20,
+    "totalHospitals": 50
   },
   "vendors": {
     "VENDOR-ETA": {
@@ -155,8 +156,8 @@
           "spend": 4258
         }
       },
-      "region": "Region A",
-      "facility": "Facility A1",
+      "region": "Region I",
+      "facility": "Holy Cross Healthcare",
       "id": "SURG-0001"
     },
     {
@@ -185,8 +186,8 @@
           "spend": 1918
         }
       },
-      "region": "Region B",
-      "facility": "Facility B1",
+      "region": "Region A",
+      "facility": "St. Elizabeth Regional Medical Center",
       "id": "SURG-0002"
     },
     {
@@ -215,8 +216,8 @@
           "spend": 1171
         }
       },
-      "region": "Region C",
-      "facility": "Facility C1",
+      "region": "Region J",
+      "facility": "Providence San Antonio",
       "id": "SURG-0003"
     },
     {
@@ -249,8 +250,8 @@
           "spend": 2959
         }
       },
-      "region": "Region D",
-      "facility": "Facility D1",
+      "region": "Region H",
+      "facility": "Facility C2",
       "id": "SURG-0004"
     },
     {
@@ -275,8 +276,8 @@
           "spend": 3752
         }
       },
-      "region": "Region E",
-      "facility": "Facility E1",
+      "region": "Region G",
+      "facility": "Facility A4",
       "id": "SURG-0005"
     },
     {
@@ -297,8 +298,8 @@
           "spend": 48
         }
       },
-      "region": "Region A",
-      "facility": "Facility A2",
+      "region": "Region J",
+      "facility": "Facility A4",
       "id": "SURG-0006"
     },
     {
@@ -323,8 +324,8 @@
           "spend": 902
         }
       },
-      "region": "Region B",
-      "facility": "Facility B2",
+      "region": "Region E",
+      "facility": "Facility C1",
       "id": "SURG-0007"
     },
     {
@@ -345,8 +346,8 @@
           "spend": 2095
         }
       },
-      "region": "Region C",
-      "facility": "Facility C2",
+      "region": "Region G",
+      "facility": "St. Vincent Medical Center",
       "id": "SURG-0008"
     },
     {
@@ -375,8 +376,8 @@
           "spend": 622
         }
       },
-      "region": "Region D",
-      "facility": "Facility D2",
+      "region": "Region I",
+      "facility": "Facility A4",
       "id": "SURG-0009"
     },
     {
@@ -427,8 +428,8 @@
           "spend": 4314
         }
       },
-      "region": "Region A",
-      "facility": "Facility A3",
+      "region": "Region C",
+      "facility": "Facility C3",
       "id": "SURG-0011"
     },
     {
@@ -453,8 +454,8 @@
           "spend": 26643
         }
       },
-      "region": "Region B",
-      "facility": "Facility B3",
+      "region": "Region C",
+      "facility": "Facility D4",
       "id": "SURG-0012"
     },
     {
@@ -487,8 +488,8 @@
           "spend": 2837
         }
       },
-      "region": "Region C",
-      "facility": "Facility C3",
+      "region": "Region J",
+      "facility": "Centura Hospital",
       "id": "SURG-0013"
     },
     {
@@ -539,8 +540,8 @@
           "spend": 955
         }
       },
-      "region": "Region E",
-      "facility": "Facility E3",
+      "region": "Region A",
+      "facility": "Denver Medical Center",
       "id": "SURG-0015"
     },
     {
@@ -583,8 +584,8 @@
           "spend": 32059
         }
       },
-      "region": "Region B",
-      "facility": "Facility B4",
+      "region": "Region F",
+      "facility": "Cleveland Medical Center",
       "id": "SURG-0017"
     },
     {
@@ -631,8 +632,8 @@
           "spend": 1008
         }
       },
-      "region": "Region D",
-      "facility": "Facility D4",
+      "region": "Region B",
+      "facility": "Facility E3",
       "id": "SURG-0019"
     },
     {
@@ -649,8 +650,8 @@
           "spend": 252146
         }
       },
-      "region": "Region E",
-      "facility": "Facility E4",
+      "region": "Region B",
+      "facility": "Portland Medical Center",
       "id": "SURG-0020"
     },
     {
@@ -672,7 +673,7 @@
         }
       },
       "region": "Region A",
-      "facility": "Facility A1",
+      "facility": "Los Angeles Regional Medical Center",
       "id": "SURG-0021"
     },
     {
@@ -701,8 +702,8 @@
           "spend": 3355
         }
       },
-      "region": "Region B",
-      "facility": "Facility B1",
+      "region": "Region J",
+      "facility": "St. Elizabeth Albuquerque",
       "id": "SURG-0022"
     },
     {
@@ -723,8 +724,8 @@
           "spend": 1538
         }
       },
-      "region": "Region C",
-      "facility": "Facility C1",
+      "region": "Region G",
+      "facility": "St. Anthony Hospital",
       "id": "SURG-0023"
     },
     {
@@ -745,8 +746,8 @@
           "spend": 8752
         }
       },
-      "region": "Region D",
-      "facility": "Facility D1",
+      "region": "Region F",
+      "facility": "Facility D4",
       "id": "SURG-0024"
     },
     {
@@ -760,7 +761,7 @@
         }
       },
       "region": "Region E",
-      "facility": "Facility E1",
+      "facility": "Sacred Heart Regional Medical Center",
       "id": "SURG-0025"
     },
     {
@@ -781,8 +782,8 @@
           "spend": 8393
         }
       },
-      "region": "Region A",
-      "facility": "Facility A2",
+      "region": "Region C",
+      "facility": "St. Vincent Kansas City",
       "id": "SURG-0026"
     },
     {
@@ -803,8 +804,8 @@
           "spend": 857
         }
       },
-      "region": "Region B",
-      "facility": "Facility B2",
+      "region": "Region E",
+      "facility": "Facility B1",
       "id": "SURG-0027"
     },
     {
@@ -863,8 +864,8 @@
           "spend": 1043
         }
       },
-      "region": "Region D",
-      "facility": "Facility D2",
+      "region": "Region H",
+      "facility": "Sacred Heart Regional Medical Center",
       "id": "SURG-0029"
     },
     {
@@ -919,8 +920,8 @@
           "spend": 1187
         }
       },
-      "region": "Region A",
-      "facility": "Facility A3",
+      "region": "Region G",
+      "facility": "Dignity Health Healthcare",
       "id": "SURG-0031"
     },
     {
@@ -981,8 +982,8 @@
           "spend": 356469
         }
       },
-      "region": "Region D",
-      "facility": "Facility D3",
+      "region": "Region J",
+      "facility": "Dignity Health Medical Center",
       "id": "SURG-0034"
     },
     {
@@ -1003,8 +1004,8 @@
           "spend": 1241
         }
       },
-      "region": "Region E",
-      "facility": "Facility E3",
+      "region": "Region F",
+      "facility": "St. Elizabeth Albuquerque",
       "id": "SURG-0035"
     },
     {
@@ -1051,8 +1052,8 @@
           "spend": 1612
         }
       },
-      "region": "Region B",
-      "facility": "Facility B4",
+      "region": "Region G",
+      "facility": "Facility C4",
       "id": "SURG-0037"
     },
     {
@@ -1073,8 +1074,8 @@
           "spend": 636
         }
       },
-      "region": "Region C",
-      "facility": "Facility C4",
+      "region": "Region D",
+      "facility": "Dignity Health Healthcare",
       "id": "SURG-0038"
     },
     {
@@ -1103,8 +1104,8 @@
           "spend": 648
         }
       },
-      "region": "Region D",
-      "facility": "Facility D4",
+      "region": "Region F",
+      "facility": "Facility D3",
       "id": "SURG-0039"
     },
     {
@@ -1159,7 +1160,7 @@
           "spend": 15245
         }
       },
-      "region": "Region A",
+      "region": "Region D",
       "facility": "Facility A1",
       "id": "SURG-0041"
     },
@@ -1185,8 +1186,8 @@
           "spend": 602
         }
       },
-      "region": "Region B",
-      "facility": "Facility B1",
+      "region": "Region G",
+      "facility": "Facility C2",
       "id": "SURG-0042"
     },
     {
@@ -1263,8 +1264,8 @@
           "spend": 64
         }
       },
-      "region": "Region E",
-      "facility": "Facility E1",
+      "region": "Region J",
+      "facility": "Facility A4",
       "id": "SURG-0045"
     },
     {
@@ -1281,8 +1282,8 @@
           "spend": 171193
         }
       },
-      "region": "Region A",
-      "facility": "Facility A2",
+      "region": "Region H",
+      "facility": "Facility C3",
       "id": "SURG-0046"
     },
     {
@@ -1317,8 +1318,8 @@
           "spend": 2899
         }
       },
-      "region": "Region C",
-      "facility": "Facility C2",
+      "region": "Region I",
+      "facility": "Kansas City Medical Center",
       "id": "SURG-0048"
     },
     {
@@ -1351,8 +1352,8 @@
           "spend": 638
         }
       },
-      "region": "Region D",
-      "facility": "Facility D2",
+      "region": "Region A",
+      "facility": "Kansas City Medical Center",
       "id": "SURG-0049"
     },
     {
@@ -1369,8 +1370,8 @@
           "spend": 49046
         }
       },
-      "region": "Region E",
-      "facility": "Facility E2",
+      "region": "Region J",
+      "facility": "Facility D1",
       "id": "SURG-0050"
     },
     {
@@ -1437,8 +1438,8 @@
           "spend": 610
         }
       },
-      "region": "Region B",
-      "facility": "Facility B3",
+      "region": "Region C",
+      "facility": "Facility C4",
       "id": "SURG-0052"
     },
     {
@@ -1451,8 +1452,8 @@
           "spend": 236488
         }
       },
-      "region": "Region C",
-      "facility": "Facility C3",
+      "region": "Region B",
+      "facility": "St. Francis San Antonio",
       "id": "SURG-0053"
     },
     {
@@ -1507,7 +1508,7 @@
           "spend": 596
         }
       },
-      "region": "Region E",
+      "region": "Region G",
       "facility": "Facility E3",
       "id": "SURG-0055"
     },
@@ -1525,8 +1526,8 @@
           "spend": 2196
         }
       },
-      "region": "Region A",
-      "facility": "Facility A4",
+      "region": "Region G",
+      "facility": "Portland Medical Center",
       "id": "SURG-0056"
     },
     {
@@ -1565,8 +1566,8 @@
           "spend": 1065
         }
       },
-      "region": "Region C",
-      "facility": "Facility C4",
+      "region": "Region J",
+      "facility": "Divine Providence Medical Center",
       "id": "SURG-0058"
     },
     {
@@ -1591,8 +1592,8 @@
           "spend": 613
         }
       },
-      "region": "Region D",
-      "facility": "Facility D4",
+      "region": "Region C",
+      "facility": "Divine Providence Medical Center",
       "id": "SURG-0059"
     },
     {
@@ -1606,7 +1607,7 @@
         }
       },
       "region": "Region E",
-      "facility": "Facility E4",
+      "facility": "St. Elizabeth Albuquerque",
       "id": "SURG-0060"
     },
     {
@@ -1627,8 +1628,8 @@
           "spend": 8975
         }
       },
-      "region": "Region A",
-      "facility": "Facility A1",
+      "region": "Region I",
+      "facility": "Centura Medical Center",
       "id": "SURG-0061"
     },
     {
@@ -1653,8 +1654,8 @@
           "spend": 1154
         }
       },
-      "region": "Region B",
-      "facility": "Facility B1",
+      "region": "Region H",
+      "facility": "Louisville Regional Medical Center",
       "id": "SURG-0062"
     },
     {
@@ -1737,8 +1738,8 @@
           "spend": 59
         }
       },
-      "region": "Region A",
-      "facility": "Facility A2",
+      "region": "Region C",
+      "facility": "Facility C4",
       "id": "SURG-0066"
     },
     {
@@ -1759,8 +1760,8 @@
           "spend": 98
         }
       },
-      "region": "Region B",
-      "facility": "Facility B2",
+      "region": "Region G",
+      "facility": "Facility E4",
       "id": "SURG-0067"
     },
     {
@@ -1777,8 +1778,8 @@
           "spend": 3574
         }
       },
-      "region": "Region C",
-      "facility": "Facility C2",
+      "region": "Region F",
+      "facility": "Portland Medical Center",
       "id": "SURG-0068"
     },
     {
@@ -1817,8 +1818,8 @@
           "spend": 386
         }
       },
-      "region": "Region E",
-      "facility": "Facility E2",
+      "region": "Region H",
+      "facility": "Holy Cross Healthcare",
       "id": "SURG-0070"
     },
     {
@@ -1849,8 +1850,8 @@
           "spend": 181979
         }
       },
-      "region": "Region B",
-      "facility": "Facility B3",
+      "region": "Region A",
+      "facility": "Facility E4",
       "id": "SURG-0072"
     },
     {
@@ -1871,7 +1872,7 @@
           "spend": 4830
         }
       },
-      "region": "Region C",
+      "region": "Region D",
       "facility": "Facility C3",
       "id": "SURG-0073"
     },
@@ -1961,8 +1962,8 @@
           "spend": 245
         }
       },
-      "region": "Region A",
-      "facility": "Facility A4",
+      "region": "Region F",
+      "facility": "Facility C3",
       "id": "SURG-0076"
     },
     {
@@ -1987,8 +1988,8 @@
           "spend": 26
         }
       },
-      "region": "Region B",
-      "facility": "Facility B4",
+      "region": "Region G",
+      "facility": "Dignity Health Medical Center",
       "id": "SURG-0077"
     },
     {
@@ -2013,8 +2014,8 @@
           "spend": 863
         }
       },
-      "region": "Region C",
-      "facility": "Facility C4",
+      "region": "Region D",
+      "facility": "Divine Providence Medical Center",
       "id": "SURG-0078"
     },
     {
@@ -2097,8 +2098,8 @@
           "spend": 701
         }
       },
-      "region": "Region B",
-      "facility": "Facility B1",
+      "region": "Region G",
+      "facility": "Facility E4",
       "id": "SURG-0082"
     },
     {
@@ -2115,8 +2116,8 @@
           "spend": 123997
         }
       },
-      "region": "Region C",
-      "facility": "Facility C1",
+      "region": "Region E",
+      "facility": "Centura Medical Center",
       "id": "SURG-0083"
     },
     {
@@ -2129,8 +2130,8 @@
           "spend": 144063
         }
       },
-      "region": "Region D",
-      "facility": "Facility D1",
+      "region": "Region F",
+      "facility": "CHI Cleveland",
       "id": "SURG-0084"
     },
     {
@@ -2143,8 +2144,8 @@
           "spend": 144122
         }
       },
-      "region": "Region E",
-      "facility": "Facility E1",
+      "region": "Region J",
+      "facility": "Facility E4",
       "id": "SURG-0085"
     },
     {
@@ -2170,7 +2171,7 @@
         }
       },
       "region": "Region A",
-      "facility": "Facility A2",
+      "facility": "Facility D4",
       "id": "SURG-0086"
     },
     {
@@ -2195,8 +2196,8 @@
           "spend": 39
         }
       },
-      "region": "Region B",
-      "facility": "Facility B2",
+      "region": "Region F",
+      "facility": "Portland Medical Center",
       "id": "SURG-0087"
     },
     {
@@ -2217,8 +2218,8 @@
           "spend": 25
         }
       },
-      "region": "Region C",
-      "facility": "Facility C2",
+      "region": "Region E",
+      "facility": "Facility D2",
       "id": "SURG-0088"
     },
     {
@@ -2265,8 +2266,8 @@
           "spend": 3812
         }
       },
-      "region": "Region E",
-      "facility": "Facility E2",
+      "region": "Region B",
+      "facility": "Dignity Health Healthcare",
       "id": "SURG-0090"
     },
     {
@@ -2301,8 +2302,8 @@
           "spend": 125357
         }
       },
-      "region": "Region B",
-      "facility": "Facility B3",
+      "region": "Region G",
+      "facility": "Mercy Albuquerque",
       "id": "SURG-0092"
     },
     {
@@ -2323,8 +2324,8 @@
           "spend": 694
         }
       },
-      "region": "Region C",
-      "facility": "Facility C3",
+      "region": "Region H",
+      "facility": "Cleveland Medical Center",
       "id": "SURG-0093"
     },
     {
@@ -2341,8 +2342,8 @@
           "spend": 6128
         }
       },
-      "region": "Region D",
-      "facility": "Facility D3",
+      "region": "Region G",
+      "facility": "Denver Medical Center",
       "id": "SURG-0094"
     },
     {
@@ -2371,8 +2372,8 @@
           "spend": 2576
         }
       },
-      "region": "Region E",
-      "facility": "Facility E3",
+      "region": "Region B",
+      "facility": "Facility B4",
       "id": "SURG-0095"
     },
     {
@@ -2389,8 +2390,8 @@
           "spend": 353
         }
       },
-      "region": "Region A",
-      "facility": "Facility A4",
+      "region": "Region H",
+      "facility": "Providence San Antonio",
       "id": "SURG-0096"
     },
     {
@@ -2407,8 +2408,8 @@
           "spend": 1581
         }
       },
-      "region": "Region B",
-      "facility": "Facility B4",
+      "region": "Region J",
+      "facility": "Facility D4",
       "id": "SURG-0097"
     },
     {
@@ -2425,8 +2426,8 @@
           "spend": 116310
         }
       },
-      "region": "Region C",
-      "facility": "Facility C4",
+      "region": "Region F",
+      "facility": "Facility A4",
       "id": "SURG-0098"
     },
     {
@@ -2495,8 +2496,8 @@
           "spend": 856
         }
       },
-      "region": "Region A",
-      "facility": "Facility A1",
+      "region": "Region I",
+      "facility": "Facility B4",
       "id": "SURG-0101"
     },
     {
@@ -2517,8 +2518,8 @@
           "spend": 418
         }
       },
-      "region": "Region B",
-      "facility": "Facility B1",
+      "region": "Region I",
+      "facility": "Facility C2",
       "id": "SURG-0102"
     },
     {
@@ -2539,8 +2540,8 @@
           "spend": 358
         }
       },
-      "region": "Region C",
-      "facility": "Facility C1",
+      "region": "Region H",
+      "facility": "Facility E1",
       "id": "SURG-0103"
     },
     {
@@ -2557,8 +2558,8 @@
           "spend": 7366
         }
       },
-      "region": "Region D",
-      "facility": "Facility D1",
+      "region": "Region H",
+      "facility": "Centura Medical Center",
       "id": "SURG-0104"
     },
     {
@@ -2579,8 +2580,8 @@
           "spend": 11020
         }
       },
-      "region": "Region E",
-      "facility": "Facility E1",
+      "region": "Region H",
+      "facility": "Dignity Health Healthcare",
       "id": "SURG-0105"
     },
     {
@@ -2609,8 +2610,8 @@
           "spend": 2864
         }
       },
-      "region": "Region A",
-      "facility": "Facility A2",
+      "region": "Region F",
+      "facility": "Facility E3",
       "id": "SURG-0106"
     },
     {
@@ -2624,7 +2625,7 @@
         }
       },
       "region": "Region B",
-      "facility": "Facility B2",
+      "facility": "St. Elizabeth Regional Medical Center",
       "id": "SURG-0107"
     },
     {
@@ -2641,8 +2642,8 @@
           "spend": 10292
         }
       },
-      "region": "Region C",
-      "facility": "Facility C2",
+      "region": "Region J",
+      "facility": "Mercy Albuquerque",
       "id": "SURG-0108"
     },
     {
@@ -2671,8 +2672,8 @@
           "spend": 1103
         }
       },
-      "region": "Region D",
-      "facility": "Facility D2",
+      "region": "Region B",
+      "facility": "Facility B2",
       "id": "SURG-0109"
     },
     {
@@ -2686,7 +2687,7 @@
         }
       },
       "region": "Region E",
-      "facility": "Facility E2",
+      "facility": "Facility E3",
       "id": "SURG-0110"
     },
     {
@@ -2721,8 +2722,8 @@
           "spend": 31801
         }
       },
-      "region": "Region B",
-      "facility": "Facility B3",
+      "region": "Region C",
+      "facility": "Denver Medical Center",
       "id": "SURG-0112"
     },
     {
@@ -2739,8 +2740,8 @@
           "spend": 12975
         }
       },
-      "region": "Region C",
-      "facility": "Facility C3",
+      "region": "Region F",
+      "facility": "Facility E2",
       "id": "SURG-0113"
     },
     {
@@ -2762,7 +2763,7 @@
         }
       },
       "region": "Region D",
-      "facility": "Facility D3",
+      "facility": "Facility B2",
       "id": "SURG-0114"
     },
     {
@@ -2780,7 +2781,7 @@
         }
       },
       "region": "Region E",
-      "facility": "Facility E3",
+      "facility": "St. Elizabeth Regional Medical Center",
       "id": "SURG-0115"
     },
     {
@@ -2815,8 +2816,8 @@
           "spend": 88379
         }
       },
-      "region": "Region B",
-      "facility": "Facility B4",
+      "region": "Region E",
+      "facility": "Facility D3",
       "id": "SURG-0117"
     },
     {
@@ -2837,8 +2838,8 @@
           "spend": 600
         }
       },
-      "region": "Region C",
-      "facility": "Facility C4",
+      "region": "Region F",
+      "facility": "Facility B2",
       "id": "SURG-0118"
     },
     {
@@ -2877,8 +2878,8 @@
           "spend": 12427
         }
       },
-      "region": "Region E",
-      "facility": "Facility E4",
+      "region": "Region B",
+      "facility": "Virginia Mason Cleveland",
       "id": "SURG-0120"
     },
     {
@@ -2949,8 +2950,8 @@
           "spend": 0
         }
       },
-      "region": "Region D",
-      "facility": "Facility D1",
+      "region": "Region H",
+      "facility": "Facility D2",
       "id": "SURG-0124"
     },
     {
@@ -2985,8 +2986,8 @@
           "spend": 54040
         }
       },
-      "region": "Region A",
-      "facility": "Facility A2",
+      "region": "Region F",
+      "facility": "Facility C3",
       "id": "SURG-0126"
     },
     {
@@ -3031,8 +3032,8 @@
           "spend": 3023
         }
       },
-      "region": "Region D",
-      "facility": "Facility D2",
+      "region": "Region E",
+      "facility": "St. Vincent Kansas City",
       "id": "SURG-0129"
     },
     {
@@ -3053,8 +3054,8 @@
           "spend": 14028
         }
       },
-      "region": "Region E",
-      "facility": "Facility E2",
+      "region": "Region H",
+      "facility": "Virginia Mason Cleveland",
       "id": "SURG-0130"
     },
     {
@@ -3071,8 +3072,8 @@
           "spend": 101
         }
       },
-      "region": "Region A",
-      "facility": "Facility A3",
+      "region": "Region D",
+      "facility": "Facility D2",
       "id": "SURG-0131"
     },
     {
@@ -3107,8 +3108,8 @@
           "spend": 2081
         }
       },
-      "region": "Region C",
-      "facility": "Facility C3",
+      "region": "Region F",
+      "facility": "Facility E3",
       "id": "SURG-0133"
     },
     {
@@ -3129,8 +3130,8 @@
           "spend": 132
         }
       },
-      "region": "Region D",
-      "facility": "Facility D3",
+      "region": "Region B",
+      "facility": "Facility C4",
       "id": "SURG-0134"
     },
     {
@@ -3169,8 +3170,8 @@
           "spend": 3179
         }
       },
-      "region": "Region A",
-      "facility": "Facility A4",
+      "region": "Region D",
+      "facility": "Facility C3",
       "id": "SURG-0136"
     },
     {
@@ -3213,8 +3214,8 @@
           "spend": 70403
         }
       },
-      "region": "Region C",
-      "facility": "Facility C4",
+      "region": "Region E",
+      "facility": "Centura Hospital",
       "id": "SURG-0138"
     },
     {
@@ -3257,8 +3258,8 @@
           "spend": 1158
         }
       },
-      "region": "Region E",
-      "facility": "Facility E4",
+      "region": "Region F",
+      "facility": "Louisville Regional Medical Center",
       "id": "SURG-0140"
     },
     {
@@ -3272,7 +3273,7 @@
         }
       },
       "region": "Region A",
-      "facility": "Facility A1",
+      "facility": "Sacred Heart Detroit",
       "id": "SURG-0141"
     },
     {
@@ -3343,8 +3344,8 @@
           "spend": 64906
         }
       },
-      "region": "Region E",
-      "facility": "Facility E1",
+      "region": "Region I",
+      "facility": "Providence San Antonio",
       "id": "SURG-0145"
     },
     {
@@ -3405,8 +3406,8 @@
           "spend": 2345
         }
       },
-      "region": "Region C",
-      "facility": "Facility C2",
+      "region": "Region E",
+      "facility": "CHI Cleveland",
       "id": "SURG-0148"
     },
     {
@@ -3439,8 +3440,8 @@
           "spend": 617
         }
       },
-      "region": "Region D",
-      "facility": "Facility D2",
+      "region": "Region B",
+      "facility": "Facility D4",
       "id": "SURG-0149"
     },
     {
@@ -3453,8 +3454,8 @@
           "spend": 64130
         }
       },
-      "region": "Region E",
-      "facility": "Facility E2",
+      "region": "Region C",
+      "facility": "St. Elizabeth Albuquerque",
       "id": "SURG-0150"
     },
     {
@@ -3467,8 +3468,8 @@
           "spend": 60320
         }
       },
-      "region": "Region A",
-      "facility": "Facility A3",
+      "region": "Region G",
+      "facility": "Los Angeles Regional Medical Center",
       "id": "SURG-0151"
     },
     {
@@ -3501,8 +3502,8 @@
           "spend": 99
         }
       },
-      "region": "Region B",
-      "facility": "Facility B3",
+      "region": "Region G",
+      "facility": "Facility E1",
       "id": "SURG-0152"
     },
     {
@@ -3545,8 +3546,8 @@
           "spend": 1600
         }
       },
-      "region": "Region D",
-      "facility": "Facility D3",
+      "region": "Region E",
+      "facility": "Facility A2",
       "id": "SURG-0154"
     },
     {
@@ -3603,8 +3604,8 @@
           "spend": 2282
         }
       },
-      "region": "Region B",
-      "facility": "Facility B4",
+      "region": "Region A",
+      "facility": "Facility C4",
       "id": "SURG-0157"
     },
     {
@@ -3621,8 +3622,8 @@
           "spend": 5404
         }
       },
-      "region": "Region C",
-      "facility": "Facility C4",
+      "region": "Region G",
+      "facility": "Dignity Health Healthcare",
       "id": "SURG-0158"
     },
     {
@@ -3639,8 +3640,8 @@
           "spend": 1885
         }
       },
-      "region": "Region D",
-      "facility": "Facility D4",
+      "region": "Region E",
+      "facility": "Facility E4",
       "id": "SURG-0159"
     },
     {
@@ -3653,8 +3654,8 @@
           "spend": 54958
         }
       },
-      "region": "Region E",
-      "facility": "Facility E4",
+      "region": "Region A",
+      "facility": "St. Elizabeth Regional Medical Center",
       "id": "SURG-0160"
     },
     {
@@ -3684,7 +3685,7 @@
         }
       },
       "region": "Region A",
-      "facility": "Facility A1",
+      "facility": "Facility C2",
       "id": "SURG-0161"
     },
     {
@@ -3702,7 +3703,7 @@
         }
       },
       "region": "Region B",
-      "facility": "Facility B1",
+      "facility": "Divine Providence Medical Center",
       "id": "SURG-0162"
     },
     {
@@ -3719,8 +3720,8 @@
           "spend": 1207
         }
       },
-      "region": "Region C",
-      "facility": "Facility C1",
+      "region": "Region E",
+      "facility": "Virginia Mason Health Center",
       "id": "SURG-0163"
     },
     {
@@ -3774,7 +3775,7 @@
         }
       },
       "region": "Region A",
-      "facility": "Facility A2",
+      "facility": "Facility B4",
       "id": "SURG-0166"
     },
     {
@@ -3791,8 +3792,8 @@
           "spend": 4275
         }
       },
-      "region": "Region B",
-      "facility": "Facility B2",
+      "region": "Region C",
+      "facility": "Sacred Heart Regional Medical Center",
       "id": "SURG-0167"
     },
     {
@@ -3809,8 +3810,8 @@
           "spend": 187
         }
       },
-      "region": "Region C",
-      "facility": "Facility C2",
+      "region": "Region F",
+      "facility": "Sacred Heart Regional Medical Center",
       "id": "SURG-0168"
     },
     {
@@ -3827,8 +3828,8 @@
           "spend": 13938
         }
       },
-      "region": "Region D",
-      "facility": "Facility D2",
+      "region": "Region J",
+      "facility": "St. Francis San Antonio",
       "id": "SURG-0169"
     },
     {
@@ -3853,8 +3854,8 @@
           "spend": 200
         }
       },
-      "region": "Region E",
-      "facility": "Facility E2",
+      "region": "Region F",
+      "facility": "Centura Springfield",
       "id": "SURG-0170"
     },
     {
@@ -3879,8 +3880,8 @@
           "spend": 2665
         }
       },
-      "region": "Region A",
-      "facility": "Facility A3",
+      "region": "Region I",
+      "facility": "Facility B1",
       "id": "SURG-0171"
     },
     {
@@ -3893,8 +3894,8 @@
           "spend": 47641
         }
       },
-      "region": "Region B",
-      "facility": "Facility B3",
+      "region": "Region E",
+      "facility": "Facility A3",
       "id": "SURG-0172"
     },
     {
@@ -3911,8 +3912,8 @@
           "spend": 1533
         }
       },
-      "region": "Region C",
-      "facility": "Facility C3",
+      "region": "Region D",
+      "facility": "Divine Providence Medical Center",
       "id": "SURG-0173"
     },
     {
@@ -3979,8 +3980,8 @@
           "spend": 2114
         }
       },
-      "region": "Region B",
-      "facility": "Facility B4",
+      "region": "Region I",
+      "facility": "Providence Oakland",
       "id": "SURG-0177"
     },
     {
@@ -3997,8 +3998,8 @@
           "spend": 3851
         }
       },
-      "region": "Region C",
-      "facility": "Facility C4",
+      "region": "Region D",
+      "facility": "Holy Cross Healthcare",
       "id": "SURG-0178"
     },
     {
@@ -4027,8 +4028,8 @@
           "spend": 4047
         }
       },
-      "region": "Region D",
-      "facility": "Facility D4",
+      "region": "Region G",
+      "facility": "Facility D3",
       "id": "SURG-0179"
     },
     {
@@ -4045,7 +4046,7 @@
           "spend": 8691
         }
       },
-      "region": "Region E",
+      "region": "Region J",
       "facility": "Facility E4",
       "id": "SURG-0180"
     },
@@ -4059,8 +4060,8 @@
           "spend": 44917
         }
       },
-      "region": "Region A",
-      "facility": "Facility A1",
+      "region": "Region C",
+      "facility": "Mercy Albuquerque",
       "id": "SURG-0181"
     },
     {
@@ -4127,8 +4128,8 @@
           "spend": 41624
         }
       },
-      "region": "Region E",
-      "facility": "Facility E1",
+      "region": "Region J",
+      "facility": "Facility C1",
       "id": "SURG-0185"
     },
     {
@@ -4177,8 +4178,8 @@
           "spend": 1255
         }
       },
-      "region": "Region C",
-      "facility": "Facility C2",
+      "region": "Region D",
+      "facility": "Cleveland Medical Center",
       "id": "SURG-0188"
     },
     {
@@ -4209,8 +4210,8 @@
           "spend": 43436
         }
       },
-      "region": "Region E",
-      "facility": "Facility E2",
+      "region": "Region G",
+      "facility": "Sacred Heart Detroit",
       "id": "SURG-0190"
     },
     {
@@ -4227,8 +4228,8 @@
           "spend": 1297
         }
       },
-      "region": "Region A",
-      "facility": "Facility A3",
+      "region": "Region E",
+      "facility": "Los Angeles Regional Medical Center",
       "id": "SURG-0191"
     },
     {
@@ -4246,7 +4247,7 @@
         }
       },
       "region": "Region B",
-      "facility": "Facility B3",
+      "facility": "Facility E4",
       "id": "SURG-0192"
     },
     {
@@ -4277,8 +4278,8 @@
           "spend": 1442
         }
       },
-      "region": "Region D",
-      "facility": "Facility D3",
+      "region": "Region F",
+      "facility": "Dignity Health Medical Center",
       "id": "SURG-0194"
     },
     {
@@ -4313,8 +4314,8 @@
           "spend": 1469
         }
       },
-      "region": "Region A",
-      "facility": "Facility A4",
+      "region": "Region E",
+      "facility": "Facility E4",
       "id": "SURG-0196"
     },
     {
@@ -4391,8 +4392,8 @@
           "spend": 680
         }
       },
-      "region": "Region D",
-      "facility": "Facility D4",
+      "region": "Region J",
+      "facility": "Providence Oakland",
       "id": "SURG-0199"
     },
     {
@@ -4441,8 +4442,8 @@
           "spend": 14867
         }
       },
-      "region": "Region B",
-      "facility": "Facility B1",
+      "region": "Region F",
+      "facility": "Facility C1",
       "id": "SURG-0202"
     },
     {
@@ -4467,8 +4468,8 @@
           "spend": 310
         }
       },
-      "region": "Region C",
-      "facility": "Facility C1",
+      "region": "Region A",
+      "facility": "Kansas City Medical Center",
       "id": "SURG-0203"
     },
     {
@@ -4497,8 +4498,8 @@
           "spend": 101
         }
       },
-      "region": "Region D",
-      "facility": "Facility D1",
+      "region": "Region H",
+      "facility": "Facility B2",
       "id": "SURG-0204"
     },
     {
@@ -4561,7 +4562,7 @@
           "spend": 29559
         }
       },
-      "region": "Region C",
+      "region": "Region A",
       "facility": "Facility C2",
       "id": "SURG-0208"
     },
@@ -4575,8 +4576,8 @@
           "spend": 28487
         }
       },
-      "region": "Region D",
-      "facility": "Facility D2",
+      "region": "Region C",
+      "facility": "Centura Hospital",
       "id": "SURG-0209"
     },
     {
@@ -4589,8 +4590,8 @@
           "spend": 29395
         }
       },
-      "region": "Region E",
-      "facility": "Facility E2",
+      "region": "Region B",
+      "facility": "Facility A2",
       "id": "SURG-0210"
     },
     {
@@ -4611,8 +4612,8 @@
           "spend": 2049
         }
       },
-      "region": "Region A",
-      "facility": "Facility A3",
+      "region": "Region J",
+      "facility": "Sacred Heart Regional Medical Center",
       "id": "SURG-0211"
     },
     {
@@ -4689,8 +4690,8 @@
           "spend": 26148
         }
       },
-      "region": "Region A",
-      "facility": "Facility A4",
+      "region": "Region I",
+      "facility": "Kansas City Medical Center",
       "id": "SURG-0216"
     },
     {
@@ -4715,8 +4716,8 @@
           "spend": 1681
         }
       },
-      "region": "Region B",
-      "facility": "Facility B4",
+      "region": "Region I",
+      "facility": "Facility E4",
       "id": "SURG-0217"
     },
     {
@@ -4733,8 +4734,8 @@
           "spend": 3505
         }
       },
-      "region": "Region C",
-      "facility": "Facility C4",
+      "region": "Region E",
+      "facility": "Facility C2",
       "id": "SURG-0218"
     },
     {
@@ -4751,8 +4752,8 @@
           "spend": 696
         }
       },
-      "region": "Region D",
-      "facility": "Facility D4",
+      "region": "Region H",
+      "facility": "St. Vincent Kansas City",
       "id": "SURG-0219"
     },
     {
@@ -4784,7 +4785,7 @@
         }
       },
       "region": "Region A",
-      "facility": "Facility A1",
+      "facility": "Sacred Heart Detroit",
       "id": "SURG-0221"
     },
     {
@@ -4797,8 +4798,8 @@
           "spend": 25505
         }
       },
-      "region": "Region B",
-      "facility": "Facility B1",
+      "region": "Region A",
+      "facility": "St. Elizabeth Albuquerque",
       "id": "SURG-0222"
     },
     {
@@ -4855,8 +4856,8 @@
           "spend": 578
         }
       },
-      "region": "Region E",
-      "facility": "Facility E1",
+      "region": "Region C",
+      "facility": "Detroit Medical Center",
       "id": "SURG-0225"
     },
     {
@@ -4869,8 +4870,8 @@
           "spend": 23004
         }
       },
-      "region": "Region A",
-      "facility": "Facility A2",
+      "region": "Region I",
+      "facility": "Kansas City Medical Center",
       "id": "SURG-0226"
     },
     {
@@ -4883,8 +4884,8 @@
           "spend": 24088
         }
       },
-      "region": "Region B",
-      "facility": "Facility B2",
+      "region": "Region H",
+      "facility": "Facility A4",
       "id": "SURG-0227"
     },
     {
@@ -4919,8 +4920,8 @@
           "spend": 8832
         }
       },
-      "region": "Region D",
-      "facility": "Facility D2",
+      "region": "Region I",
+      "facility": "Facility B4",
       "id": "SURG-0229"
     },
     {
@@ -4937,8 +4938,8 @@
           "spend": 20890
         }
       },
-      "region": "Region E",
-      "facility": "Facility E2",
+      "region": "Region G",
+      "facility": "Facility A4",
       "id": "SURG-0230"
     },
     {
@@ -5001,8 +5002,8 @@
           "spend": 20769
         }
       },
-      "region": "Region D",
-      "facility": "Facility D3",
+      "region": "Region H",
+      "facility": "Centura Springfield",
       "id": "SURG-0234"
     },
     {
@@ -5019,8 +5020,8 @@
           "spend": 11
         }
       },
-      "region": "Region E",
-      "facility": "Facility E3",
+      "region": "Region A",
+      "facility": "Divine Providence Medical Center",
       "id": "SURG-0235"
     },
     {
@@ -5033,8 +5034,8 @@
           "spend": 20147
         }
       },
-      "region": "Region A",
-      "facility": "Facility A4",
+      "region": "Region D",
+      "facility": "Facility E3",
       "id": "SURG-0236"
     },
     {
@@ -5079,8 +5080,8 @@
           "spend": 19330
         }
       },
-      "region": "Region D",
-      "facility": "Facility D4",
+      "region": "Region G",
+      "facility": "Virginia Mason Health Center",
       "id": "SURG-0239"
     },
     {
@@ -5097,8 +5098,8 @@
           "spend": 1251
         }
       },
-      "region": "Region E",
-      "facility": "Facility E4",
+      "region": "Region J",
+      "facility": "Denver Medical Center",
       "id": "SURG-0240"
     },
     {
@@ -5111,8 +5112,8 @@
           "spend": 19364
         }
       },
-      "region": "Region A",
-      "facility": "Facility A1",
+      "region": "Region I",
+      "facility": "Facility A3",
       "id": "SURG-0241"
     },
     {
@@ -5129,8 +5130,8 @@
           "spend": 8774
         }
       },
-      "region": "Region B",
-      "facility": "Facility B1",
+      "region": "Region C",
+      "facility": "Facility C4",
       "id": "SURG-0242"
     },
     {
@@ -5165,8 +5166,8 @@
           "spend": 8803
         }
       },
-      "region": "Region D",
-      "facility": "Facility D1",
+      "region": "Region C",
+      "facility": "Facility E2",
       "id": "SURG-0244"
     },
     {
@@ -5179,8 +5180,8 @@
           "spend": 19015
         }
       },
-      "region": "Region E",
-      "facility": "Facility E1",
+      "region": "Region D",
+      "facility": "Kansas City Medical Center",
       "id": "SURG-0245"
     },
     {
@@ -5215,8 +5216,8 @@
           "spend": 6397
         }
       },
-      "region": "Region B",
-      "facility": "Facility B2",
+      "region": "Region E",
+      "facility": "Facility C3",
       "id": "SURG-0247"
     },
     {
@@ -5243,8 +5244,8 @@
           "spend": 17866
         }
       },
-      "region": "Region D",
-      "facility": "Facility D2",
+      "region": "Region H",
+      "facility": "Las Vegas Medical Center",
       "id": "SURG-0249"
     },
     {
@@ -5265,8 +5266,8 @@
           "spend": 3050
         }
       },
-      "region": "Region E",
-      "facility": "Facility E2",
+      "region": "Region G",
+      "facility": "Virginia Mason Health Center",
       "id": "SURG-0250"
     },
     {
@@ -5293,8 +5294,8 @@
           "spend": 17824
         }
       },
-      "region": "Region B",
-      "facility": "Facility B3",
+      "region": "Region G",
+      "facility": "St. Francis San Antonio",
       "id": "SURG-0252"
     },
     {
@@ -5321,8 +5322,8 @@
           "spend": 16589
         }
       },
-      "region": "Region D",
-      "facility": "Facility D3",
+      "region": "Region E",
+      "facility": "Mercy Albuquerque",
       "id": "SURG-0254"
     },
     {
@@ -5339,8 +5340,8 @@
           "spend": 3029
         }
       },
-      "region": "Region E",
-      "facility": "Facility E3",
+      "region": "Region I",
+      "facility": "Divine Providence Medical Center",
       "id": "SURG-0255"
     },
     {
@@ -5365,8 +5366,8 @@
           "spend": 401
         }
       },
-      "region": "Region A",
-      "facility": "Facility A4",
+      "region": "Region G",
+      "facility": "CHI Cleveland",
       "id": "SURG-0256"
     },
     {
@@ -5379,8 +5380,8 @@
           "spend": 15666
         }
       },
-      "region": "Region B",
-      "facility": "Facility B4",
+      "region": "Region E",
+      "facility": "Facility A1",
       "id": "SURG-0257"
     },
     {
@@ -5429,8 +5430,8 @@
           "spend": 2139
         }
       },
-      "region": "Region E",
-      "facility": "Facility E4",
+      "region": "Region A",
+      "facility": "Las Vegas Medical Center",
       "id": "SURG-0260"
     },
     {
@@ -5456,7 +5457,7 @@
         }
       },
       "region": "Region A",
-      "facility": "Facility A1",
+      "facility": "Facility C1",
       "id": "SURG-0261"
     },
     {
@@ -5487,8 +5488,8 @@
           "spend": 16439
         }
       },
-      "region": "Region C",
-      "facility": "Facility C1",
+      "region": "Region F",
+      "facility": "Facility A1",
       "id": "SURG-0263"
     },
     {
@@ -5501,8 +5502,8 @@
           "spend": 14929
         }
       },
-      "region": "Region D",
-      "facility": "Facility D1",
+      "region": "Region H",
+      "facility": "Portland Medical Center",
       "id": "SURG-0264"
     },
     {
@@ -5529,8 +5530,8 @@
           "spend": 15169
         }
       },
-      "region": "Region A",
-      "facility": "Facility A2",
+      "region": "Region H",
+      "facility": "Las Vegas Medical Center",
       "id": "SURG-0266"
     },
     {
@@ -5551,8 +5552,8 @@
           "spend": 610
         }
       },
-      "region": "Region B",
-      "facility": "Facility B2",
+      "region": "Region J",
+      "facility": "Virginia Mason Cleveland",
       "id": "SURG-0267"
     },
     {
@@ -5565,8 +5566,8 @@
           "spend": 15550
         }
       },
-      "region": "Region C",
-      "facility": "Facility C2",
+      "region": "Region B",
+      "facility": "St. Francis San Antonio",
       "id": "SURG-0268"
     },
     {
@@ -5583,8 +5584,8 @@
           "spend": 4771
         }
       },
-      "region": "Region D",
-      "facility": "Facility D2",
+      "region": "Region J",
+      "facility": "Detroit Medical Center",
       "id": "SURG-0269"
     },
     {
@@ -5597,8 +5598,8 @@
           "spend": 14759
         }
       },
-      "region": "Region E",
-      "facility": "Facility E2",
+      "region": "Region A",
+      "facility": "St. Francis San Antonio",
       "id": "SURG-0270"
     },
     {
@@ -5611,8 +5612,8 @@
           "spend": 13855
         }
       },
-      "region": "Region A",
-      "facility": "Facility A3",
+      "region": "Region C",
+      "facility": "St. Elizabeth Regional Medical Center",
       "id": "SURG-0271"
     },
     {
@@ -5637,8 +5638,8 @@
           "spend": 994
         }
       },
-      "region": "Region B",
-      "facility": "Facility B3",
+      "region": "Region D",
+      "facility": "Virginia Mason Health Center",
       "id": "SURG-0272"
     },
     {
@@ -5697,7 +5698,7 @@
           "spend": 13521
         }
       },
-      "region": "Region A",
+      "region": "Region C",
       "facility": "Facility A4",
       "id": "SURG-0276"
     },
@@ -5711,8 +5712,8 @@
           "spend": 13844
         }
       },
-      "region": "Region B",
-      "facility": "Facility B4",
+      "region": "Region C",
+      "facility": "St. Elizabeth Regional Medical Center",
       "id": "SURG-0277"
     },
     {
@@ -5725,8 +5726,8 @@
           "spend": 13004
         }
       },
-      "region": "Region C",
-      "facility": "Facility C4",
+      "region": "Region H",
+      "facility": "Providence Health Center",
       "id": "SURG-0278"
     },
     {
@@ -5771,8 +5772,8 @@
           "spend": 12296
         }
       },
-      "region": "Region A",
-      "facility": "Facility A1",
+      "region": "Region E",
+      "facility": "Virginia Mason Health Center",
       "id": "SURG-0281"
     },
     {
@@ -5793,8 +5794,8 @@
           "spend": 24
         }
       },
-      "region": "Region B",
-      "facility": "Facility B1",
+      "region": "Region J",
+      "facility": "Facility D3",
       "id": "SURG-0282"
     },
     {
@@ -5808,7 +5809,7 @@
         }
       },
       "region": "Region C",
-      "facility": "Facility C1",
+      "facility": "Divine Providence Medical Center",
       "id": "SURG-0283"
     },
     {
@@ -5821,8 +5822,8 @@
           "spend": 11946
         }
       },
-      "region": "Region D",
-      "facility": "Facility D1",
+      "region": "Region H",
+      "facility": "Portland Medical Center",
       "id": "SURG-0284"
     },
     {
@@ -5835,8 +5836,8 @@
           "spend": 11949
         }
       },
-      "region": "Region E",
-      "facility": "Facility E1",
+      "region": "Region C",
+      "facility": "Facility D1",
       "id": "SURG-0285"
     },
     {
@@ -5849,8 +5850,8 @@
           "spend": 12028
         }
       },
-      "region": "Region A",
-      "facility": "Facility A2",
+      "region": "Region J",
+      "facility": "Facility B3",
       "id": "SURG-0286"
     },
     {
@@ -5864,7 +5865,7 @@
         }
       },
       "region": "Region B",
-      "facility": "Facility B2",
+      "facility": "Providence San Antonio",
       "id": "SURG-0287"
     },
     {
@@ -5877,8 +5878,8 @@
           "spend": 11513
         }
       },
-      "region": "Region C",
-      "facility": "Facility C2",
+      "region": "Region E",
+      "facility": "Providence Health Center",
       "id": "SURG-0288"
     },
     {
@@ -5891,8 +5892,8 @@
           "spend": 11918
         }
       },
-      "region": "Region D",
-      "facility": "Facility D2",
+      "region": "Region C",
+      "facility": "Facility B2",
       "id": "SURG-0289"
     },
     {
@@ -5905,8 +5906,8 @@
           "spend": 11438
         }
       },
-      "region": "Region E",
-      "facility": "Facility E2",
+      "region": "Region I",
+      "facility": "Facility A1",
       "id": "SURG-0290"
     },
     {
@@ -5961,8 +5962,8 @@
           "spend": 11540
         }
       },
-      "region": "Region D",
-      "facility": "Facility D3",
+      "region": "Region G",
+      "facility": "Holy Cross Healthcare",
       "id": "SURG-0294"
     },
     {
@@ -5976,7 +5977,7 @@
         }
       },
       "region": "Region E",
-      "facility": "Facility E3",
+      "facility": "Facility B4",
       "id": "SURG-0295"
     },
     {
@@ -6008,7 +6009,7 @@
         }
       },
       "region": "Region B",
-      "facility": "Facility B4",
+      "facility": "Las Vegas Medical Center",
       "id": "SURG-0297"
     },
     {
@@ -6035,8 +6036,8 @@
           "spend": 10471
         }
       },
-      "region": "Region D",
-      "facility": "Facility D4",
+      "region": "Region A",
+      "facility": "Denver Medical Center",
       "id": "SURG-0299"
     },
     {
@@ -6109,8 +6110,8 @@
           "spend": 9919
         }
       },
-      "region": "Region D",
-      "facility": "Facility D1",
+      "region": "Region F",
+      "facility": "Facility A1",
       "id": "SURG-0304"
     },
     {
@@ -6123,8 +6124,8 @@
           "spend": 10183
         }
       },
-      "region": "Region E",
-      "facility": "Facility E1",
+      "region": "Region C",
+      "facility": "Facility C3",
       "id": "SURG-0305"
     },
     {
@@ -6159,8 +6160,8 @@
           "spend": 937
         }
       },
-      "region": "Region B",
-      "facility": "Facility B2",
+      "region": "Region G",
+      "facility": "Divine Providence Medical Center",
       "id": "SURG-0307"
     },
     {
@@ -6177,8 +6178,8 @@
           "spend": 7812
         }
       },
-      "region": "Region C",
-      "facility": "Facility C2",
+      "region": "Region I",
+      "facility": "Facility D2",
       "id": "SURG-0308"
     },
     {
@@ -6199,8 +6200,8 @@
           "spend": 4089
         }
       },
-      "region": "Region D",
-      "facility": "Facility D2",
+      "region": "Region C",
+      "facility": "Sacred Heart Regional Medical Center",
       "id": "SURG-0309"
     },
     {
@@ -6217,8 +6218,8 @@
           "spend": 414
         }
       },
-      "region": "Region E",
-      "facility": "Facility E2",
+      "region": "Region H",
+      "facility": "Cleveland Medical Center",
       "id": "SURG-0310"
     },
     {
@@ -6231,8 +6232,8 @@
           "spend": 8983
         }
       },
-      "region": "Region A",
-      "facility": "Facility A3",
+      "region": "Region H",
+      "facility": "Facility D4",
       "id": "SURG-0311"
     },
     {
@@ -6259,8 +6260,8 @@
           "spend": 8994
         }
       },
-      "region": "Region C",
-      "facility": "Facility C3",
+      "region": "Region F",
+      "facility": "Centura Medical Center",
       "id": "SURG-0313"
     },
     {
@@ -6273,8 +6274,8 @@
           "spend": 9232
         }
       },
-      "region": "Region D",
-      "facility": "Facility D3",
+      "region": "Region G",
+      "facility": "Facility A2",
       "id": "SURG-0314"
     },
     {
@@ -6305,8 +6306,8 @@
           "spend": 8992
         }
       },
-      "region": "Region A",
-      "facility": "Facility A4",
+      "region": "Region B",
+      "facility": "Facility C4",
       "id": "SURG-0316"
     },
     {
@@ -6327,8 +6328,8 @@
           "spend": 382
         }
       },
-      "region": "Region B",
-      "facility": "Facility B4",
+      "region": "Region A",
+      "facility": "Facility D4",
       "id": "SURG-0317"
     },
     {
@@ -6341,8 +6342,8 @@
           "spend": 8770
         }
       },
-      "region": "Region C",
-      "facility": "Facility C4",
+      "region": "Region D",
+      "facility": "Facility C3",
       "id": "SURG-0318"
     },
     {
@@ -6377,8 +6378,8 @@
           "spend": 1625
         }
       },
-      "region": "Region E",
-      "facility": "Facility E4",
+      "region": "Region G",
+      "facility": "Facility B2",
       "id": "SURG-0320"
     },
     {
@@ -6399,8 +6400,8 @@
           "spend": 1722
         }
       },
-      "region": "Region A",
-      "facility": "Facility A1",
+      "region": "Region I",
+      "facility": "Facility C4",
       "id": "SURG-0321"
     },
     {
@@ -6449,8 +6450,8 @@
           "spend": 50
         }
       },
-      "region": "Region D",
-      "facility": "Facility D1",
+      "region": "Region I",
+      "facility": "Detroit Medical Center",
       "id": "SURG-0324"
     },
     {
@@ -6463,8 +6464,8 @@
           "spend": 7529
         }
       },
-      "region": "Region E",
-      "facility": "Facility E1",
+      "region": "Region B",
+      "facility": "Kansas City Medical Center",
       "id": "SURG-0325"
     },
     {
@@ -6477,8 +6478,8 @@
           "spend": 7884
         }
       },
-      "region": "Region A",
-      "facility": "Facility A2",
+      "region": "Region C",
+      "facility": "Cleveland Medical Center",
       "id": "SURG-0326"
     },
     {
@@ -6495,8 +6496,8 @@
           "spend": 2230
         }
       },
-      "region": "Region B",
-      "facility": "Facility B2",
+      "region": "Region I",
+      "facility": "Sacred Heart Regional Medical Center",
       "id": "SURG-0327"
     },
     {
@@ -6509,8 +6510,8 @@
           "spend": 7001
         }
       },
-      "region": "Region C",
-      "facility": "Facility C2",
+      "region": "Region A",
+      "facility": "Portland Medical Center",
       "id": "SURG-0328"
     },
     {
@@ -6523,8 +6524,8 @@
           "spend": 7062
         }
       },
-      "region": "Region D",
-      "facility": "Facility D2",
+      "region": "Region H",
+      "facility": "Kansas City Medical Center",
       "id": "SURG-0329"
     },
     {
@@ -6555,8 +6556,8 @@
           "spend": 1352
         }
       },
-      "region": "Region A",
-      "facility": "Facility A3",
+      "region": "Region H",
+      "facility": "Kansas City Medical Center",
       "id": "SURG-0331"
     },
     {
@@ -6605,8 +6606,8 @@
           "spend": 493
         }
       },
-      "region": "Region D",
-      "facility": "Facility D3",
+      "region": "Region H",
+      "facility": "Centura Medical Center",
       "id": "SURG-0334"
     },
     {
@@ -6619,8 +6620,8 @@
           "spend": 6415
         }
       },
-      "region": "Region E",
-      "facility": "Facility E3",
+      "region": "Region A",
+      "facility": "Facility D1",
       "id": "SURG-0335"
     },
     {
@@ -6633,8 +6634,8 @@
           "spend": 6030
         }
       },
-      "region": "Region A",
-      "facility": "Facility A4",
+      "region": "Region H",
+      "facility": "Centura Springfield",
       "id": "SURG-0336"
     },
     {
@@ -6683,8 +6684,8 @@
           "spend": 5648
         }
       },
-      "region": "Region D",
-      "facility": "Facility D4",
+      "region": "Region H",
+      "facility": "Facility E3",
       "id": "SURG-0339"
     },
     {
@@ -6729,8 +6730,8 @@
           "spend": 89
         }
       },
-      "region": "Region B",
-      "facility": "Facility B1",
+      "region": "Region I",
+      "facility": "Facility E1",
       "id": "SURG-0342"
     },
     {
@@ -6757,8 +6758,8 @@
           "spend": 5844
         }
       },
-      "region": "Region D",
-      "facility": "Facility D1",
+      "region": "Region C",
+      "facility": "Facility D3",
       "id": "SURG-0344"
     },
     {
@@ -6771,8 +6772,8 @@
           "spend": 5562
         }
       },
-      "region": "Region E",
-      "facility": "Facility E1",
+      "region": "Region J",
+      "facility": "Dignity Health Healthcare",
       "id": "SURG-0345"
     },
     {
@@ -6789,8 +6790,8 @@
           "spend": 49
         }
       },
-      "region": "Region A",
-      "facility": "Facility A2",
+      "region": "Region D",
+      "facility": "Facility E2",
       "id": "SURG-0346"
     },
     {
@@ -6821,8 +6822,8 @@
           "spend": 26
         }
       },
-      "region": "Region C",
-      "facility": "Facility C2",
+      "region": "Region B",
+      "facility": "Facility A4",
       "id": "SURG-0348"
     },
     {
@@ -6839,8 +6840,8 @@
           "spend": 24
         }
       },
-      "region": "Region D",
-      "facility": "Facility D2",
+      "region": "Region H",
+      "facility": "Facility E3",
       "id": "SURG-0349"
     },
     {
@@ -6921,8 +6922,8 @@
           "spend": 4598
         }
       },
-      "region": "Region D",
-      "facility": "Facility D3",
+      "region": "Region J",
+      "facility": "Providence Health Center",
       "id": "SURG-0354"
     },
     {
@@ -6936,7 +6937,7 @@
         }
       },
       "region": "Region E",
-      "facility": "Facility E3",
+      "facility": "St. Anthony Hospital",
       "id": "SURG-0355"
     },
     {
@@ -6949,8 +6950,8 @@
           "spend": 4262
         }
       },
-      "region": "Region A",
-      "facility": "Facility A4",
+      "region": "Region I",
+      "facility": "St. Elizabeth Regional Medical Center",
       "id": "SURG-0356"
     },
     {
@@ -6977,8 +6978,8 @@
           "spend": 4297
         }
       },
-      "region": "Region C",
-      "facility": "Facility C4",
+      "region": "Region E",
+      "facility": "Providence San Antonio",
       "id": "SURG-0358"
     },
     {
@@ -6992,7 +6993,7 @@
         }
       },
       "region": "Region D",
-      "facility": "Facility D4",
+      "facility": "Facility A3",
       "id": "SURG-0359"
     },
     {
@@ -7020,7 +7021,7 @@
         }
       },
       "region": "Region A",
-      "facility": "Facility A1",
+      "facility": "Louisville Regional Medical Center",
       "id": "SURG-0361"
     },
     {
@@ -7033,8 +7034,8 @@
           "spend": 4036
         }
       },
-      "region": "Region B",
-      "facility": "Facility B1",
+      "region": "Region J",
+      "facility": "Holy Cross Healthcare",
       "id": "SURG-0362"
     },
     {
@@ -7047,8 +7048,8 @@
           "spend": 4104
         }
       },
-      "region": "Region C",
-      "facility": "Facility C1",
+      "region": "Region F",
+      "facility": "Denver Medical Center",
       "id": "SURG-0363"
     },
     {
@@ -7153,8 +7154,8 @@
           "spend": 3556
         }
       },
-      "region": "Region E",
-      "facility": "Facility E2",
+      "region": "Region F",
+      "facility": "Providence Oakland",
       "id": "SURG-0370"
     },
     {
@@ -7167,8 +7168,8 @@
           "spend": 3601
         }
       },
-      "region": "Region A",
-      "facility": "Facility A3",
+      "region": "Region D",
+      "facility": "Facility A4",
       "id": "SURG-0371"
     },
     {
@@ -7199,8 +7200,8 @@
           "spend": 3753
         }
       },
-      "region": "Region C",
-      "facility": "Facility C3",
+      "region": "Region F",
+      "facility": "Facility B3",
       "id": "SURG-0373"
     },
     {
@@ -7277,8 +7278,8 @@
           "spend": 48
         }
       },
-      "region": "Region C",
-      "facility": "Facility C4",
+      "region": "Region I",
+      "facility": "Cleveland Medical Center",
       "id": "SURG-0378"
     },
     {
@@ -7305,8 +7306,8 @@
           "spend": 3147
         }
       },
-      "region": "Region E",
-      "facility": "Facility E4",
+      "region": "Region G",
+      "facility": "Cleveland Medical Center",
       "id": "SURG-0380"
     },
     {
@@ -7327,8 +7328,8 @@
           "spend": 915
         }
       },
-      "region": "Region A",
-      "facility": "Facility A1",
+      "region": "Region C",
+      "facility": "Providence San Antonio",
       "id": "SURG-0381"
     },
     {
@@ -7341,8 +7342,8 @@
           "spend": 2883
         }
       },
-      "region": "Region B",
-      "facility": "Facility B1",
+      "region": "Region G",
+      "facility": "Centura Medical Center",
       "id": "SURG-0382"
     },
     {
@@ -7355,8 +7356,8 @@
           "spend": 2686
         }
       },
-      "region": "Region C",
-      "facility": "Facility C1",
+      "region": "Region F",
+      "facility": "Facility B3",
       "id": "SURG-0383"
     },
     {
@@ -7397,8 +7398,8 @@
           "spend": 2642
         }
       },
-      "region": "Region A",
-      "facility": "Facility A2",
+      "region": "Region I",
+      "facility": "Denver Medical Center",
       "id": "SURG-0386"
     },
     {
@@ -7447,8 +7448,8 @@
           "spend": 256
         }
       },
-      "region": "Region D",
-      "facility": "Facility D2",
+      "region": "Region J",
+      "facility": "Facility B3",
       "id": "SURG-0389"
     },
     {
@@ -7461,8 +7462,8 @@
           "spend": 2304
         }
       },
-      "region": "Region E",
-      "facility": "Facility E2",
+      "region": "Region D",
+      "facility": "Facility E3",
       "id": "SURG-0390"
     },
     {
@@ -7517,8 +7518,8 @@
           "spend": 1979
         }
       },
-      "region": "Region D",
-      "facility": "Facility D3",
+      "region": "Region I",
+      "facility": "Kansas City Medical Center",
       "id": "SURG-0394"
     },
     {
@@ -7531,8 +7532,8 @@
           "spend": 1878
         }
       },
-      "region": "Region E",
-      "facility": "Facility E3",
+      "region": "Region D",
+      "facility": "Facility C2",
       "id": "SURG-0395"
     },
     {
@@ -7545,8 +7546,8 @@
           "spend": 1637
         }
       },
-      "region": "Region A",
-      "facility": "Facility A4",
+      "region": "Region E",
+      "facility": "Mercy Albuquerque",
       "id": "SURG-0396"
     },
     {
@@ -7573,8 +7574,8 @@
           "spend": 1637
         }
       },
-      "region": "Region C",
-      "facility": "Facility C4",
+      "region": "Region F",
+      "facility": "Virginia Mason Health Center",
       "id": "SURG-0398"
     },
     {
@@ -7601,8 +7602,8 @@
           "spend": 1746
         }
       },
-      "region": "Region E",
-      "facility": "Facility E4",
+      "region": "Region C",
+      "facility": "Facility A2",
       "id": "SURG-0400"
     },
     {
@@ -7615,8 +7616,8 @@
           "spend": 1639
         }
       },
-      "region": "Region A",
-      "facility": "Facility A1",
+      "region": "Region G",
+      "facility": "Kansas City Medical Center",
       "id": "SURG-0401"
     },
     {
@@ -7675,8 +7676,8 @@
           "spend": 1518
         }
       },
-      "region": "Region E",
-      "facility": "Facility E1",
+      "region": "Region J",
+      "facility": "Facility B4",
       "id": "SURG-0405"
     },
     {
@@ -7689,8 +7690,8 @@
           "spend": 1590
         }
       },
-      "region": "Region A",
-      "facility": "Facility A2",
+      "region": "Region B",
+      "facility": "Facility E2",
       "id": "SURG-0406"
     },
     {
@@ -7731,8 +7732,8 @@
           "spend": 1255
         }
       },
-      "region": "Region D",
-      "facility": "Facility D2",
+      "region": "Region C",
+      "facility": "Facility A3",
       "id": "SURG-0409"
     },
     {
@@ -7754,7 +7755,7 @@
         }
       },
       "region": "Region E",
-      "facility": "Facility E2",
+      "facility": "St. Anthony Hospital",
       "id": "SURG-0410"
     },
     {
@@ -7795,8 +7796,8 @@
           "spend": 1122
         }
       },
-      "region": "Region C",
-      "facility": "Facility C3",
+      "region": "Region G",
+      "facility": "Facility B3",
       "id": "SURG-0413"
     },
     {
@@ -7823,8 +7824,8 @@
           "spend": 1143
         }
       },
-      "region": "Region E",
-      "facility": "Facility E3",
+      "region": "Region F",
+      "facility": "Facility C1",
       "id": "SURG-0415"
     },
     {
@@ -7837,8 +7838,8 @@
           "spend": 1075
         }
       },
-      "region": "Region A",
-      "facility": "Facility A4",
+      "region": "Region B",
+      "facility": "Facility E3",
       "id": "SURG-0416"
     },
     {
@@ -7866,7 +7867,7 @@
         }
       },
       "region": "Region C",
-      "facility": "Facility C4",
+      "facility": "Facility A4",
       "id": "SURG-0418"
     },
     {
@@ -7929,8 +7930,8 @@
           "spend": 539
         }
       },
-      "region": "Region B",
-      "facility": "Facility B1",
+      "region": "Region C",
+      "facility": "Facility D2",
       "id": "SURG-0422"
     },
     {
@@ -7958,7 +7959,7 @@
         }
       },
       "region": "Region D",
-      "facility": "Facility D1",
+      "facility": "Mercy Albuquerque",
       "id": "SURG-0424"
     },
     {
@@ -7971,8 +7972,8 @@
           "spend": 434
         }
       },
-      "region": "Region E",
-      "facility": "Facility E1",
+      "region": "Region B",
+      "facility": "Sacred Heart Detroit",
       "id": "SURG-0425"
     },
     {
@@ -7999,8 +8000,8 @@
           "spend": 341
         }
       },
-      "region": "Region B",
-      "facility": "Facility B2",
+      "region": "Region E",
+      "facility": "Facility E1",
       "id": "SURG-0427"
     },
     {
@@ -8027,8 +8028,8 @@
           "spend": 341
         }
       },
-      "region": "Region D",
-      "facility": "Facility D2",
+      "region": "Region B",
+      "facility": "Facility A4",
       "id": "SURG-0429"
     },
     {
@@ -8070,7 +8071,7 @@
         }
       },
       "region": "Region B",
-      "facility": "Facility B3",
+      "facility": "Facility A3",
       "id": "SURG-0432"
     },
     {
@@ -8097,8 +8098,8 @@
           "spend": 139
         }
       },
-      "region": "Region D",
-      "facility": "Facility D3",
+      "region": "Region H",
+      "facility": "Kansas City Medical Center",
       "id": "SURG-0434"
     },
     {
@@ -8125,8 +8126,8 @@
           "spend": 84
         }
       },
-      "region": "Region A",
-      "facility": "Facility A4",
+      "region": "Region C",
+      "facility": "Centura Hospital",
       "id": "SURG-0436"
     },
     {
@@ -8153,8 +8154,8 @@
           "spend": 51
         }
       },
-      "region": "Region C",
-      "facility": "Facility C4",
+      "region": "Region H",
+      "facility": "Facility E4",
       "id": "SURG-0438"
     },
     {
@@ -8185,8 +8186,8 @@
           "spend": 51
         }
       },
-      "region": "Region E",
-      "facility": "Facility E4",
+      "region": "Region H",
+      "facility": "St. Anthony Hospital",
       "id": "SURG-0440"
     },
     {
@@ -8199,8 +8200,8 @@
           "spend": 46
         }
       },
-      "region": "Region A",
-      "facility": "Facility A1",
+      "region": "Region H",
+      "facility": "St. Francis San Antonio",
       "id": "SURG-0441"
     },
     {
@@ -8232,7 +8233,7 @@
         }
       },
       "region": "Region C",
-      "facility": "Facility C1",
+      "facility": "Divine Providence Medical Center",
       "id": "SURG-0443"
     }
   ],

@@ -69,7 +69,6 @@ const EnhancedOrthopedicDashboard = () => {
   const [customAssumptions, setCustomAssumptions] = useState({
     // Vendor Consolidation Savings (as percentages)
     triVendorSavings: 12,
-    quadNicheSavings: 9,
     dualPremiumSavings: 18,
     dualValueSavings: 16,
     // Price Cap Scenarios
@@ -88,7 +87,6 @@ const EnhancedOrthopedicDashboard = () => {
   const resetAssumptions = () => {
     setCustomAssumptions({
       triVendorSavings: 12,
-      quadNicheSavings: 9,
       dualPremiumSavings: 18,
       dualValueSavings: 16,
       constructCapSavings: 8,
@@ -803,7 +801,7 @@ const EnhancedOrthopedicDashboard = () => {
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-gray-100 border-b-2 border-gray-300">
-                <th className="px-3 py-2 text-left font-bold text-gray-900 sticky left-0 bg-gray-100 z-10 min-w-[180px]">
+                <th className="px-2 py-1.5 text-left font-bold text-gray-900 sticky left-0 bg-gray-100 z-10 min-w-[180px]">
                   Metric
                 </th>
                 {filteredScenarios.map(scenario => (
@@ -839,210 +837,39 @@ const EnhancedOrthopedicDashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {/* STRATEGIC & RISK METRICS SECTION */}
-              <tr className="bg-gradient-to-r from-purple-100 to-purple-50 border-t-2 border-purple-400">
-                <td colSpan={filteredScenarios.length + 1} className="px-3 py-2 font-bold text-purple-900 text-sm uppercase tracking-wide sticky left-0 z-10">
-                  📊 Strategic & Risk Metrics
-                </td>
-              </tr>
-
-              {/* Overall Weighted Score Row */}
-              <tr className="border-b-2 border-purple-300 bg-gradient-to-r from-purple-50 to-purple-100">
-                <td className="px-3 py-2 font-bold text-gray-900 sticky left-0 bg-gradient-to-r from-purple-50 to-purple-100 z-10">
-                  Overall Score
-                  <div className="text-xs font-normal text-gray-600 mt-1">Weighted composite</div>
-                </td>
-                {filteredScenarios.map(scenario => {
-                  // Calculate weighted scorecard (0-100 scale)
-                  const calculateScore = () => {
-                    let score = 0;
-
-                    // Financial (30% weight): Based on annual savings and payback
-                    const financialSavings = scenario.annualSavings || 0;
-                    const maxSavings = 10; // $10M would be excellent
-                    const financialScore = Math.min(100, (financialSavings / maxSavings) * 100);
-                    score += financialScore * 0.30;
-
-                    // Clinical (30% weight): Lower is better for most metrics
-                    const getRevisionRate = (id) => {
-                      const rates = {
-                        'status-quo': 2.3, 'tri-vendor-premium': 2.4, 'dual-premium': 2.5,
-                        'dual-value': 2.8, 'quad-niche': 2.2, 'construct-price-cap': 2.3, 'component-price-cap': 2.3
-                      };
-                      return rates[id] || 2.5;
-                    };
-                    const revisionRate = getRevisionRate(scenario.id);
-                    const clinicalScore = Math.max(0, 100 - ((revisionRate - 2.0) * 50)); // 2.0% = 100, 4.0% = 0
-                    score += clinicalScore * 0.30;
-
-                    // Operational (20% weight): Efficiency metrics
-                    const getAdoptionRate = (id) => {
-                      const rates = {
-                        'status-quo': 100, 'tri-vendor-premium': 92, 'dual-premium': 85,
-                        'dual-value': 78, 'quad-niche': 95, 'construct-price-cap': 88, 'component-price-cap': 90
-                      };
-                      return rates[id] || 85;
-                    };
-                    const adoptionRate = getAdoptionRate(scenario.id);
-                    const operationalScore = adoptionRate; // Already 0-100
-                    score += operationalScore * 0.20;
-
-                    // Strategic/Risk (20% weight): Lower risk is better
-                    const riskScore = scenario.riskLevel === 'low' ? 100 : scenario.riskLevel === 'medium' ? 65 : 30;
-                    const loyalistsAffected = scenario.volumeWeightedRisk?.loyalistsAffected || 0;
-                    const maxLoyalists = 15; // 15+ loyalists = high risk
-                    const loyalistPenalty = Math.min(50, (loyalistsAffected / maxLoyalists) * 50);
-                    const strategicScore = Math.max(0, riskScore - loyalistPenalty);
-                    score += strategicScore * 0.20;
-
-                    return Math.round(score);
-                  };
-
-                  const overallScore = calculateScore();
-                  const scoreColor = overallScore >= 80 ? 'text-green-600' : overallScore >= 60 ? 'text-yellow-600' : 'text-red-600';
-                  const bgColor = overallScore >= 80 ? 'bg-green-50' : overallScore >= 60 ? 'bg-yellow-50' : 'bg-red-50';
-
-                  return (
-                    <td
-                      key={scenario.id}
-                      className={`px-3 py-2 text-center ${selectedScenario === scenario.id ? 'bg-purple-100' : bgColor}`}
-                    >
-                      <div className={`text-3xl font-bold ${scoreColor}`}>
-                        {overallScore}
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        out of 100
-                      </div>
-                      <div className="text-xs font-semibold text-gray-600 mt-1">
-                        {overallScore >= 80 ? 'Excellent' : overallScore >= 60 ? 'Good' : 'Fair'}
-                      </div>
-                    </td>
-                  );
-                })}
-              </tr>
-
-              {/* Loyalists Needing Transition Row */}
-              <tr className="border-b hover:bg-gray-50">
-                <td className="px-3 py-2 font-semibold text-gray-700 sticky left-0 bg-white z-10">
-                  Loyalists Needing Transition
-                </td>
-                {filteredScenarios.map(scenario => (
-                  <td
-                    key={scenario.id}
-                    className={`px-3 py-2 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
-                  >
-                    <div className="font-bold text-orange-600 text-lg">
-                      {scenario.volumeWeightedRisk?.loyalistsAffected || 0}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      <span className="font-semibold text-red-600">
-                        {scenario.volumeWeightedRisk?.highVolumeSurgeonsAffected || 0} high-volume
-                      </span>
-                    </div>
-                    <div className="text-xs text-gray-400 mt-1">
-                      {((scenario.volumeWeightedRisk?.loyalistsAffected || 0) / (realData?.surgeons?.length || 1) * 100).toFixed(0)}% of surgeons
-                    </div>
-                  </td>
-                ))}
-              </tr>
-
-              {/* Risk Level Row */}
-              <tr className="border-b hover:bg-gray-50">
-                <td className="px-3 py-2 font-semibold text-gray-700 sticky left-0 bg-white z-10">
-                  Risk Level
-                </td>
-                {filteredScenarios.map(scenario => (
-                  <td
-                    key={scenario.id}
-                    className={`px-3 py-2 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
-                  >
-                    <div className="flex justify-center">
-                      <span className={`px-4 py-2 rounded-full text-sm font-bold ${
-                        scenario.riskLevel === 'low' ? 'bg-green-100 text-green-700' :
-                        scenario.riskLevel === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-red-100 text-red-700'
-                      }`}>
-                        {scenario.riskLevel.charAt(0).toUpperCase() + scenario.riskLevel.slice(1)}
-                      </span>
-                    </div>
-                  </td>
-                ))}
-              </tr>
-
-              {/* Robotic Platform Alignment Row */}
-              <tr className="border-b hover:bg-gray-50">
-                <td className="px-3 py-2 font-semibold text-gray-700 sticky left-0 bg-white z-10">
-                  Robotic Platform Alignment
-                </td>
-                {filteredScenarios.map(scenario => (
-                  <td
-                    key={scenario.id}
-                    className={`px-3 py-2 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
-                  >
-                    {scenario.roboticPlatformAlignment &&
-                     scenario.roboticPlatformAlignment.alignmentScore !== undefined &&
-                     scenario.roboticPlatformAlignment.compatibleCases !== undefined &&
-                     scenario.roboticPlatformAlignment.totalRoboticCases !== undefined ? (
-                      <>
-                        <div className={`font-bold text-lg ${
-                          scenario.roboticPlatformAlignment.alignmentScore >= 90 ? 'text-green-600' :
-                          scenario.roboticPlatformAlignment.alignmentScore >= 70 ? 'text-yellow-600' :
-                          'text-red-600'
-                        }`}>
-                          {scenario.roboticPlatformAlignment.alignmentScore.toFixed(1)}%
-                        </div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {scenario.roboticPlatformAlignment.compatibleCases.toLocaleString()} / {scenario.roboticPlatformAlignment.totalRoboticCases.toLocaleString()} cases
-                        </div>
-                        {scenario.roboticPlatformAlignment.incompatibleCases > 0 && (
-                          <div
-                            className="text-xs text-red-600 font-semibold mt-1"
-                            title="Stranded cases: Robotic surgery cases that become incompatible with selected vendors, representing sunk investment in robotic platforms that cannot be used under this scenario. Higher stranded cases increase adoption risk."
-                          >
-                            {scenario.roboticPlatformAlignment.incompatibleCases.toLocaleString()} stranded ℹ️
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <span className="text-gray-400 text-sm">N/A</span>
-                    )}
-                  </td>
-                ))}
-              </tr>
-
               {/* FINANCIAL OUTCOMES SECTION */}
               <tr className="bg-gradient-to-r from-green-100 to-green-50 border-t-2 border-green-400">
-                <td colSpan={filteredScenarios.length + 1} className="px-3 py-2 font-bold text-green-900 text-sm uppercase tracking-wide sticky left-0 z-10">
+                <td colSpan={filteredScenarios.length + 1} className="px-2 py-1 font-bold text-green-900 text-xs uppercase tracking-wide sticky left-0 z-10">
                   💰 Financial Outcomes
                 </td>
               </tr>
 
               {/* Annual Savings Row */}
               <tr className="border-b hover:bg-gray-50">
-                <td className="px-3 py-2 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
                   Annual Savings
                 </td>
                 {filteredScenarios.map(scenario => (
                   <td
                     key={scenario.id}
-                    className={`px-3 py-2 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                    className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
                   >
-                    <div className="font-bold text-green-600 text-lg">${scenario.annualSavings.toFixed(2)}M</div>
+                    <div className="font-bold text-green-600 text-base">${scenario.annualSavings.toFixed(2)}M</div>
                   </td>
                 ))}
               </tr>
 
               {/* 5-Year NPV Row */}
               <tr className="border-b hover:bg-gray-50">
-                <td className="px-3 py-2 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
                   5-Year NPV
                 </td>
                 {filteredScenarios.map(scenario => (
                   <td
                     key={scenario.id}
-                    className={`px-3 py-2 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                    className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
                   >
-                    <div className="font-bold text-purple-600 text-lg">
+                    <div className="font-bold text-purple-600 text-base">
                       ${scenario.npv5Year?.toFixed(2) || '0.00'}M
                     </div>
                   </td>
@@ -1051,7 +878,7 @@ const EnhancedOrthopedicDashboard = () => {
 
               {/* Implementation Cost Row */}
               <tr className="border-b hover:bg-gray-50">
-                <td className="px-3 py-2 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
                   Implementation Cost
                 </td>
                 {filteredScenarios.map(scenario => {
@@ -1071,9 +898,9 @@ const EnhancedOrthopedicDashboard = () => {
                   return (
                     <td
                       key={scenario.id}
-                      className={`px-3 py-2 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
                     >
-                      <div className={`font-bold text-lg ${cost === 0 ? 'text-gray-600' : 'text-red-600'}`}>
+                      <div className={`font-bold text-base ${cost === 0 ? 'text-gray-600' : 'text-red-600'}`}>
                         ${cost.toFixed(1)}M
                       </div>
                       <div className="text-xs text-gray-500 mt-1">
@@ -1086,8 +913,9 @@ const EnhancedOrthopedicDashboard = () => {
 
               {/* Cost per Case Row */}
               <tr className="border-b hover:bg-gray-50">
-                <td className="px-3 py-2 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
                   Average Cost per Case
+                  <div className="text-xs font-normal text-gray-500 mt-1">Baseline: $6,420</div>
                 </td>
                 {filteredScenarios.map(scenario => {
                   const getCostPerCase = (id) => {
@@ -1107,13 +935,10 @@ const EnhancedOrthopedicDashboard = () => {
                   return (
                     <td
                       key={scenario.id}
-                      className={`px-3 py-2 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
                     >
-                      <div className={`font-bold text-lg ${cost < baseline ? 'text-green-600' : 'text-gray-600'}`}>
+                      <div className={`font-bold text-base ${cost < baseline ? 'text-green-600' : 'text-gray-600'}`}>
                         ${cost.toLocaleString()}
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        Baseline: ${baseline.toLocaleString()}
                       </div>
                     </td>
                   );
@@ -1122,7 +947,7 @@ const EnhancedOrthopedicDashboard = () => {
 
               {/* Payback Period Row */}
               <tr className="border-b hover:bg-gray-50">
-                <td className="px-3 py-2 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
                   Payback Period
                 </td>
                 {filteredScenarios.map(scenario => {
@@ -1139,17 +964,18 @@ const EnhancedOrthopedicDashboard = () => {
                     return costs[id] || 1.0;
                   };
                   const implCost = getImplementationCost(scenario.id);
-                  const paybackMonths = implCost === 0 ? 0 : Math.round((implCost / scenario.annualSavings) * 12);
+                  const rawPayback = (implCost / scenario.annualSavings) * 12;
+                  const paybackMonths = !implCost || !scenario.annualSavings || !isFinite(rawPayback) ? null : Math.round(rawPayback);
                   return (
                     <td
                       key={scenario.id}
-                      className={`px-3 py-2 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
                     >
-                      {paybackMonths === 0 ? (
-                        <div className="font-bold text-gray-600 text-lg">N/A</div>
+                      {paybackMonths === null ? (
+                        <div className="font-bold text-gray-600 text-base">N/A</div>
                       ) : (
                         <>
-                          <div className={`font-bold text-lg ${paybackMonths <= 12 ? 'text-green-600' : paybackMonths <= 24 ? 'text-yellow-600' : 'text-red-600'}`}>
+                          <div className={`font-bold text-base ${paybackMonths <= 12 ? 'text-green-600' : paybackMonths <= 24 ? 'text-yellow-600' : 'text-red-600'}`}>
                             {paybackMonths} months
                           </div>
                           <div className="text-xs text-gray-500 mt-1">
@@ -1164,8 +990,9 @@ const EnhancedOrthopedicDashboard = () => {
 
               {/* Contract Compliance Rate Row */}
               <tr className="border-b hover:bg-gray-50">
-                <td className="px-3 py-2 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
                   Contract Compliance Rate
+                  <div className="text-xs font-normal text-gray-500 mt-1">Target: 85%</div>
                 </td>
                 {filteredScenarios.map(scenario => {
                   const getComplianceRate = (id) => {
@@ -1185,13 +1012,10 @@ const EnhancedOrthopedicDashboard = () => {
                   return (
                     <td
                       key={scenario.id}
-                      className={`px-3 py-2 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
                     >
-                      <div className={`font-bold text-lg ${rate >= benchmark ? 'text-green-600' : 'text-red-600'}`}>
+                      <div className={`font-bold text-base ${rate >= benchmark ? 'text-green-600' : 'text-red-600'}`}>
                         {rate}%
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        Target: {benchmark}%
                       </div>
                     </td>
                   );
@@ -1200,14 +1024,14 @@ const EnhancedOrthopedicDashboard = () => {
 
               {/* CLINICAL OUTCOMES SECTION */}
               <tr className="bg-gradient-to-r from-blue-100 to-blue-50 border-t-2 border-blue-400">
-                <td colSpan={filteredScenarios.length + 1} className="px-3 py-2 font-bold text-blue-900 text-sm uppercase tracking-wide sticky left-0 z-10">
+                <td colSpan={filteredScenarios.length + 1} className="px-2 py-1.5 font-bold text-blue-900 text-xs uppercase tracking-wide sticky left-0 z-10">
                   🏥 Clinical Outcomes
                 </td>
               </tr>
 
               {/* Revision Rate Row */}
               <tr className="border-b hover:bg-gray-50">
-                <td className="px-3 py-2 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
                   Revision Rate (2-year)
                 </td>
                 {filteredScenarios.map(scenario => {
@@ -1229,9 +1053,9 @@ const EnhancedOrthopedicDashboard = () => {
                   return (
                     <td
                       key={scenario.id}
-                      className={`px-3 py-2 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
                     >
-                      <div className={`font-bold text-lg ${rate <= benchmark ? 'text-green-600' : 'text-red-600'}`}>
+                      <div className={`font-bold text-base ${rate <= benchmark ? 'text-green-600' : 'text-red-600'}`}>
                         {rate.toFixed(1)}%
                       </div>
                       <div className="text-xs text-gray-500 mt-1">
@@ -1244,7 +1068,7 @@ const EnhancedOrthopedicDashboard = () => {
 
               {/* 30-Day Readmission Rate Row */}
               <tr className="border-b hover:bg-gray-50">
-                <td className="px-3 py-2 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
                   30-Day Readmission Rate
                 </td>
                 {filteredScenarios.map(scenario => {
@@ -1265,9 +1089,9 @@ const EnhancedOrthopedicDashboard = () => {
                   return (
                     <td
                       key={scenario.id}
-                      className={`px-3 py-2 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
                     >
-                      <div className={`font-bold text-lg ${rate <= benchmark ? 'text-green-600' : 'text-red-600'}`}>
+                      <div className={`font-bold text-base ${rate <= benchmark ? 'text-green-600' : 'text-red-600'}`}>
                         {rate.toFixed(1)}%
                       </div>
                       <div className="text-xs text-gray-500 mt-1">
@@ -1280,7 +1104,7 @@ const EnhancedOrthopedicDashboard = () => {
 
               {/* Average Length of Stay Row */}
               <tr className="border-b hover:bg-gray-50">
-                <td className="px-3 py-2 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
                   Average Length of Stay
                 </td>
                 {filteredScenarios.map(scenario => {
@@ -1301,9 +1125,9 @@ const EnhancedOrthopedicDashboard = () => {
                   return (
                     <td
                       key={scenario.id}
-                      className={`px-3 py-2 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
                     >
-                      <div className={`font-bold text-lg ${days <= benchmark ? 'text-green-600' : 'text-red-600'}`}>
+                      <div className={`font-bold text-base ${days <= benchmark ? 'text-green-600' : 'text-red-600'}`}>
                         {days.toFixed(1)} days
                       </div>
                       <div className="text-xs text-gray-500 mt-1">
@@ -1316,7 +1140,7 @@ const EnhancedOrthopedicDashboard = () => {
 
               {/* Surgical Site Infection Rate Row */}
               <tr className="border-b hover:bg-gray-50">
-                <td className="px-3 py-2 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
                   Surgical Site Infection Rate
                 </td>
                 {filteredScenarios.map(scenario => {
@@ -1337,9 +1161,9 @@ const EnhancedOrthopedicDashboard = () => {
                   return (
                     <td
                       key={scenario.id}
-                      className={`px-3 py-2 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
                     >
-                      <div className={`font-bold text-lg ${rate <= benchmark ? 'text-green-600' : 'text-red-600'}`}>
+                      <div className={`font-bold text-base ${rate <= benchmark ? 'text-green-600' : 'text-red-600'}`}>
                         {rate.toFixed(1)}%
                       </div>
                       <div className="text-xs text-gray-500 mt-1">
@@ -1352,7 +1176,7 @@ const EnhancedOrthopedicDashboard = () => {
 
               {/* Patient-Reported Outcome Score Row */}
               <tr className="border-b hover:bg-gray-50">
-                <td className="px-3 py-2 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
                   Patient-Reported Outcomes
                 </td>
                 {filteredScenarios.map(scenario => {
@@ -1373,9 +1197,9 @@ const EnhancedOrthopedicDashboard = () => {
                   return (
                     <td
                       key={scenario.id}
-                      className={`px-3 py-2 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
                     >
-                      <div className={`font-bold text-lg ${score >= benchmark ? 'text-green-600' : 'text-red-600'}`}>
+                      <div className={`font-bold text-base ${score >= benchmark ? 'text-green-600' : 'text-red-600'}`}>
                         {score}
                       </div>
                       <div className="text-xs text-gray-500 mt-1">
@@ -1388,14 +1212,14 @@ const EnhancedOrthopedicDashboard = () => {
 
               {/* OPERATIONAL OUTCOMES SECTION */}
               <tr className="bg-gradient-to-r from-orange-100 to-orange-50 border-t-2 border-orange-400">
-                <td colSpan={filteredScenarios.length + 1} className="px-3 py-2 font-bold text-orange-900 text-sm uppercase tracking-wide sticky left-0 z-10">
+                <td colSpan={filteredScenarios.length + 1} className="px-2 py-1.5 font-bold text-orange-900 text-xs uppercase tracking-wide sticky left-0 z-10">
                   ⚙️ Operational Outcomes
                 </td>
               </tr>
 
               {/* Average OR Time Row */}
               <tr className="border-b hover:bg-gray-50">
-                <td className="px-3 py-2 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
                   Average OR Time
                 </td>
                 {filteredScenarios.map(scenario => {
@@ -1416,9 +1240,9 @@ const EnhancedOrthopedicDashboard = () => {
                   return (
                     <td
                       key={scenario.id}
-                      className={`px-3 py-2 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
                     >
-                      <div className={`font-bold text-lg ${minutes <= benchmark ? 'text-green-600' : 'text-red-600'}`}>
+                      <div className={`font-bold text-base ${minutes <= benchmark ? 'text-green-600' : 'text-red-600'}`}>
                         {minutes} min
                       </div>
                       <div className="text-xs text-gray-500 mt-1">
@@ -1431,7 +1255,7 @@ const EnhancedOrthopedicDashboard = () => {
 
               {/* Case Turnaround Time Row */}
               <tr className="border-b hover:bg-gray-50">
-                <td className="px-3 py-2 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
                   Case Turnaround Time
                 </td>
                 {filteredScenarios.map(scenario => {
@@ -1452,9 +1276,9 @@ const EnhancedOrthopedicDashboard = () => {
                   return (
                     <td
                       key={scenario.id}
-                      className={`px-3 py-2 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
                     >
-                      <div className={`font-bold text-lg ${minutes <= benchmark ? 'text-green-600' : 'text-red-600'}`}>
+                      <div className={`font-bold text-base ${minutes <= benchmark ? 'text-green-600' : 'text-red-600'}`}>
                         {minutes} min
                       </div>
                       <div className="text-xs text-gray-500 mt-1">
@@ -1467,7 +1291,7 @@ const EnhancedOrthopedicDashboard = () => {
 
               {/* Surgeon Adoption Rate Row */}
               <tr className="border-b hover:bg-gray-50">
-                <td className="px-3 py-2 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
                   Surgeon Adoption Rate
                 </td>
                 {filteredScenarios.map(scenario => {
@@ -1488,9 +1312,9 @@ const EnhancedOrthopedicDashboard = () => {
                   return (
                     <td
                       key={scenario.id}
-                      className={`px-3 py-2 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
                     >
-                      <div className={`font-bold text-lg ${rate >= benchmark ? 'text-green-600' : 'text-red-600'}`}>
+                      <div className={`font-bold text-base ${rate >= benchmark ? 'text-green-600' : 'text-red-600'}`}>
                         {rate}%
                       </div>
                       <div className="text-xs text-gray-500 mt-1">
@@ -1503,7 +1327,7 @@ const EnhancedOrthopedicDashboard = () => {
 
               {/* Inventory Turns Row */}
               <tr className="border-b hover:bg-gray-50">
-                <td className="px-3 py-2 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
                   Inventory Turns per Year
                 </td>
                 {filteredScenarios.map(scenario => {
@@ -1524,9 +1348,9 @@ const EnhancedOrthopedicDashboard = () => {
                   return (
                     <td
                       key={scenario.id}
-                      className={`px-3 py-2 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
                     >
-                      <div className={`font-bold text-lg ${turns >= benchmark ? 'text-green-600' : 'text-red-600'}`}>
+                      <div className={`font-bold text-base ${turns >= benchmark ? 'text-green-600' : 'text-red-600'}`}>
                         {turns.toFixed(1)}
                       </div>
                       <div className="text-xs text-gray-500 mt-1">
@@ -1539,7 +1363,7 @@ const EnhancedOrthopedicDashboard = () => {
 
               {/* Preferred Item Usage Rate Row */}
               <tr className="border-b hover:bg-gray-50">
-                <td className="px-3 py-2 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
                   Preferred Item Usage Rate
                 </td>
                 {filteredScenarios.map(scenario => {
@@ -1560,9 +1384,9 @@ const EnhancedOrthopedicDashboard = () => {
                   return (
                     <td
                       key={scenario.id}
-                      className={`px-3 py-2 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
                     >
-                      <div className={`font-bold text-lg ${rate >= benchmark ? 'text-green-600' : 'text-red-600'}`}>
+                      <div className={`font-bold text-base ${rate >= benchmark ? 'text-green-600' : 'text-red-600'}`}>
                         {rate}%
                       </div>
                       <div className="text-xs text-gray-500 mt-1">
@@ -2731,7 +2555,6 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
                   <th className="text-center p-4 font-bold text-purple-900">Total Cases</th>
                   <th className="text-center p-4 font-bold text-purple-900">% of Overall Spend</th>
                   <th className="text-center p-4 font-bold text-purple-900">Preferred Vendor</th>
-                  <th className="text-center p-4 font-bold text-purple-900">Robots Available</th>
                   <th className="text-center p-4 font-bold text-purple-900" title="Surgeons with >200 cases/year who are ≥70% loyal to non-preferred vendors. These surgeons represent high-impact transition challenges.">High-Vol Loyalists<br/><span className="text-xs font-normal">(to non-preferred)</span></th>
                   <th className="text-left p-4 font-bold text-purple-900">Vendor Breakdown<br/><span className="text-xs font-normal">(Top 4 by volume)</span></th>
                   <th className="text-center p-4 font-bold text-purple-900">Experienced Sherpas<br/><span className="text-xs font-normal">(≥30 cases/yr)</span></th>
@@ -2801,7 +2624,7 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
                       {/* Threshold marker if this row crosses a threshold */}
                       {crossedHere.length > 0 && (
                         <tr key={`threshold-${idx}`} className="bg-purple-100">
-                          <td colSpan="12" className="p-2 text-center">
+                          <td colSpan="11" className="p-2 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <div className="h-0.5 flex-1 bg-purple-400"></div>
                               <span className="text-sm font-bold text-purple-700">
@@ -2832,23 +2655,6 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
                         </div>
                       </td>
                       <td className="p-4 text-center">
-                        {hospital.roboticVendors && Object.keys(hospital.roboticVendors).length > 0 ? (
-                          <div className="text-sm">
-                            {Object.keys(hospital.roboticVendors)
-                              .map((vendor) => getRobotName(vendor))
-                              .filter(robot => robot !== null)
-                              .sort()
-                              .map((robot) => (
-                                <div key={robot} className="text-gray-900 font-semibold">
-                                  {robot}
-                                </div>
-                              ))}
-                          </div>
-                        ) : (
-                          <span className="text-gray-400 text-xs">—</span>
-                        )}
-                      </td>
-                      <td className="p-4 text-center">
                         <span className="font-bold text-xl text-orange-600">
                           {hospital.highVolumeLoyalists}
                           {hospital.highVolumeLoyalists > 0 && (
@@ -2861,35 +2667,45 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
                       <td className="p-4">
                         {hospital.vendorCaseCounts && Object.keys(hospital.vendorCaseCounts).length > 0 ? (
                           <div className="space-y-1">
-                            {Object.entries(hospital.vendorCaseCounts)
-                              .filter(([vendor, cases]) => cases > 0)
-                              .sort((a, b) => b[1] - a[1])
-                              .slice(0, 4)
-                              .map(([vendor, cases]) => {
+                            {(() => {
+                              const vendorEntries = Object.entries(hospital.vendorCaseCounts)
+                                .filter(([vendor, cases]) => cases > 0)
+                                .sort((a, b) => b[1] - a[1])
+                                .slice(0, 4);
+
+                              // Find max percentage for scaling bars
+                              const maxPercentage = Math.max(
+                                ...vendorEntries.map(([_, cases]) =>
+                                  hospital.totalCases > 0 ? (cases / hospital.totalCases) * 100 : 0
+                                )
+                              );
+
+                              return vendorEntries.map(([vendor, cases]) => {
                                 const percentage = hospital.totalCases > 0 ? (cases / hospital.totalCases) * 100 : 0;
+                                // Scale bar width: dominant vendor gets 100% width, others proportional
+                                const barWidth = maxPercentage > 0 ? (percentage / maxPercentage) * 80 : 0;
                                 const isPreferred = scenarioVendors.includes(vendor);
                                 return (
                                   <div key={vendor} className="flex items-center gap-2 text-xs">
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-center gap-1">
-                                        <div
-                                          className={`h-4 rounded ${isPreferred ? 'bg-green-500' : 'bg-red-400'}`}
-                                          style={{ width: `${Math.max(percentage, 2)}%` }}
-                                        ></div>
-                                        <span className="font-semibold text-gray-900 whitespace-nowrap">
-                                          {abbreviateVendor(vendor)}
-                                        </span>
-                                        <span className="text-gray-600">
-                                          {percentage.toFixed(0)}%
-                                        </span>
-                                        <span className="text-gray-500 text-xs">
-                                          ({cases.toLocaleString()})
-                                        </span>
-                                      </div>
+                                    <div className="flex items-center gap-1 w-full">
+                                      <div
+                                        className={`h-4 rounded ${isPreferred ? 'bg-green-500' : 'bg-red-400'}`}
+                                        style={{ width: `${Math.max(barWidth, 8)}px`, minWidth: '8px' }}
+                                      ></div>
+                                      <span className="font-semibold text-gray-900 whitespace-nowrap">
+                                        {abbreviateVendor(vendor)}
+                                      </span>
+                                      <span className="text-gray-600">
+                                        {percentage.toFixed(0)}%
+                                      </span>
+                                      <span className="text-gray-500 text-xs">
+                                        ({cases.toLocaleString()})
+                                      </span>
                                     </div>
                                   </div>
                                 );
-                              })}
+                              });
+                            })()}
                           </div>
                         ) : (
                           <span className="text-gray-400 text-xs">—</span>
@@ -2897,20 +2713,7 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
                       </td>
                       <td className="p-4 text-center">
                         {potentialSherpas > 0 ? (
-                          <div>
-                            <div className="font-bold text-xl text-green-600">{potentialSherpas}</div>
-                            {hospital.sherpaVendors && Object.keys(hospital.sherpaVendors).length > 0 && (
-                              <div className="text-xs text-gray-600 mt-1">
-                                {Object.entries(hospital.sherpaVendors)
-                                  .sort((a, b) => b[1] - a[1])
-                                  .map(([vendor, count]) => (
-                                    <div key={vendor}>
-                                      {vendor} ({count})
-                                    </div>
-                                  ))}
-                              </div>
-                            )}
-                          </div>
+                          <div className="font-bold text-xl text-green-600">{potentialSherpas}</div>
                         ) : (
                           <span className="text-gray-400 text-xl">—</span>
                         )}
@@ -4956,16 +4759,17 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
 
       {/* Key Assumptions Display */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        {/* Status Quo - Baseline */}
+        <div className="bg-white rounded-lg p-3 border border-gray-200">
+          <div className="text-xs text-gray-600 mb-1">Status Quo</div>
+          <div className="text-lg font-bold text-gray-600">0%</div>
+          <div className="text-xs text-gray-500">baseline</div>
+        </div>
+
         {/* Vendor Consolidation Savings */}
         <div className="bg-white rounded-lg p-3 border border-gray-200">
           <div className="text-xs text-gray-600 mb-1">Three-Vendor</div>
           <div className="text-lg font-bold text-green-600">{customAssumptions.triVendorSavings}%</div>
-          <div className="text-xs text-gray-500">savings</div>
-        </div>
-
-        <div className="bg-white rounded-lg p-3 border border-gray-200">
-          <div className="text-xs text-gray-600 mb-1">Quad-Niche</div>
-          <div className="text-lg font-bold text-green-600">{customAssumptions.quadNicheSavings}%</div>
           <div className="text-xs text-gray-500">savings</div>
         </div>
 
@@ -5331,33 +5135,6 @@ Cumulative: ${hospital.cumulativeCompliance.toFixed(1)}%`}
                         className="flex-1"
                         min="0"
                         max="25"
-                        step="0.5"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Four-Vendor Strategy (Niche)
-                    </label>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="number"
-                        value={customAssumptions.quadNicheSavings}
-                        onChange={(e) => setCustomAssumptions({...customAssumptions, quadNicheSavings: parseFloat(e.target.value) || 0})}
-                        className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-center font-semibold"
-                        min="0"
-                        max="50"
-                        step="0.5"
-                      />
-                      <span className="text-gray-700">%</span>
-                      <input
-                        type="range"
-                        value={customAssumptions.quadNicheSavings}
-                        onChange={(e) => setCustomAssumptions({...customAssumptions, quadNicheSavings: parseFloat(e.target.value)})}
-                        className="flex-1"
-                        min="0"
-                        max="20"
                         step="0.5"
                       />
                     </div>
