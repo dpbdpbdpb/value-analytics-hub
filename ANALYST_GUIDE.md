@@ -589,26 +589,24 @@ If a surgeon uses "VENDOR-ALPHA", that vendor must exist in the vendors list. Mi
 
 The Executive Dashboard features a comprehensive scenario comparison table that shows all consolidation strategies side-by-side. This table is the primary decision-making tool.
 
-**The "Analyze" Button:**
+**Selecting Scenarios for Detailed Analysis:**
 
-Each scenario column has an **Analyze** button at the bottom. When clicked, this button:
+To view detailed analysis for any scenario:
 
-1. **Selects that scenario** as the active focus
-2. **Navigates to the Overview tab** showing detailed analysis
-3. **Displays:**
-   - Detailed surgeon impact analysis (which surgeons would need to switch)
-   - Vendor split breakdown (volume and spend allocation)
-   - Implementation timeline with milestones
-   - Risk factors and mitigation strategies
-   - Financial projections with NPV calculations
-   - Quality and clinical considerations
+1. **Click on the scenario column header** in the Scenario Comparison Table
+2. **Navigate to different tabs** at the top to explore:
+   - **Overview:** High-level summary with key metrics
+   - **Surgeon Impact:** Which surgeons would need to switch vendors
+   - **Vendor Details:** Breakdown of spend and volume allocation
+   - **Implementation:** Timeline, milestones, and risk mitigation strategies
+   - **Quality:** Clinical outcomes and safety considerations
 
 **How to Use It:**
 - Review all scenarios in the comparison table first
 - Identify 2-3 promising scenarios based on savings vs. risk
-- Click **Analyze** on each to dive into the details
-- Compare the detailed views to make your final decision
-- Share the detailed analysis with stakeholders
+- Click scenario headers to select them and explore detailed views
+- Compare the detailed analysis to make your final decision
+- Share insights with stakeholders for collaborative decision-making
 
 **Key Definitions Box:**
 
@@ -619,6 +617,65 @@ Below the scenario comparison table, you'll find a reference box with:
 - **Risk level definitions:** What each risk level (LOW, MEDIUM, MED-HIGH, HIGH) means
 
 These definitions help you interpret the metrics shown in the table above.
+
+**Customize Assumptions Feature:**
+
+One of the most powerful features of the dashboard is the ability to adjust key assumptions in real-time to explore "what-if" scenarios.
+
+**How to Access:**
+- Click the blue **"Customize Assumptions"** button at the top-right of the Scenario Comparison Table
+- A slide-out panel opens from the right side of the screen
+
+**What You Can Customize:**
+
+*Vendor Consolidation Savings (%)* - Adjust expected savings percentages for each consolidation strategy:
+- Three-Vendor Strategy (default: 12%)
+- Two-Vendor Strategy (Premium) (default: 18%)
+- Two-Vendor Strategy (Value) (default: 16%)
+
+*Price Cap Savings (%)* - Adjust expected savings from implementing price caps:
+- Construct Price Cap Strategy (default: 8%)
+- Component Price Cap Strategy (default: 10%)
+
+*Construct Price Caps ($)* - Set maximum prices for complete implant sets:
+- Hip Construct Cap (default: $4,500)
+- Knee Construct Cap (default: $3,800)
+
+*Component Price Caps ($)* - Set maximum prices for individual components:
+- Femoral Stem (default: $1,200)
+- Acetabular Cup (default: $1,100)
+- Femoral Head (default: $950)
+- Liner (default: $1,000)
+
+**Real-Time Updates:**
+
+As you adjust any assumption, the dashboard immediately recalculates:
+- Annual savings for each scenario
+- 5-Year NPV projections
+- Savings percentages
+- Price caps displayed in the table headers and Key Definitions box
+
+This allows you to quickly model conservative, expected, and optimistic scenarios without needing to edit data files or reload the dashboard.
+
+**Example Use Cases:**
+
+1. **Conservative Planning:** Reduce savings percentages by 20% (e.g., 18% → 14.4%) to model worst-case scenarios
+2. **Market Validation:** Adjust price caps to match ECRI benchmark data for your region
+3. **Negotiation Support:** Test different price cap levels to understand impact before vendor negotiations
+4. **Sensitivity Analysis:** See how much a 1% change in savings rates affects total NPV
+
+**Controls:**
+
+- **Sliders:** Quick adjustments with visual feedback
+- **Number Inputs:** Precise entry for specific values
+- **Reset to Defaults:** One-click restore of original values
+- **Apply Changes:** Close the panel (changes are already applied in real-time)
+
+**Important Notes:**
+
+- Changes only affect your current session—they don't modify the underlying data files
+- Refresh the page to restore original default values
+- Document any custom assumptions you use when sharing analyses with stakeholders
 
 **Tooltips and Hover Information:**
 
