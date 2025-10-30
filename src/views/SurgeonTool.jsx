@@ -1858,10 +1858,15 @@ const SurgeonTool = () => {
                       {/* Performance Quadrant Chart */}
                       <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 border-2 border-purple-100">
                         <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-bold text-gray-900 flex items-center gap-2">
-                            <Target className="text-purple-600" size={20} />
-                            Performance Quadrant
-                          </h4>
+                          <div>
+                            <h4 className="font-bold text-gray-900 flex items-center gap-2">
+                              <Target className="text-purple-600" size={20} />
+                              Performance Quadrant
+                            </h4>
+                            <p className="text-xs text-gray-600 mt-1">
+                              Showing {displaySurgeons.length} of {surgeonData.length} surgeons
+                            </p>
+                          </div>
                           <select
                             value={selectedVendorFilter}
                             onChange={(e) => setSelectedVendorFilter(e.target.value)}
@@ -1901,13 +1906,20 @@ const SurgeonTool = () => {
                               content={({ active, payload }) => {
                                 if (active && payload && payload.length) {
                                   const data = payload[0].payload;
+                                  const isCurrentSurgeon = data.id === selectedSurgeon.id;
                                   return (
-                                    <div className="bg-white p-3 border-2 border-purple-600 rounded-lg shadow-xl">
-                                      <p className="font-bold text-purple-900">{data.name}</p>
-                                      <p className="text-sm text-gray-700">Cases: {data.totalCases}</p>
+                                    <div className={`bg-white p-3 border-2 rounded-lg shadow-xl ${
+                                      isCurrentSurgeon ? 'border-purple-600 bg-purple-50' : 'border-gray-400'
+                                    }`}>
+                                      <p className="font-bold text-purple-900">
+                                        {data.name}
+                                        {isCurrentSurgeon && <span className="ml-2 text-xs bg-purple-600 text-white px-2 py-0.5 rounded">YOU</span>}
+                                      </p>
+                                      <p className="text-sm text-gray-700">Cases: {data.totalCases.toLocaleString()}</p>
                                       <p className="text-sm text-gray-700">Avg Cost: ${data.avgSpendPerCase.toFixed(0)}</p>
+                                      <p className="text-sm text-gray-700">Total Spend: ${(data.totalSpend / 1000).toFixed(0)}K</p>
                                       <p className="text-sm text-gray-700">Vendor: {data.primaryVendor}</p>
-                                      {data.id !== selectedSurgeon.id && (
+                                      {!isCurrentSurgeon && (
                                         <button
                                           onClick={() => handleSurgeonClick(data)}
                                           className="mt-2 text-xs text-purple-600 hover:text-purple-800 font-semibold"
@@ -1924,26 +1936,40 @@ const SurgeonTool = () => {
                             <ReferenceLine x={medianCases} stroke="#9ca3af" strokeDasharray="5 5" />
                             <ReferenceLine y={medianCost} stroke="#9ca3af" strokeDasharray="5 5" />
 
-                            {/* Other surgeons */}
+                            {/* Other surgeons - all 443 surgeons for context */}
                             <Scatter
                               data={displaySurgeons.filter(s => s.id !== selectedSurgeon.id)}
                               fill="#9ca3af"
-                              opacity={0.4}
+                              opacity={0.6}
                             />
 
-                            {/* Selected surgeon */}
+                            {/* Selected surgeon - highlighted in purple */}
                             <Scatter
                               data={[selectedSurgeon]}
-                              fill="#BA4896"
+                              fill="#9333EA"
+                              stroke="#7E22CE"
+                              strokeWidth={3}
                               opacity={1}
                             >
-                              <Cell r={8} />
+                              <Cell r={12} />
                             </Scatter>
                           </ScatterChart>
                         </ResponsiveContainer>
 
+                        {/* Legend */}
+                        <div className="flex items-center justify-center gap-4 mt-3 text-sm">
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 rounded-full bg-purple-600 border-2 border-purple-800"></div>
+                            <span className="font-semibold text-gray-700">You ({selectedSurgeon.name})</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-gray-400 opacity-60"></div>
+                            <span className="text-gray-600">All Other Surgeons</span>
+                          </div>
+                        </div>
+
                         {/* Quadrant Labels */}
-                        <div className="grid grid-cols-2 gap-2 mt-2 text-xs">
+                        <div className="grid grid-cols-2 gap-2 mt-4 text-xs">
                           <div className="text-center p-2 bg-blue-100 rounded">
                             <div className="font-bold text-blue-900">Cost Conscious</div>
                             <div className="text-blue-700">Low vol, Low cost</div>
