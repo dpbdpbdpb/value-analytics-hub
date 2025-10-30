@@ -91,25 +91,25 @@ export const COLORS = {
 
   // Vendor Colors (for consistent vendor representation)
   vendors: {
-    'Stryker': {
+    'Vendor 1': {
       main: 'blue-600',
       light: 'blue-50',
       text: 'text-blue-900',
       bg: 'bg-blue-500'
     },
-    'Zimmer Biomet': {
+    'Vendor 2': {
       main: 'purple-600',
       light: 'purple-50',
       text: 'text-purple-900',
       bg: 'bg-purple-500'
     },
-    'Johnson & Johnson': {
+    'Vendor 3': {
       main: 'red-600',
       light: 'red-50',
       text: 'text-red-900',
       bg: 'bg-red-500'
     },
-    'Smith & Nephew': {
+    'Vendor 4': {
       main: 'green-600',
       light: 'green-50',
       text: 'text-green-900',
