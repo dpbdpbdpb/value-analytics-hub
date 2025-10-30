@@ -36,7 +36,7 @@ const EnhancedOrthopedicDashboard = () => {
 
   // State management
   const [activeTab, setActiveTab] = useState('overview');
-  const [selectedScenario, setSelectedScenario] = useState('dual-premium'); // Default to optimal scenario (Zimmer + Stryker)
+  const [selectedScenario, setSelectedScenario] = useState('tri-vendor-premium'); // Default to first available scenario
   const [comparisonMode, setComparisonMode] = useState(false);
   const [comparisonScenario, setComparisonScenario] = useState('dual-value'); // Default comparison
   const [sortBy, setSortBy] = useState('savings');
@@ -761,7 +761,10 @@ const EnhancedOrthopedicDashboard = () => {
                     key={scenario.id}
                     className={`px-4 py-4 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
                   >
-                    {scenario.roboticPlatformAlignment ? (
+                    {scenario.roboticPlatformAlignment &&
+                     scenario.roboticPlatformAlignment.alignmentScore !== undefined &&
+                     scenario.roboticPlatformAlignment.compatibleCases !== undefined &&
+                     scenario.roboticPlatformAlignment.totalRoboticCases !== undefined ? (
                       <>
                         <div className={`font-bold text-lg ${
                           scenario.roboticPlatformAlignment.alignmentScore >= 90 ? 'text-green-600' :
@@ -814,7 +817,7 @@ const EnhancedOrthopedicDashboard = () => {
                     <br/>
                     <strong className="mt-1 inline-block">Feasibility Model:</strong> Expected savings = Total potential × Feasibility%.
                     Base feasibility by vendor count: 1 vendor (70%), 2 vendors (60%), 3 vendors (50%), 4+ vendors (30%).
-                    Adjustments: Stryker presence -10% (premium positioning), J&J/Zimmer +8% (competitive pricing), S&N +7% (market share hungry).
+                    Adjustments based on vendor positioning: Premium vendors (-10%), Value-focused vendors (+8%), Market-share-seeking vendors (+7%).
                     <br/>
                     <strong className="mt-1 inline-block">Implementation:</strong> Pricing caps are enforced through contract language requiring vendors to bundle implant components at or below the construct price cap ($2,500 knee / $3,000 hip).
                   </div>
@@ -1528,7 +1531,7 @@ const EnhancedOrthopedicDashboard = () => {
               The purple line shows cumulative % of total system spend captured. Markers show where you reach 70%, 80%, and 90% of system spend - helping you prioritize which hospitals to focus on for maximum impact. Y-axis scaled to 95th percentile for clarity.
             </p>
             <p className="text-sm text-blue-800">
-              <strong>Risk Score Calculation (0-10):</strong> Base risk is determined by the number of high-volume loyalists (surgeons with >200 cases/year loyal to non-scenario vendors)
+              <strong>Risk Score Calculation (0-10):</strong> Base risk is determined by the number of high-volume loyalists (surgeons with {'>'}200 cases/year loyal to non-scenario vendors)
               and available sherpa support ratio (experienced aligned surgeons who can mentor). This base risk is then adjusted by a volume multiplier based on total cases at risk:
               ×1.4 for ≥300 cases, ×1.3 for ≥200 cases, ×1.2 for ≥150 cases, ×1.1 for ≥100 cases, and ×0.8 for ≤30 cases. Higher scores indicate more challenging transitions requiring focused resources.
             </p>

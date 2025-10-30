@@ -341,6 +341,8 @@ const SurgeonTool = () => {
     if (!selectedSurgeon) return null;
 
     const scenario = scenarios[selectedScenario];
+    if (!scenario || !scenario.vendors) return null;
+
     const approvedVendors = scenario.vendors;
 
     const mustSwitch = !approvedVendors.includes(selectedSurgeon.primaryVendor);
@@ -803,6 +805,8 @@ const SurgeonTool = () => {
   const calculateAllScenarios = (surgeon) => {
     return Object.keys(scenarios).map(key => {
       const scenario = scenarios[key];
+      if (!scenario || !scenario.vendors) return null;
+
       const approvedVendors = scenario.vendors;
       const mustSwitch = !approvedVendors.includes(surgeon.primaryVendor);
       const affectedSpend = surgeon.vendorBreakdown
@@ -1162,17 +1166,17 @@ const SurgeonTool = () => {
             // Scenario projections: "surgeons" = loyalists (>85% spend) with non-approved vendors who'd need to switch
             scenarioProjections: {
               'A': { potential: 0, surgeons: 0, adoptionRate: 0 }, // Status Quo - no change
-              'B': { potential: 1200000, surgeons: 45, adoptionRate: 0.13 }, // Tri-Source
-              'C': { potential: 1400000, surgeons: 65, adoptionRate: 0.31 }, // Zimmer + J&J
-              'D': { potential: 1600000, surgeons: 78, adoptionRate: 0.38 }, // Stryker + Zimmer
-              'E': { potential: 2800000, surgeons: 142, adoptionRate: 0.42 }, // Stryker + J&J
-              'F': { potential: 2100000, surgeons: 89, adoptionRate: 0.28 }, // Zimmer Only
-              'G': { potential: 1800000, surgeons: 67, adoptionRate: 0.23 }  // Stryker Only
+              'B': { potential: 1200000, surgeons: 45, adoptionRate: 0.13 }, // Three-Vendor Strategy
+              'C': { potential: 1400000, surgeons: 65, adoptionRate: 0.31 }, // Two-Vendor Strategy (Value)
+              'D': { potential: 1600000, surgeons: 78, adoptionRate: 0.38 }, // Two-Vendor Strategy (Premium)
+              'E': { potential: 2800000, surgeons: 142, adoptionRate: 0.42 }, // Two-Vendor Strategy (Innovation)
+              'F': { potential: 2100000, surgeons: 89, adoptionRate: 0.28 }, // Single-Vendor Strategy (Vendor 1)
+              'G': { potential: 1800000, surgeons: 67, adoptionRate: 0.23 }  // Single-Vendor Strategy (Vendor 2)
             },
             clinicalData: {
-              survivorship: { 'STRYKER': 97.2, 'ZIMMER BIOMET': 96.8, 'J&J': 97.1, benchmark: 96.5 },
-              complications: { 'STRYKER': 1.8, 'ZIMMER BIOMET': 1.9, 'J&J': 1.7, national: 2.1 },
-              revisionRates: { 'STRYKER': 2.1, 'ZIMMER BIOMET': 2.3, 'J&J': 2.2, national: 3.2 }
+              survivorship: { 'VENDOR 1': 97.2, 'VENDOR 2': 96.8, 'VENDOR 3': 97.1, benchmark: 96.5 },
+              complications: { 'VENDOR 1': 1.8, 'VENDOR 2': 1.9, 'VENDOR 3': 1.7, national: 2.1 },
+              revisionRates: { 'VENDOR 1': 2.1, 'VENDOR 2': 2.3, 'VENDOR 3': 2.2, national: 3.2 }
             },
             qualityTrends: {
               readmission: { before: 3.2, after: 2.8, change: -12.5 },
@@ -1307,6 +1311,8 @@ const SurgeonTool = () => {
             {individualTab === 'overview' && (() => {
               // Calculate status metrics
               const currentScenario = scenarios[selectedScenario];
+              if (!currentScenario || !currentScenario.vendors) return null;
+
               const mustSwitch = !currentScenario.vendors.includes(selectedSurgeon.primaryVendor);
               const qualitySurgeons = surgeonData.filter(s =>
                 (s.totalCases || 0) >= 100 &&
@@ -1488,7 +1494,7 @@ const SurgeonTool = () => {
                           .sort((a, b) => b.spend - a.spend)
                           .map((vendor, idx) => {
                             const percentage = (vendor.spend / displayData.totalSpend) * 100;
-                            const isPreferred = currentScenario.vendors.includes(vendor.vendor);
+                            const isPreferred = currentScenario && currentScenario.vendors ? currentScenario.vendors.includes(vendor.vendor) : false;
 
                             return (
                               <div key={idx} className="space-y-1">

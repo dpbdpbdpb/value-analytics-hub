@@ -40,7 +40,7 @@ const LandingPage = () => {
       name: 'Hip & Knee',
       icon: Activity,
       description: 'Total joint arthroplasty - value-based optimization',
-      vendors: ['Zimmer Biomet', 'Stryker', 'J&J'],
+      vendors: ['Vendor 1', 'Vendor 2', 'Vendor 3'],
       status: 'active',
       color: '#BA4896'
     },
@@ -49,7 +49,7 @@ const LandingPage = () => {
       name: 'Sports Medicine',
       icon: Heart,
       description: 'Arthroscopic procedures, ligament repair, biologics',
-      vendors: ['Arthrex', 'Smith & Nephew', 'ConMed', 'Stryker'],
+      vendors: ['Vendor 1', 'Vendor 2', 'Vendor 3', 'Vendor 4'],
       status: 'coming-soon',
       color: '#F59E0B'
     },
@@ -58,7 +58,7 @@ const LandingPage = () => {
       name: 'Trauma',
       icon: Activity,
       description: 'Fracture fixation, plates, screws, intramedullary nails',
-      vendors: ['Synthes (J&J)', 'Stryker Trauma', 'Zimmer Biomet'],
+      vendors: ['Vendor 1', 'Vendor 2', 'Vendor 3'],
       status: 'coming-soon',
       color: '#EF4444'
     },
@@ -67,7 +67,7 @@ const LandingPage = () => {
       name: 'Shoulder',
       icon: Users,
       description: 'Anatomic and reverse shoulder arthroplasty',
-      vendors: ['Zimmer Biomet', 'Stryker', 'DePuy', 'Wright Medical'],
+      vendors: ['Vendor 1', 'Vendor 2', 'Vendor 3', 'Vendor 4'],
       status: 'coming-soon',
       color: '#8B5CF6'
     },
@@ -76,7 +76,7 @@ const LandingPage = () => {
       name: 'Spine',
       icon: Activity,
       description: 'Spinal fusion, instrumentation, and biologics',
-      vendors: ['Medtronic', 'DePuy Synthes', 'NuVasive', 'Stryker'],
+      vendors: ['Vendor 1', 'Vendor 2', 'Vendor 3', 'Vendor 4'],
       status: 'coming-soon',
       color: '#14B8A6'
     }

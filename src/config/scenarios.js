@@ -15,26 +15,21 @@ export const SCENARIO_IDS = {
   DUAL_INNOVATION: 'dual-innovation'
 };
 
-// Helper to format vendor names for display
+// Helper to format vendor names for display (using generic names for synthetic data)
 const formatVendorNames = (vendors) => {
   if (!vendors || vendors.length === 0) return '';
-  const shortNames = vendors.map(v => {
-    const upper = v.toUpperCase();
-    if (upper.includes('ZIMMER')) return 'Zimmer';
-    if (upper.includes('STRYKER')) return 'Stryker';
-    if (upper.includes('J&J') || upper.includes('JOHNSON')) return 'J&J';
-    if (upper.includes('SMITH')) return 'Smith & Nephew';
-    return v;
-  });
-  return shortNames.join(' + ');
+
+  // Use generic vendor numbers for synthetic data
+  const genericNames = vendors.map((v, index) => `Vendor ${index + 1}`);
+  return genericNames.join(' + ');
 };
 
 export const SCENARIO_NAMES = {
   [SCENARIO_IDS.STATUS_QUO]: 'Status Quo',
-  [SCENARIO_IDS.TRI_VENDOR]: 'Tri-Source (Zimmer + Stryker + J&J)',
-  [SCENARIO_IDS.DUAL_PREMIUM]: 'Stryker + Zimmer',
-  [SCENARIO_IDS.DUAL_VALUE]: 'Zimmer + J&J',
-  [SCENARIO_IDS.DUAL_INNOVATION]: 'Stryker + J&J'
+  [SCENARIO_IDS.TRI_VENDOR]: 'Three-Vendor Strategy',
+  [SCENARIO_IDS.DUAL_PREMIUM]: 'Two-Vendor Strategy (Premium)',
+  [SCENARIO_IDS.DUAL_VALUE]: 'Two-Vendor Strategy (Value)',
+  [SCENARIO_IDS.DUAL_INNOVATION]: 'Two-Vendor Strategy (Innovation)'
 };
 
 const DEFAULT_AGENT_SCORES = {
@@ -201,21 +196,15 @@ export const calculatePricingCapMetrics = (vendors, realData) => {
   }
 
   // Vendor characteristic adjustments
-  const vendorNames = vendors.map(v => v.toUpperCase());
+  // Note: For synthetic data, we use generic adjustments based on vendor count
+  // In production, vendor-specific characteristics would be applied
 
-  // Premium vendors less willing to discount deeply
-  if (vendorNames.includes('STRYKER')) {
-    feasibility -= 0.10; // Premium brand, less flexible on pricing caps
-  }
-
-  // Value-focused vendors more willing to accept pricing caps
-  if (vendorNames.includes('JOHNSON & JOHNSON') || vendorNames.includes('ZIMMER BIOMET')) {
-    feasibility += 0.08; // More flexible, competitive pricing strategies
-  }
-
-  // Smaller vendors more willing to compete
-  if (vendorNames.includes('SMITH & NEPHEW') && vendors.length <= 3) {
-    feasibility += 0.07; // Hungry for market share
+  // Adjust based on vendor positioning (generic for synthetic data)
+  // Assume a balanced mix of premium and value vendors
+  if (vendors.length === 2) {
+    feasibility += 0.05; // Dual vendor creates strong leverage
+  } else if (vendors.length === 3) {
+    feasibility += 0.03; // Balanced competition
   }
 
   // Cap between 15% and 75%
@@ -270,14 +259,20 @@ export const generateScenarios = (realData) => {
     const dataScenario = realData.scenarios[scenarioId];
     const vendors = dataScenario.vendors || [];
 
-    // Generate vendor-based name
+    // Generate vendor-based name (using generic names for synthetic data)
     let displayName;
     if (scenarioId === 'status-quo') {
       displayName = 'Status Quo';
     } else if (vendors.length === 1) {
-      displayName = `Single Vendor (${formatVendorNames(vendors)})`;
+      displayName = `Single-Vendor Strategy (Vendor 1)`;
+    } else if (vendors.length === 2) {
+      displayName = `Two-Vendor Strategy (Vendors 1-2)`;
+    } else if (vendors.length === 3) {
+      displayName = `Three-Vendor Strategy (Vendors 1-3)`;
+    } else if (vendors.length === 4) {
+      displayName = `Four-Vendor Strategy (Vendors 1-4)`;
     } else {
-      displayName = formatVendorNames(vendors);
+      displayName = `Multi-Vendor Strategy (${vendors.length} vendors)`;
     }
 
     scenarios[scenarioId] = {
