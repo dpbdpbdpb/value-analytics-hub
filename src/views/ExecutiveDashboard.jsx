@@ -575,7 +575,7 @@ const EnhancedOrthopedicDashboard = () => {
               <CheckCircle className="w-6 h-6 text-green-600" />
               <div>
                 <div className="font-bold text-green-900">
-                  Real CommonSpirit Data Loaded
+                  Synthetic Data Loaded for Demonstration
                   {filterProcedureType !== 'all' && (
                     <span className="ml-2 text-sm text-green-700">
                       (Filtered: {filterProcedureType === 'primary' ? 'Primary' : 'Revision'} Only)
@@ -585,7 +585,7 @@ const EnhancedOrthopedicDashboard = () => {
                 <div className="text-sm text-green-700">
                   {filteredRealData.metadata.totalCases.toLocaleString()} cases |
                   ${(filteredRealData.metadata.totalSpend / 1000000).toFixed(2)}M total spend |
-                  Last updated: {new Date(realData.metadata.lastUpdated).toLocaleString()}
+                  Data version: {realData.metadata.version || '1.0'}
                 </div>
               </div>
             </div>
