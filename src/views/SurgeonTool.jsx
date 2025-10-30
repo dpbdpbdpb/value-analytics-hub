@@ -113,6 +113,11 @@ const SurgeonTool = () => {
 
             // Convert to array and sort by spend
             surgeon.topComponents = Object.values(componentsByCategory)
+              .map(comp => ({
+                ...comp,
+                quantity: Math.round(comp.quantity), // Round to integer
+                avgPrice: comp.quantity > 0 ? comp.spend / comp.quantity : 0
+              }))
               .sort((a, b) => b.spend - a.spend)
               .slice(0, 20); // Top 20 components
           }
@@ -2237,12 +2242,27 @@ const SurgeonTool = () => {
               });
 
               // Separate hip and knee components
-              const hipComponents = Object.values(componentsByName).filter(c =>
-                c.bodyPart === 'Hip' || c.name.toLowerCase().includes('hip')
-              );
-              const kneeComponents = Object.values(componentsByName).filter(c =>
-                c.bodyPart === 'Knee' || c.name.toLowerCase().includes('knee')
-              );
+              // Many components have bodyPart='General' so we need to check names too
+              const isHipComponent = (c) => {
+                const name = c.name.toLowerCase();
+                return c.bodyPart === 'Hip' ||
+                       name.includes('hip') ||
+                       name.includes('femoral head') ||
+                       name.includes('acetabular') ||
+                       name.includes('femoral stem');
+              };
+
+              const isKneeComponent = (c) => {
+                const name = c.name.toLowerCase();
+                return c.bodyPart === 'Knee' ||
+                       name.includes('knee') ||
+                       name.includes('tibial') ||
+                       name.includes('patellar') ||
+                       name.includes('femoral component');
+              };
+
+              const hipComponents = Object.values(componentsByName).filter(isHipComponent);
+              const kneeComponents = Object.values(componentsByName).filter(isKneeComponent);
 
               // Calculate construct totals for each vendor
               const calculateConstructTotal = (components, vendor) => {
