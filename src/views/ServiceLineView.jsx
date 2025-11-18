@@ -237,7 +237,7 @@ const ServiceLineView = () => {
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Product Lines</h2>
             <p className="text-gray-600 mb-6">
-              Select a product line to view active decision canvases and lookbacks
+              Select a product line to view active decision canvases and monitoring checkpoints
             </p>
           </div>
 
@@ -340,7 +340,7 @@ const ServiceLineView = () => {
                 <ul className="text-blue-800 text-sm space-y-1">
                   <li>• <strong>Click a product line</strong> to see all decision canvases</li>
                   <li>• <strong>Decision canvases</strong> include tri-pillar analyses and scenario modeling</li>
-                  <li>• <strong>Lookbacks</strong> track actual vs. predicted performance for continuous learning</li>
+                  <li>• <strong>Monitoring</strong> tracks actual vs. predicted performance for continuous learning</li>
                 </ul>
               </div>
             </div>

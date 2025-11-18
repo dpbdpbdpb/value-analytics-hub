@@ -73,10 +73,10 @@ function updateWorkflowDates(filePath) {
       ],
       notes: 'Timeline dependent on scenario selection and stakeholder alignment'
     },
-    'lookback': {
+    'monitoring': {
       status: 'upcoming',
       scheduledDate: addMonths(today, 19), // 3 months after implementation
-      notes: 'First lookback scheduled 3 months post-implementation to validate assumptions'
+      notes: 'First monitoring checkpoint scheduled 3 months post-implementation to validate assumptions'
     },
     'renewal': {
       status: 'upcoming',
@@ -95,7 +95,7 @@ function updateWorkflowDates(filePath) {
   console.log(`   - Current stage: sourcing-review (active)`);
   console.log(`   - Decision scheduled: ${workflow.stages['decision'].scheduledDate}`);
   console.log(`   - Implementation: ${workflow.stages['implementation'].expectedStart} - ${workflow.stages['implementation'].expectedCompletion}`);
-  console.log(`   - Lookback: ${workflow.stages['lookback'].scheduledDate}`);
+  console.log(`   - Monitoring checkpoint: ${workflow.stages['monitoring'].scheduledDate}`);
   console.log(`   - Contract expiration: ${workflow.stages['renewal'].contractExpirationDate}`);
 }
 

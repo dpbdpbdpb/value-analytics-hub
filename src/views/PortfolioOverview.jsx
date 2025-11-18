@@ -184,7 +184,7 @@ const PortfolioOverview = () => {
                     <div>1. Define assumptions & analyze scenarios</div>
                     <div>2. Make tradeoffs explicit & transparent</div>
                     <div>3. All three pillars own the decision</div>
-                    <div>4. Track metrics & conduct lookbacks</div>
+                    <div>4. Track metrics & conduct monitoring</div>
                   </div>
                 </div>
               </div>
@@ -301,7 +301,7 @@ const PortfolioOverview = () => {
                     <li>• <strong>Service Lines</strong> → High-level clinical service areas</li>
                     <li>• <strong>Product Lines</strong> → Specific procedure/product categories within each service</li>
                     <li>• <strong>Decision Canvases</strong> → Tri-pillar analyses with scenario modeling and clear tradeoffs</li>
-                    <li>• <strong>Lookbacks</strong> → Performance tracking against assumptions to drive continuous improvement</li>
+                    <li>• <strong>Monitoring</strong> → Performance tracking against assumptions to drive continuous improvement</li>
                   </ul>
                   <p className="mt-3 italic">
                     Every decision is owned by all three pillars, with metrics to validate assumptions and drive learning.

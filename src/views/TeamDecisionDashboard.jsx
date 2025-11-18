@@ -415,54 +415,7 @@ const TeamDecisionDashboard = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {/* Finance Section Header */}
-                      <tr className="bg-amber-50">
-                        <td colSpan={Object.keys(SCENARIOS).length + 1} className="px-4 py-2">
-                          <div className="flex items-center gap-2">
-                            <DollarSign className="w-5 h-5 text-amber-700" />
-                            <span className="font-bold text-amber-900 uppercase tracking-wide text-sm">Finance - Funding the Mission</span>
-                          </div>
-                        </td>
-                      </tr>
-
-                      {/* Annual Savings */}
-                      <tr className="border-b hover:bg-amber-25">
-                        <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-white z-10">
-                          Annual Savings
-                        </td>
-                        {Object.entries(SCENARIOS).map(([id, scenario]) => (
-                          <td
-                            key={id}
-                            className={`px-4 py-4 text-center ${selectedScenario === id ? 'bg-purple-50' : ''}`}
-                          >
-                            <div className="font-bold text-green-600 text-lg">
-                              {formatCurrency(scenario.annualSavings || 0, { millions: true })}
-                            </div>
-                            <div className="text-xs text-gray-500 mt-1">
-                              {((scenario.savingsPercent || 0) * 100).toFixed(1)}% reduction
-                            </div>
-                          </td>
-                        ))}
-                      </tr>
-
-                      {/* 5-Year NPV */}
-                      <tr className="border-b hover:bg-amber-25">
-                        <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-white z-10">
-                          5-Year NPV
-                        </td>
-                        {Object.entries(SCENARIOS).map(([id, scenario]) => (
-                          <td
-                            key={id}
-                            className={`px-4 py-4 text-center ${selectedScenario === id ? 'bg-purple-50' : ''}`}
-                          >
-                            <div className="font-bold text-purple-600 text-lg">
-                              {formatCurrency(scenario.npv5Year || 0, { millions: true })}
-                            </div>
-                          </td>
-                        ))}
-                      </tr>
-
-                      {/* Clinical Section Header */}
+                      {/* Clinical Section Header (moved first) */}
                       <tr className="bg-blue-50 border-t-2 border-gray-200">
                         <td colSpan={Object.keys(SCENARIOS).length + 1} className="px-4 py-2">
                           <div className="flex items-center gap-2">
@@ -515,7 +468,7 @@ const TeamDecisionDashboard = () => {
                         ))}
                       </tr>
 
-                      {/* Operations Section Header */}
+                      {/* Operations Section Header (second) */}
                       <tr className="bg-green-50 border-t-2 border-gray-200">
                         <td colSpan={Object.keys(SCENARIOS).length + 1} className="px-4 py-2">
                           <div className="flex items-center gap-2">
@@ -581,6 +534,53 @@ const TeamDecisionDashboard = () => {
                               {scenario.riskLevel === 'low' ? 'Low Risk' :
                                scenario.riskLevel === 'medium' || scenario.riskLevel === 'medium-high' ? 'Moderate Risk' :
                                'High Risk'}
+                            </div>
+                          </td>
+                        ))}
+                      </tr>
+
+                      {/* Finance Section Header (moved last) */}
+                      <tr className="bg-amber-50">
+                        <td colSpan={Object.keys(SCENARIOS).length + 1} className="px-4 py-2">
+                          <div className="flex items-center gap-2">
+                            <DollarSign className="w-5 h-5 text-amber-700" />
+                            <span className="font-bold text-amber-900 uppercase tracking-wide text-sm">Finance - Funding the Mission</span>
+                          </div>
+                        </td>
+                      </tr>
+
+                      {/* Annual Savings */}
+                      <tr className="border-b hover:bg-amber-25">
+                        <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                          Annual Savings
+                        </td>
+                        {Object.entries(SCENARIOS).map(([id, scenario]) => (
+                          <td
+                            key={id}
+                            className={`px-4 py-4 text-center ${selectedScenario === id ? 'bg-purple-50' : ''}`}
+                          >
+                            <div className="font-bold text-green-600 text-lg">
+                              {formatCurrency(scenario.annualSavings || 0, { millions: true })}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {((scenario.savingsPercent || 0) * 100).toFixed(1)}% reduction
+                            </div>
+                          </td>
+                        ))}
+                      </tr>
+
+                      {/* 5-Year NPV */}
+                      <tr className="border-b hover:bg-amber-25">
+                        <td className="px-4 py-4 font-semibold text-gray-700 sticky left-0 bg-white z-10">
+                          5-Year NPV
+                        </td>
+                        {Object.entries(SCENARIOS).map(([id, scenario]) => (
+                          <td
+                            key={id}
+                            className={`px-4 py-4 text-center ${selectedScenario === id ? 'bg-purple-50' : ''}`}
+                          >
+                            <div className="font-bold text-purple-600 text-lg">
+                              {formatCurrency(scenario.npv5Year || 0, { millions: true })}
                             </div>
                           </td>
                         ))}
@@ -727,7 +727,7 @@ const TeamDecisionDashboard = () => {
                   <ul className="space-y-2 text-sm text-blue-800">
                     <li>• Each assumption has defined validation metrics</li>
                     <li>• Regular review cadence (monthly or quarterly)</li>
-                    <li>• Status updates in lookback/retrospective sessions</li>
+                    <li>• Status updates in monitoring/retrospective sessions</li>
                     <li>• Triggers decision to <strong>Persevere</strong>, <strong>Pivot</strong>, or <strong>Stop</strong></li>
                   </ul>
                 </div>

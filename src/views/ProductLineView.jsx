@@ -1,7 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronRight, ArrowLeft, Target, BarChart3, Users, Stethoscope, DollarSign, Settings, Search, CheckCircle, Wrench, TrendingUp, RotateCcw, Calendar } from 'lucide-react';
+import { ChevronRight, ArrowLeft, Target, BarChart3, Users, Stethoscope, DollarSign, Settings, Search, CheckCircle, FileSignature, Wrench, TrendingUp, RotateCcw, Calendar } from 'lucide-react';
 import NavigationHeader from '../components/shared/NavigationHeader';
+
+const ARC_HEIGHT = 200;
+
+const formatContractDate = (value) => {
+  if (!value) return 'TBD';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
 
 const ProductLineView = () => {
   const navigate = useNavigate();
@@ -36,6 +45,13 @@ const ProductLineView = () => {
         relevantCanvases: ['team-decision', 'financial-view']
       },
       {
+        id: 'contract-execution',
+        name: 'Contract Execution',
+        icon: FileSignature,
+        description: 'Execute contracts and onboard vendors',
+        relevantCanvases: ['team-decision', 'financial-view']
+      },
+      {
         id: 'implementation',
         name: 'Implementation',
         icon: Wrench,
@@ -43,10 +59,10 @@ const ProductLineView = () => {
         relevantCanvases: ['operational-view', 'surgeon-analytics']
       },
       {
-        id: 'lookback',
-        name: 'Lookback Analysis',
+        id: 'monitoring',
+        name: 'Contract Management & Performance Monitoring',
         icon: TrendingUp,
-        description: 'Track actual vs. predicted performance',
+        description: 'Ongoing vendor management and performance tracking (custom KPIs by product line)',
         relevantCanvases: ['team-decision', 'clinical-view', 'financial-view']
       },
       {
@@ -77,6 +93,38 @@ const ProductLineView = () => {
   };
 
   const workflowStages = React.useMemo(() => getWorkflowStages(), [orthoData]);
+
+  const cycleMetadata = {
+    currentCycle: orthoData?.workflowTracking?.cycleMetadata?.currentCycle || 1,
+    contractYear: orthoData?.workflowTracking?.cycleMetadata?.contractYear || 2,
+    contractStartDate: orthoData?.workflowTracking?.cycleMetadata?.contractStartDate || '2024-01-01',
+    contractLength: orthoData?.workflowTracking?.cycleMetadata?.contractLength || 3
+  };
+
+  const contractEndDate = React.useMemo(() => {
+    const start = new Date(cycleMetadata.contractStartDate);
+    if (Number.isNaN(start.getTime())) return cycleMetadata.contractStartDate;
+    const end = new Date(start);
+    end.setFullYear(end.getFullYear() + (cycleMetadata.contractLength || 1));
+    return end.toISOString().split('T')[0];
+  }, [cycleMetadata.contractStartDate, cycleMetadata.contractLength]);
+
+  const formattedContractStart = formatContractDate(cycleMetadata.contractStartDate);
+  const formattedContractEnd = formatContractDate(contractEndDate);
+
+  const positionedStages = React.useMemo(() => {
+    if (!workflowStages || workflowStages.length === 0) return [];
+    // Distribute stages evenly along a semi-circle (0deg -> 180deg)
+    const count = workflowStages.length;
+    return workflowStages.map((stage, index) => {
+      const angleDeg = count > 1 ? (index * 180) / (count - 1) : 90; // degrees
+      const angleRad = (angleDeg * Math.PI) / 180;
+      // leftPercent is mapped 0deg (left) -> 100% (right)
+      const leftPercent = (index * 100) / (count - 1);
+      const topOffset = Math.sin(angleRad) * ARC_HEIGHT * -1 + ARC_HEIGHT; // invert so arc goes upward
+      return { stage, leftPercent, topOffset, angleDeg };
+    });
+  }, [workflowStages]);
 
   // Load orthopedic data based on product line
   useEffect(() => {
@@ -167,6 +215,15 @@ const ProductLineView = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <style>{`
+        @keyframes spin-slow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+          animation: spin-slow 10s linear infinite;
+        }
+      `}</style>
       <NavigationHeader role="portfolio" persona="portfolio" />
 
       <div className="p-6">
@@ -285,92 +342,127 @@ const ProductLineView = () => {
               </div>
             </div>
 
-            {/* Workflow Timeline */}
-            <div className="relative">
-              {/* Connection Line */}
-              <div className="absolute top-8 left-0 right-0 h-1 bg-gray-200" style={{ width: 'calc(100% - 60px)', left: '30px' }}></div>
-
-              {/* Stages */}
-              <div className="relative grid grid-cols-5 gap-4">
-                {workflowStages.map((stage, idx) => {
-                  const IconComponent = stage.icon;
-                  const isActive = stage.status === 'active';
-                  const isCompleted = stage.status === 'completed';
-                  const isUpcoming = stage.status === 'upcoming';
-
-                  return (
-                    <div key={stage.id} className="flex flex-col items-center">
-                      {/* Icon Circle */}
-                      <div className={`relative z-10 w-16 h-16 rounded-full flex items-center justify-center mb-3 border-4 transition-all ${
-                        isCompleted
-                          ? 'bg-green-500 border-green-600'
-                          : isActive
-                          ? 'bg-blue-500 border-blue-600 ring-4 ring-blue-200 animate-pulse'
-                          : 'bg-gray-300 border-gray-400'
-                      }`}>
-                        <IconComponent className={`w-7 h-7 ${isCompleted || isActive ? 'text-white' : 'text-gray-600'}`} />
-                      </div>
-
-                      {/* Stage Info */}
-                      <div className={`text-center ${isActive ? 'bg-blue-50 rounded-lg p-3 border-2 border-blue-200' : ''}`}>
-                        <div className={`font-bold text-sm mb-1 ${
-                          isCompleted ? 'text-green-900' : isActive ? 'text-blue-900' : 'text-gray-600'
-                        }`}>
-                          {stage.name}
-                        </div>
-                        <div className="text-xs text-gray-600 mb-2">{stage.description}</div>
-
-                        {/* Status Badge */}
-                        <div className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
-                          isCompleted
-                            ? 'bg-green-100 text-green-800'
-                            : isActive
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-gray-100 text-gray-600'
-                        }`}>
-                          {isCompleted ? '✓ Complete' : isActive ? '⚡ In Progress' : '⏳ Upcoming'}
-                        </div>
-
-                        {/* Dates */}
-                        {stage.decisionDate && (
-                          <div className="text-xs text-gray-500 mt-2">
-                            <Calendar className="w-3 h-3 inline mr-1" />
-                            {stage.decisionDate}
-                          </div>
-                        )}
-                        {stage.expectedCompletion && isActive && (
-                          <div className="text-xs text-blue-600 mt-2 font-semibold">
-                            <Calendar className="w-3 h-3 inline mr-1" />
-                            Due: {stage.expectedCompletion}
-                          </div>
-                        )}
-                        {stage.scheduledDate && isUpcoming && (
-                          <div className="text-xs text-gray-500 mt-2">
-                            <Calendar className="w-3 h-3 inline mr-1" />
-                            Scheduled: {stage.scheduledDate}
-                          </div>
-                        )}
-                        {stage.contractExpirationDate && (
-                          <div className="text-xs text-gray-500 mt-2">
-                            <Calendar className="w-3 h-3 inline mr-1" />
-                            Expires: {stage.contractExpirationDate}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+            {/* Cycle Metadata Banner */}
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-200 gap-4">
+              <div>
+                <div className="text-sm text-gray-600">Contract Cycle</div>
+                <div className="text-2xl font-bold text-blue-900">Cycle {cycleMetadata.currentCycle}</div>
+                <div className="text-xs text-gray-600">Year {cycleMetadata.contractYear} of {cycleMetadata.contractLength}</div>
+              </div>
+              <div className="text-left md:text-right">
+                <div className="text-sm text-gray-600">Contract Period</div>
+                <div className="text-lg font-bold text-gray-900">{formattedContractStart} - {formattedContractEnd}</div>
               </div>
             </div>
 
+            {/* Arc Layout for desktop */}
+            <div className="relative hidden md:block h-[360px]">
+              <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 1000 320" preserveAspectRatio="none">
+                <defs>
+                  <marker id="workflow-arrow" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto" markerUnits="strokeWidth">
+                    <path d="M0,0 L0,6 L6,3 z" fill="#1d4ed8" />
+                  </marker>
+                  <marker id="loop-head" markerWidth="12" markerHeight="12" refX="6" refY="6" orient="auto" markerUnits="strokeWidth">
+                    <path d="M2,2 L10,6 L2,10 z" fill="#1d4ed8" />
+                  </marker>
+                </defs>
+                {/* main arc */}
+                <path d="M 80 260 Q 500 60 920 260" fill="none" stroke="#cbd5f5" strokeWidth="3" strokeLinecap="round" />
+                {/* subtle arrow near end to indicate direction */}
+                <path d="M 820 240 Q 920 180 880 90" fill="none" stroke="#1d4ed8" strokeWidth="2" markerEnd="url(#workflow-arrow)" strokeDasharray="6 4" />
+                {/* loop-back arrow from end back to start to show cycle returns */}
+                <path d="M 900 220 Q 500 320 120 220" fill="none" stroke="#1d4ed8" strokeWidth="2" markerEnd="url(#loop-head)" strokeDasharray="4 4" opacity="0.95" />
+              </svg>
+
+              {positionedStages.map(({ stage, leftPercent, topOffset }, idx) => {
+                const IconComponent = stage.icon;
+                const isActive = stage.status === 'active';
+                const isCompleted = stage.status === 'completed';
+                const isUpcoming = stage.status === 'upcoming';
+                return (
+                  <div
+                    key={stage.id}
+                    className="absolute flex flex-col items-center w-40"
+                    style={{ left: `calc(${leftPercent}% - 70px)`, top: `${topOffset}px` }}
+                  >
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-3 border-4 transition-all ${
+                      isCompleted
+                        ? 'bg-green-500 border-green-600'
+                        : isActive
+                        ? 'bg-blue-500 border-blue-600 ring-4 ring-blue-200 animate-pulse'
+                        : 'bg-gray-300 border-gray-400'
+                    }`}>
+                      <IconComponent className={`w-7 h-7 ${isCompleted || isActive ? 'text-white' : 'text-gray-600'}`} />
+                    </div>
+                    <div className={`text-center px-3 py-2 rounded-xl shadow ${
+                      isActive ? 'bg-blue-50 border border-blue-200' : 'bg-white border border-gray-200'
+                    }`}>
+                      <div className={`font-bold text-sm mb-1 ${
+                        isCompleted ? 'text-green-900' : isActive ? 'text-blue-900' : 'text-gray-600'
+                      }`}>{stage.name}</div>
+                      <div className="text-xs text-gray-600 mb-2">{stage.description}</div>
+                      <div className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
+                        isCompleted
+                          ? 'bg-green-100 text-green-800'
+                          : isActive
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {isCompleted ? '✓ Complete' : isActive ? '⚡ In Progress' : '⏳ Upcoming'}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Mobile fallback */}
+            <div className="md:hidden space-y-5">
+              {workflowStages.map((stage) => {
+                const IconComponent = stage.icon;
+                const isActive = stage.status === 'active';
+                const isCompleted = stage.status === 'completed';
+                const isUpcoming = stage.status === 'upcoming';
+                return (
+                  <div key={stage.id} className={`p-4 rounded-xl border ${
+                    isActive ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-white'
+                  }`}>
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        isCompleted ? 'bg-green-500 text-white' : isActive ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-600'
+                      }`}>
+                        <IconComponent className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="font-semibold text-sm text-gray-900">{stage.name}</div>
+                        <div className="text-xs text-gray-600">{stage.description}</div>
+                      </div>
+                    </div>
+                    <div className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
+                      isCompleted
+                        ? 'bg-green-100 text-green-800'
+                        : isActive
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      {isCompleted ? '✓ Complete' : isActive ? '⚡ In Progress' : '⏳ Upcoming'}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
             {/* Cycle Note */}
-            <div className="mt-6 bg-slate-50 border border-slate-200 rounded-lg p-4 flex items-start gap-3">
-              <RotateCcw className="w-5 h-5 text-slate-600 flex-shrink-0 mt-0.5" />
+            <div className="mt-6 bg-gradient-to-r from-slate-50 to-blue-50 border-2 border-slate-300 rounded-lg p-5 flex items-start gap-4">
+              <RotateCcw className="w-8 h-8 text-blue-600 flex-shrink-0 mt-0.5 animate-spin-slow" />
               <div>
-                <div className="font-bold text-slate-900 mb-1">Continuous Improvement Cycle</div>
-                <p className="text-sm text-slate-700">
+                <div className="font-bold text-slate-900 mb-2 text-lg">Continuous Improvement Cycle</div>
+                <p className="text-sm text-slate-700 mb-2">
                   After Contract Renewal Review, the cycle returns to Sourcing Strategy Review. This iterative process ensures
                   continuous optimization of vendor relationships, clinical outcomes, and financial performance.
+                </p>
+                <p className="text-xs text-slate-600 italic">
+                  Note: Monitoring KPIs and strategic priorities may vary between cycles and product lines based on organizational needs.
                 </p>
               </div>
             </div>

@@ -741,9 +741,9 @@ const AdminDataUpload = () => {
             status: 'upcoming',
             notes: 'Implementation phase will begin after decision is made'
           },
-          'lookback': {
+          'monitoring': {
             status: 'upcoming',
-            notes: 'Lookback analysis will occur post-implementation'
+            notes: 'Monitoring and performance tracking will occur post-implementation'
           },
           'renewal': {
             status: 'upcoming',

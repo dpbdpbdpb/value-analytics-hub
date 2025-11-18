@@ -14,6 +14,22 @@
     "facilities": 20,
     "totalHospitals": 50
   },
+  "workflowTracking": {
+    "cycleMetadata": {
+      "currentCycle": 1,
+      "contractYear": 2,
+      "contractStartDate": "2024-01-01",
+      "contractLength": 3
+    },
+    "stages": {
+      "sourcing-review": { "status": "completed" },
+      "decision": { "status": "completed" },
+      "contract-execution": { "status": "completed" },
+      "implementation": { "status": "active" },
+      "monitoring": { "status": "upcoming" },
+      "renewal": { "status": "upcoming" }
+    }
+  },
   "vendors": {
     "VENDOR-ETA": {
       "totalSpend": 461766.74,
@@ -53875,6 +53891,12 @@
   "workflowTracking": {
     "currentStage": "sourcing-review",
     "lastUpdated": "2025-10-23T20:09:06.684Z",
+    "cycleMetadata": {
+      "currentCycle": 1,
+      "contractYear": 2,
+      "contractStartDate": "2024-01-01",
+      "contractLength": 3
+    },
     "stages": {
       "sourcing-review": {
         "status": "active",
@@ -53884,6 +53906,10 @@
       "decision": {
         "status": "upcoming",
         "notes": "Decision phase will begin after sourcing review completion"
+      },
+      "contract-execution": {
+        "status": "upcoming",
+        "notes": "Contract execution pending decision approval"
       },
       "implementation": {
         "status": "upcoming",
