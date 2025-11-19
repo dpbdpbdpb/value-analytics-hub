@@ -10,25 +10,30 @@ const ServiceLineView = () => {
   const [shoulderData, setShoulderData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Load orthopedic data
+  // Load data based on service line
   useEffect(() => {
-    const hipKneePath = `${process.env.PUBLIC_URL}/data/hip-knee-data.json`;
-    const shoulderPath = `${process.env.PUBLIC_URL}/data/shoulder-data.json`;
+    if (serviceLineId === 'orthopedic') {
+      const hipKneePath = `${process.env.PUBLIC_URL}/data/hip-knee-data.json`;
+      const shoulderPath = `${process.env.PUBLIC_URL}/data/shoulder-data.json`;
 
-    Promise.all([
-      fetch(hipKneePath).then(r => r.json()),
-      fetch(shoulderPath).then(r => r.json())
-    ])
-      .then(([hipKneeData, shoulderData]) => {
-        setOrthoData(hipKneeData);
-        setShoulderData(shoulderData);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Error loading orthopedic data:', err);
-        setLoading(false);
-      });
-  }, []);
+      Promise.all([
+        fetch(hipKneePath).then(r => r.json()),
+        fetch(shoulderPath).then(r => r.json())
+      ])
+        .then(([hipKneeData, shoulderData]) => {
+          setOrthoData(hipKneeData);
+          setShoulderData(shoulderData);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error('Error loading orthopedic data:', err);
+          setLoading(false);
+        });
+    } else if (serviceLineId === 'cardiovascular') {
+      // For cardiovascular, we don't have JSON data yet - just show the structure
+      setLoading(false);
+    }
+  }, [serviceLineId]);
 
   // Calculate metrics from real data
   const hipKneeMetrics = orthoData ? {
@@ -70,8 +75,24 @@ const ServiceLineView = () => {
       }));
   };
 
-  // Product lines - Hip/Knee and Shoulder have active data
-  const productLines = [
+  // Service line configuration
+  const serviceLineConfig = {
+    orthopedic: {
+      name: 'Orthopedic Service Line',
+      description: 'Product lines and decision canvases for orthopedic value analytics',
+      totalSpend: hipKneeMetrics.opportunityValue,
+      totalSpendLabel: 'Hip & Knee product line'
+    },
+    cardiovascular: {
+      name: 'Cardiovascular Service Line',
+      description: 'Product lines and decision canvases for cardiovascular value analytics',
+      totalSpend: 'TBD',
+      totalSpendLabel: 'System-wide spend'
+    }
+  };
+
+  // Product lines - dynamic based on service line
+  const orthopedicProductLines = [
     {
       id: 'hip-knee',
       name: 'Hip & Knee',
@@ -129,6 +150,67 @@ const ServiceLineView = () => {
     }
   ];
 
+  const cardiovascularProductLines = [
+    {
+      id: 'interventional-cardiology',
+      name: 'Interventional Cardiology',
+      description: 'PCI, stents, drug-coated balloons, atherectomy',
+      activeDecisions: 1, // AGENT IPG evaluation
+      completedDecisions: 0,
+      annualVolume: 'TBD',
+      opportunityValue: 'TBD',
+      status: 'active',
+      phases: [{ id: 'ipg', name: 'IPG Evaluation', status: 'active' }]
+    },
+    {
+      id: 'structural-heart',
+      name: 'Structural Heart',
+      description: 'TAVR, MitraClip, LAA closure, valve repair',
+      activeDecisions: 0,
+      completedDecisions: 0,
+      annualVolume: 'TBD',
+      opportunityValue: 'TBD',
+      status: 'coming-soon',
+      decisions: []
+    },
+    {
+      id: 'electrophysiology',
+      name: 'Electrophysiology',
+      description: 'Pacemakers, ICDs, ablation catheters, mapping systems',
+      activeDecisions: 0,
+      completedDecisions: 0,
+      annualVolume: 'TBD',
+      opportunityValue: 'TBD',
+      status: 'coming-soon',
+      decisions: []
+    },
+    {
+      id: 'vascular',
+      name: 'Vascular',
+      description: 'Peripheral intervention, AAA repair, vascular access',
+      activeDecisions: 0,
+      completedDecisions: 0,
+      annualVolume: 'TBD',
+      opportunityValue: 'TBD',
+      status: 'coming-soon',
+      decisions: []
+    },
+    {
+      id: 'heart-failure',
+      name: 'Heart Failure',
+      description: 'LVAD, cardiac resynchronization, hemodynamic monitoring',
+      activeDecisions: 0,
+      completedDecisions: 0,
+      annualVolume: 'TBD',
+      opportunityValue: 'TBD',
+      status: 'coming-soon',
+      decisions: []
+    }
+  ];
+
+  // Select product lines based on service line
+  const productLines = serviceLineId === 'cardiovascular' ? cardiovascularProductLines : orthopedicProductLines;
+
   const getStatusColor = (status) => {
     const colors = {
       analyzing: 'bg-purple-100 text-purple-800 border-purple-200',
@@ -141,7 +223,12 @@ const ServiceLineView = () => {
 
   const handleProductLineClick = (productLine) => {
     if (productLine.status === 'active') {
-      navigate(`/product-line/${serviceLineId}/${productLine.id}`);
+      // Special case for interventional cardiology - navigate to IPG demo
+      if (serviceLineId === 'cardiovascular' && productLine.id === 'interventional-cardiology') {
+        navigate('/cardiovascular/ipg-demo');
+      } else {
+        navigate(`/product-line/${serviceLineId}/${productLine.id}`);
+      }
     }
   };
 
@@ -176,17 +263,17 @@ const ServiceLineView = () => {
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                  Orthopedic Service Line
+                  {serviceLineConfig[serviceLineId]?.name || 'Service Line'}
                 </h1>
                 <p className="text-gray-600 text-lg">
-                  Product lines and decision canvases for orthopedic value analytics
+                  {serviceLineConfig[serviceLineId]?.description || 'Product lines and decision canvases for value analytics'}
                 </p>
               </div>
               <div className="flex items-start gap-6">
                 <div className="text-right">
                   <div className="text-sm text-gray-600">Total Spend</div>
-                  <div className="text-3xl font-bold text-blue-600">{hipKneeMetrics.opportunityValue}</div>
-                  <div className="text-sm text-gray-600 mt-1">Hip & Knee product line</div>
+                  <div className="text-3xl font-bold text-blue-600">{serviceLineConfig[serviceLineId]?.totalSpend || 'TBD'}</div>
+                  <div className="text-sm text-gray-600 mt-1">{serviceLineConfig[serviceLineId]?.totalSpendLabel || 'System-wide'}</div>
                 </div>
                 <button
                   onClick={() => navigate('/admin/data-upload')}
@@ -212,14 +299,18 @@ const ServiceLineView = () => {
                   <TrendingUp className="w-5 h-5 text-green-600" />
                   <div className="text-sm text-gray-600">Active Decisions</div>
                 </div>
-                <div className="text-2xl font-bold text-green-900">{hipKneeMetrics.activeDecisions + shoulderMetrics.activeDecisions}</div>
+                <div className="text-2xl font-bold text-green-900">
+                  {productLines.reduce((sum, pl) => sum + pl.activeDecisions, 0)}
+                </div>
               </div>
               <div className="bg-purple-50 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <CheckCircle className="w-5 h-5 text-purple-600" />
                   <div className="text-sm text-gray-600">Completed</div>
                 </div>
-                <div className="text-2xl font-bold text-purple-900">0</div>
+                <div className="text-2xl font-bold text-purple-900">
+                  {productLines.reduce((sum, pl) => sum + pl.completedDecisions, 0)}
+                </div>
               </div>
               <div className="bg-amber-50 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-2">
@@ -227,7 +318,9 @@ const ServiceLineView = () => {
                   <div className="text-sm text-gray-600">Annual Volume</div>
                 </div>
                 <div className="text-2xl font-bold text-amber-900">
-                  {orthoData && shoulderData ? `${((orthoData.metadata.totalCases + shoulderData.metadata.totalCases) / 1000).toFixed(1)}K` : 'Loading...'}
+                  {serviceLineId === 'orthopedic' && orthoData && shoulderData
+                    ? `${((orthoData.metadata.totalCases + shoulderData.metadata.totalCases) / 1000).toFixed(1)}K`
+                    : 'TBD'}
                 </div>
               </div>
             </div>

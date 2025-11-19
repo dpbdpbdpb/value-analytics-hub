@@ -62,11 +62,11 @@ const PortfolioOverview = () => {
       textColor: 'text-red-900',
       accentColor: 'text-red-600',
       description: 'Cardiac surgery, interventional cardiology, vascular',
-      productLines: ['Cardiac Surgery', 'Interventional Cardiology', 'Vascular', 'Electrophysiology'],
-      activeDecisions: 0,
+      productLines: ['Interventional Cardiology', 'Structural Heart', 'Electrophysiology', 'Vascular', 'Heart Failure'],
+      activeDecisions: 1,
       annualVolume: 'TBD',
       opportunityValue: 'TBD',
-      status: 'coming-soon'
+      status: 'active'
     },
     {
       id: 'neuroscience',
@@ -103,11 +103,8 @@ const PortfolioOverview = () => {
   ];
 
   const handleServiceLineClick = (serviceLine) => {
-    if (serviceLine.status === 'active') {
+    if (serviceLine.status === 'active' || serviceLine.id === 'cardiovascular') {
       navigate(`/service-line/${serviceLine.id}`);
-    } else if (serviceLine.id === 'cardiovascular') {
-      // Special case: Navigate to IPG demo for cardiovascular
-      navigate('/cardiovascular/ipg-demo');
     }
   };
 

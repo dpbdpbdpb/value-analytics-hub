@@ -106,7 +106,8 @@ const CardiovascularIPGDemo = () => {
         status: 'completed',
         color: 'orange',
         icon: '⚙️',
-        completionDate: 'Q2 2025'
+        startDate: 'Q2 2025',
+        completionDate: 'Q3 2025'
       },
       'active': {
         id: 'active',
@@ -116,7 +117,7 @@ const CardiovascularIPGDemo = () => {
         color: 'green',
         icon: '✓',
         subPhase: 'scale', // pilot, scale, or sustain
-        startDate: 'Q2 2025'
+        startDate: 'Q3 2025'
       },
       'sustainability': {
         id: 'sustainability',
@@ -1167,58 +1168,6 @@ const CardiovascularIPGDemo = () => {
                 </div>
               </div>
             )}
-
-            {/* Three Pillars */}
-            {['clinical', 'financial', 'operational'].map((pillar) => (
-              <div key={pillar} className="bg-white rounded-xl shadow-md p-6">
-                <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-gray-100">
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-white ${
-                    pillar === 'clinical' ? 'bg-gradient-to-br from-purple-500 to-purple-700' :
-                    pillar === 'financial' ? 'bg-gradient-to-br from-green-500 to-green-700' :
-                    'bg-gradient-to-br from-orange-500 to-orange-700'
-                  }`}>
-                    {pillar === 'clinical' ? <Activity className="w-6 h-6" /> :
-                     pillar === 'financial' ? <DollarSign className="w-6 h-6" /> :
-                     <Settings className="w-6 h-6" />}
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 capitalize">
-                      {pillar} Domain
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      Adjust assumptions to see impact on outcomes
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {Object.entries(products[selectedProduct][pillar]).map(([key, assumption]) => (
-                    <div key={key} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-semibold text-gray-700">
-                          {assumption.label}
-                        </span>
-                        <span className="text-lg font-bold text-purple-600">
-                          {formatValue(assumptions[pillar]?.[key] || assumption.default, assumption.unit)}
-                        </span>
-                      </div>
-                      <input
-                        type="range"
-                        min={assumption.min}
-                        max={assumption.max}
-                        value={assumptions[pillar]?.[key] || assumption.default}
-                        onChange={(e) => updateAssumption(pillar, key, e.target.value)}
-                        step={(assumption.max - assumption.min) / 100}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
-                      />
-                      <p className="text-xs text-gray-500 mt-2">
-                        {assumption.description}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
 
             {/* Results Section */}
             <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl shadow-md p-6">
