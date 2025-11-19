@@ -1,0 +1,367 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, Lock, CheckCircle, Calendar, Clock, AlertCircle, Users, FileText, MessageSquare, TrendingUp } from 'lucide-react';
+import NavigationHeader from '../components/shared/NavigationHeader';
+import ExecutiveDashboard from './ExecutiveDashboard';
+import SurgeonTool from './SurgeonTool';
+
+const StageWorkspaceView = () => {
+  const navigate = useNavigate();
+  const { serviceLineId, productLineId, stageId } = useParams();
+  const [orthoData, setOrthoData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Load data
+  useEffect(() => {
+    const dataFile = productLineId === 'shoulder' ? 'shoulder-data.json' : 'hip-knee-data.json';
+    const jsonPath = `${process.env.PUBLIC_URL}/data/${dataFile}`;
+    fetch(jsonPath)
+      .then(response => response.json())
+      .then(data => {
+        setOrthoData(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error loading orthopedic data:', err);
+        setLoading(false);
+      });
+  }, [productLineId]);
+
+  // Get stage data
+  const getStageData = () => {
+    const tracking = orthoData?.workflowTracking;
+    if (!tracking) return null;
+
+    const stageData = tracking.stages[stageId] || {};
+
+    // Return stage configuration with data
+    return {
+      id: stageId,
+      status: stageData.status || 'upcoming',
+      startDate: stageData.startDate,
+      completionDate: stageData.completionDate,
+      expectedCompletion: stageData.expectedCompletion,
+      percentComplete: stageData.percentComplete || 0,
+      milestones: stageData.milestones || [],
+      notes: stageData.notes || '',
+      assignedTo: stageData.assignedTo || []
+    };
+  };
+
+  const stageData = orthoData ? getStageData() : null;
+
+  // Stage configurations
+  const stageConfigs = {
+    'sourcing-review': {
+      name: 'Sourcing Strategy Review',
+      description: 'Analyze market, vendors, and internal data to identify opportunities',
+      color: 'blue',
+      sections: ['Market Analysis', 'Vendor Research', 'Historical Performance', 'Team Assignment']
+    },
+    'decision': {
+      name: 'Decision',
+      description: 'Evaluate scenarios, discuss with stakeholders, and select vendor strategy',
+      color: 'purple',
+      sections: ['Scenario Comparison', 'Team Discussion', 'Vendor Selection', 'Approval Workflow']
+    },
+    'contract-execution': {
+      name: 'Contract Execution',
+      description: 'Negotiate contracts, finalize terms, and execute agreements',
+      color: 'green',
+      sections: ['Contract Terms', 'Negotiations', 'Legal Review', 'Signatures']
+    },
+    'implementation': {
+      name: 'Implementation',
+      description: 'Roll out new vendor contracts, train surgeons, and manage transition',
+      color: 'teal',
+      sections: ['Transition Planning', 'Surgeon Profiles', 'Training Schedule', 'Risk Management']
+    },
+    'monitoring': {
+      name: 'Contract Management & Performance Monitoring',
+      description: 'Track KPIs, manage vendor relationships, and monitor outcomes',
+      color: 'indigo',
+      sections: ['Performance Dashboard', 'KPI Tracking', 'Vendor Management', 'Issue Resolution']
+    },
+    'renewal': {
+      name: 'Contract Renewal Review',
+      description: 'Evaluate performance, capture lessons learned, and prepare for next cycle',
+      color: 'orange',
+      sections: ['Performance Summary', 'Lessons Learned', 'Recommendations', 'Cycle Preparation']
+    }
+  };
+
+  const config = stageConfigs[stageId] || {};
+
+  // Helper function to render stage-specific content
+  const renderStageContent = () => {
+    if (stageId === 'sourcing-review') {
+      return (
+        <div>
+          <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-4 mb-6">
+            <div className="flex items-center gap-2 mb-1">
+              <FileText className="w-5 h-5 text-blue-600" />
+              <div className="font-bold text-blue-900">Outcomes Analysis & Scenario Comparison</div>
+            </div>
+            <p className="text-sm text-blue-800">
+              Review all vendor scenarios, financial projections, and decision support data for this sourcing cycle.
+            </p>
+          </div>
+          <ExecutiveDashboard />
+        </div>
+      );
+    }
+
+    if (stageId === 'implementation') {
+      return (
+        <div>
+          <div className="bg-teal-50 border-2 border-teal-300 rounded-lg p-4 mb-6">
+            <div className="flex items-center gap-2 mb-1">
+              <Users className="w-5 h-5 text-teal-600" />
+              <div className="font-bold text-teal-900">Implementation Planning & Surgeon Analytics</div>
+            </div>
+            <p className="text-sm text-teal-800">
+              Access surgeon profiles, influence mapping, transition planning tools, and adoption tracking.
+            </p>
+          </div>
+          <SurgeonTool />
+        </div>
+      );
+    }
+
+    return (
+      <div className="bg-white rounded-xl shadow-lg p-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Stage Workspace</h2>
+        <div className="grid grid-cols-2 gap-6">
+          {config.sections?.map((section, idx) => (
+            <div key={idx} className="bg-gray-50 rounded-lg p-6 border-2 border-gray-200 hover:border-blue-300 transition-all cursor-pointer">
+              <div className="flex items-center gap-3 mb-3">
+                {idx === 0 && <FileText className="w-6 h-6 text-blue-600" />}
+                {idx === 1 && <Users className="w-6 h-6 text-purple-600" />}
+                {idx === 2 && <MessageSquare className="w-6 h-6 text-green-600" />}
+                {idx === 3 && <AlertCircle className="w-6 h-6 text-orange-600" />}
+                <h3 className="text-lg font-bold text-gray-900">{section}</h3>
+              </div>
+              <p className="text-sm text-gray-600">
+                Click to access {section.toLowerCase()} tools and data for this stage.
+              </p>
+              {isLocked && (
+                <div className="mt-3 flex items-center gap-2 text-sm text-gray-500">
+                  <Lock className="w-4 h-4" />
+                  <span>Locked until stage is active</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="mt-8 bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-lg p-6">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="text-2xl">🚧</div>
+            <h3 className="text-xl font-bold text-gray-900">Stage-Specific Content In Development</h3>
+          </div>
+          <p className="text-gray-700 mb-4">
+            This workspace will contain stage-specific tools, data views, and collaboration features tailored to <strong>{config.name}</strong>.
+          </p>
+          <div className="text-sm text-gray-600">
+            <strong>Planned Features:</strong>
+            <ul className="list-disc ml-5 mt-2 space-y-1">
+              {config.sections?.map((section, idx) => (
+                <li key={idx}>{section} module with data entry, analysis, and reporting capabilities</li>
+              ))}
+              <li>Real-time collaboration and discussion threads</li>
+              <li>Document repository and version control</li>
+              <li>Approval workflows and sign-offs</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading stage workspace...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const isLocked = stageData?.status === 'upcoming';
+  const isCompleted = stageData?.status === 'completed';
+  const isActive = stageData?.status === 'active';
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <NavigationHeader role="portfolio" persona="portfolio" />
+
+      <div className="p-6">
+        <div className="max-w-7xl mx-auto">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 mb-6 text-sm">
+            <button
+              onClick={() => navigate(`/service-line/${serviceLineId}`)}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              Orthopedics
+            </button>
+            <span className="text-gray-400">/</span>
+            <button
+              onClick={() => navigate(`/service-line/${serviceLineId}/product-line/${productLineId}`)}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              {productLineId === 'shoulder' ? 'Shoulder Replacement' : 'Hip & Knee Replacement'}
+            </button>
+            <span className="text-gray-400">/</span>
+            <span className="text-gray-900 font-semibold">{config.name}</span>
+          </div>
+
+          {/* Stage Header */}
+          <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
+            <div className="flex items-start justify-between mb-6">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <h1 className="text-4xl font-bold text-gray-900">{config.name}</h1>
+                  {isCompleted && <CheckCircle className="w-8 h-8 text-green-600" />}
+                  {isLocked && <Lock className="w-8 h-8 text-gray-400" />}
+                  {isActive && <div className="w-3 h-3 rounded-full bg-blue-500 animate-pulse"></div>}
+                </div>
+                <p className="text-gray-600 text-lg">{config.description}</p>
+              </div>
+
+              <div className={`px-4 py-2 rounded-lg font-bold text-lg ${
+                isCompleted ? 'bg-green-100 text-green-800' :
+                isActive ? 'bg-blue-100 text-blue-800' :
+                'bg-gray-100 text-gray-600'
+              }`}>
+                {isCompleted ? 'Completed' : isActive ? 'In Progress' : 'Pending'}
+              </div>
+            </div>
+
+            {/* Timeline & Milestones */}
+            <div className="grid grid-cols-3 gap-6 mb-6">
+              <div className="bg-blue-50 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Calendar className="w-5 h-5 text-blue-600" />
+                  <div className="text-sm text-gray-600">Start Date</div>
+                </div>
+                <div className="text-lg font-bold text-blue-900">
+                  {stageData?.startDate || 'Not started'}
+                </div>
+              </div>
+
+              <div className="bg-amber-50 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="w-5 h-5 text-amber-600" />
+                  <div className="text-sm text-gray-600">Expected Completion</div>
+                </div>
+                <div className="text-lg font-bold text-amber-900">
+                  {stageData?.expectedCompletion || 'TBD'}
+                </div>
+              </div>
+
+              <div className="bg-green-50 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingUp className="w-5 h-5 text-green-600" />
+                  <div className="text-sm text-gray-600">Progress</div>
+                </div>
+                <div className="text-lg font-bold text-green-900">
+                  {stageData?.percentComplete || 0}%
+                </div>
+              </div>
+            </div>
+
+            {/* Completion Timestamp */}
+            {isCompleted && stageData?.completionDate && (
+              <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4 mb-6">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <div className="font-bold text-green-900">
+                    Stage Completed: {stageData.completionDate}
+                  </div>
+                </div>
+                <p className="text-sm text-green-800 mt-1">
+                  This stage is now locked. All data and decisions are archived for audit purposes.
+                </p>
+              </div>
+            )}
+
+            {/* Locked State Warning */}
+            {isLocked && (
+              <div className="bg-gray-50 border-2 border-gray-300 rounded-lg p-4 mb-6">
+                <div className="flex items-center gap-2">
+                  <Lock className="w-5 h-5 text-gray-600" />
+                  <div className="font-bold text-gray-900">
+                    Stage Locked
+                  </div>
+                </div>
+                <p className="text-sm text-gray-700 mt-1">
+                  This stage is not yet available. Complete the current active stage to unlock this stage.
+                </p>
+              </div>
+            )}
+
+            {/* Milestones */}
+            {stageData?.milestones && stageData.milestones.length > 0 && (
+              <div className="mt-6">
+                <h3 className="text-lg font-bold text-gray-900 mb-3">Milestones & Phase Gates</h3>
+                <div className="space-y-2">
+                  {stageData.milestones.map((milestone, idx) => (
+                    <div key={idx} className={`flex items-center gap-3 p-3 rounded-lg border ${
+                      milestone.completed ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'
+                    }`}>
+                      {milestone.completed ? (
+                        <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                      ) : (
+                        <div className="w-5 h-5 rounded-full border-2 border-gray-400 flex-shrink-0"></div>
+                      )}
+                      <div className="flex-1">
+                        <div className="font-semibold text-gray-900">{milestone.name}</div>
+                        <div className="text-sm text-gray-600">{milestone.description}</div>
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {milestone.dueDate}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Stage Content Workspace */}
+          {renderStageContent()}
+
+          {/* Action Buttons */}
+          {isActive && stageId !== 'sourcing-review' && stageId !== 'implementation' && (
+            <div className="mt-8 flex gap-4">
+              <button className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                Save Progress
+              </button>
+              <button className="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors">
+                Mark Stage Complete
+              </button>
+              <button className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors">
+                Request Review
+              </button>
+            </div>
+          )}
+
+          {/* Back Button */}
+          <div className="mt-6">
+            <button
+              onClick={() => navigate(`/service-line/${serviceLineId}/product-line/${productLineId}`)}
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Product Line Overview
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default StageWorkspaceView;

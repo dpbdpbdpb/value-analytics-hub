@@ -37,13 +37,183 @@
       "contractLength": 3
     },
     "stages": {
-      "sourcing-review": { "status": "completed" },
-      "decision": { "status": "completed" },
-      "contract-execution": { "status": "completed" },
-      "implementation": { "status": "active" },
-      "monitoring": { "status": "upcoming" },
-      "renewal": { "status": "upcoming" }
-    }
+      "sourcing-review": {
+        "status": "completed",
+        "startDate": "2024-01-15",
+        "completionDate": "2024-03-22",
+        "expectedCompletion": "2024-03-31",
+        "percentComplete": 100,
+        "assignedTo": ["Sarah Chen (Portfolio Director)", "Michael Rodriguez (Category Manager)"],
+        "milestones": [
+          {
+            "name": "Market Analysis Complete",
+            "description": "Vendor landscape and pricing analysis finalized",
+            "dueDate": "2024-02-15",
+            "completed": true
+          },
+          {
+            "name": "Historical Data Review",
+            "description": "3-year spend and utilization trends analyzed",
+            "dueDate": "2024-02-28",
+            "completed": true
+          },
+          {
+            "name": "Stakeholder Alignment",
+            "description": "Surgeon and executive team briefings completed",
+            "dueDate": "2024-03-15",
+            "completed": true
+          }
+        ],
+        "notes": "Identified $1.2M savings opportunity through vendor consolidation. Surgeon engagement strong across all facilities."
+      },
+      "decision": {
+        "status": "completed",
+        "startDate": "2024-03-25",
+        "completionDate": "2024-05-10",
+        "expectedCompletion": "2024-05-15",
+        "percentComplete": 100,
+        "assignedTo": ["Dr. Jennifer Park (Chief Medical Officer)", "Sarah Chen (Portfolio Director)", "Finance Team"],
+        "milestones": [
+          {
+            "name": "Scenario Modeling Complete",
+            "description": "All vendor scenarios evaluated for financial/clinical impact",
+            "dueDate": "2024-04-10",
+            "completed": true
+          },
+          {
+            "name": "Team Decision Meeting",
+            "description": "Executive committee approves dual-vendor strategy",
+            "dueDate": "2024-04-25",
+            "completed": true
+          },
+          {
+            "name": "Final Vendor Selection",
+            "description": "Vendor Alpha and Beta selected with target pricing",
+            "dueDate": "2024-05-08",
+            "completed": true
+          }
+        ],
+        "notes": "Approved dual-vendor strategy (Alpha + Beta) projecting $945K annual savings. Clinical quality metrics maintained."
+      },
+      "contract-execution": {
+        "status": "completed",
+        "startDate": "2024-05-13",
+        "completionDate": "2024-07-18",
+        "expectedCompletion": "2024-07-31",
+        "percentComplete": 100,
+        "assignedTo": ["Legal Team", "Michael Rodriguez (Category Manager)", "Vendor Relations"],
+        "milestones": [
+          {
+            "name": "Contract Terms Negotiated",
+            "description": "Pricing, volume commitments, and service levels finalized",
+            "dueDate": "2024-06-15",
+            "completed": true
+          },
+          {
+            "name": "Legal Review Complete",
+            "description": "All contract terms approved by legal counsel",
+            "dueDate": "2024-07-01",
+            "completed": true
+          },
+          {
+            "name": "Contracts Executed",
+            "description": "All parties sign final agreements",
+            "dueDate": "2024-07-15",
+            "completed": true
+          }
+        ],
+        "notes": "3-year contracts executed. Achieved 8% better pricing than initial proposals through competitive negotiation."
+      },
+      "implementation": {
+        "status": "active",
+        "startDate": "2024-07-22",
+        "expectedCompletion": "2024-11-30",
+        "percentComplete": 62,
+        "assignedTo": ["Operations Team", "Clinical Champions", "Training Coordinator"],
+        "milestones": [
+          {
+            "name": "Surgeon Training Sessions",
+            "description": "Product training for 180+ surgeons across 5 regions",
+            "dueDate": "2024-09-30",
+            "completed": true
+          },
+          {
+            "name": "Facility Rollout Phase 1",
+            "description": "Implementation at 12 high-volume facilities",
+            "dueDate": "2024-10-31",
+            "completed": true
+          },
+          {
+            "name": "Facility Rollout Phase 2",
+            "description": "Implementation at remaining 60 facilities",
+            "dueDate": "2024-11-30",
+            "completed": false
+          },
+          {
+            "name": "Inventory Transition Complete",
+            "description": "Old vendor products phased out, new products stocked",
+            "dueDate": "2024-12-15",
+            "completed": false
+          }
+        ],
+        "notes": "Phase 1 complete with 95% surgeon adoption rate. Phase 2 rollout on track. Minor inventory coordination issues resolved."
+      },
+      "monitoring": {
+        "status": "upcoming",
+        "expectedCompletion": "2027-01-01",
+        "percentComplete": 0,
+        "assignedTo": ["Performance Analytics Team", "Sarah Chen (Portfolio Director)"],
+        "milestones": [
+          {
+            "name": "Performance Dashboard Launch",
+            "description": "Real-time KPI tracking system activated",
+            "dueDate": "2025-01-15",
+            "completed": false
+          },
+          {
+            "name": "Quarterly Business Reviews (Q1-Q12)",
+            "description": "Regular performance reviews with vendors and stakeholders",
+            "dueDate": "Quarterly through 2027",
+            "completed": false
+          },
+          {
+            "name": "Annual Savings Validation",
+            "description": "Verify actual savings vs. projected targets",
+            "dueDate": "Annually",
+            "completed": false
+          }
+        ],
+        "notes": "Will begin once implementation is complete. KPIs include: cost per case, utilization rates, clinical outcomes, surgeon satisfaction."
+      },
+      "renewal": {
+        "status": "upcoming",
+        "expectedCompletion": "2027-01-31",
+        "percentComplete": 0,
+        "assignedTo": ["Portfolio Team", "Executive Leadership"],
+        "milestones": [
+          {
+            "name": "Performance Summary Report",
+            "description": "3-year contract performance analysis",
+            "dueDate": "2026-10-01",
+            "completed": false
+          },
+          {
+            "name": "Lessons Learned Workshop",
+            "description": "Team debrief on successes and improvement areas",
+            "dueDate": "2026-11-01",
+            "completed": false
+          },
+          {
+            "name": "Renewal Strategy Decision",
+            "description": "Determine approach for next contract cycle",
+            "dueDate": "2026-12-15",
+            "completed": false
+          }
+        ],
+        "notes": "Will evaluate market changes, new technologies, and contract performance to inform next cycle strategy."
+      }
+    },
+    "previousCycles": []
   },
   "vendors": {
     "VENDOR-ALPHA": {

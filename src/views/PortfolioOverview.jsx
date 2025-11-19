@@ -105,6 +105,9 @@ const PortfolioOverview = () => {
   const handleServiceLineClick = (serviceLine) => {
     if (serviceLine.status === 'active') {
       navigate(`/service-line/${serviceLine.id}`);
+    } else if (serviceLine.id === 'cardiovascular') {
+      // Special case: Navigate to IPG demo for cardiovascular
+      navigate('/cardiovascular/ipg-demo');
     }
   };
 
@@ -204,12 +207,13 @@ const PortfolioOverview = () => {
             {serviceLines.map((serviceLine) => {
               const IconComponent = serviceLine.icon;
               const isActive = serviceLine.status === 'active';
+              const isClickable = isActive || serviceLine.id === 'cardiovascular';
 
               return (
                 <div
                   key={serviceLine.id}
                   className={`bg-white rounded-xl shadow-lg p-5 transition-all border-2 ${
-                    isActive
+                    isClickable
                       ? `${serviceLine.borderColor} hover:shadow-xl cursor-pointer hover:scale-[1.01]`
                       : 'border-gray-200 opacity-75'
                   }`}
@@ -276,7 +280,7 @@ const PortfolioOverview = () => {
                     </div>
 
                     {/* Arrow */}
-                    {isActive && (
+                    {isClickable && (
                       <div className={`flex items-center ${serviceLine.accentColor} ml-4`}>
                         <ChevronRight className="w-8 h-8" />
                       </div>

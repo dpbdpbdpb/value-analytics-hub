@@ -22,13 +22,183 @@
       "contractLength": 3
     },
     "stages": {
-      "sourcing-review": { "status": "completed" },
-      "decision": { "status": "completed" },
-      "contract-execution": { "status": "completed" },
-      "implementation": { "status": "active" },
-      "monitoring": { "status": "upcoming" },
-      "renewal": { "status": "upcoming" }
-    }
+      "sourcing-review": {
+        "status": "completed",
+        "startDate": "2024-01-08",
+        "completionDate": "2024-03-15",
+        "expectedCompletion": "2024-03-31",
+        "percentComplete": 100,
+        "assignedTo": ["Sarah Chen (Portfolio Director)", "James Wilson (Category Manager)"],
+        "milestones": [
+          {
+            "name": "Market Analysis Complete",
+            "description": "Comprehensive vendor landscape and competitive pricing review",
+            "dueDate": "2024-02-10",
+            "completed": true
+          },
+          {
+            "name": "Utilization Trends Analysis",
+            "description": "Historical spend patterns and surgeon preferences evaluated",
+            "dueDate": "2024-02-25",
+            "completed": true
+          },
+          {
+            "name": "Stakeholder Engagement",
+            "description": "Key surgeon champions and department chairs aligned",
+            "dueDate": "2024-03-10",
+            "completed": true
+          }
+        ],
+        "notes": "Identified $2.8M annual savings opportunity. Strong clinical consensus on dual-vendor approach for hip/knee."
+      },
+      "decision": {
+        "status": "completed",
+        "startDate": "2024-03-18",
+        "completionDate": "2024-05-02",
+        "expectedCompletion": "2024-05-15",
+        "percentComplete": 100,
+        "assignedTo": ["Dr. Robert Martinez (Orthopedic Service Line Director)", "Sarah Chen", "CFO Office"],
+        "milestones": [
+          {
+            "name": "Scenario Analysis Complete",
+            "description": "7 vendor scenarios modeled with full financial/clinical impact",
+            "dueDate": "2024-04-05",
+            "completed": true
+          },
+          {
+            "name": "Executive Decision Committee",
+            "description": "Final vendor strategy approved by executive leadership",
+            "dueDate": "2024-04-20",
+            "completed": true
+          },
+          {
+            "name": "Vendor Selection Finalized",
+            "description": "Alpha and Gamma selected with negotiated pricing targets",
+            "dueDate": "2024-04-30",
+            "completed": true
+          }
+        ],
+        "notes": "Board approved Alpha/Gamma dual-vendor strategy. Projected $2.1M annual savings while maintaining clinical standards."
+      },
+      "contract-execution": {
+        "status": "completed",
+        "startDate": "2024-05-06",
+        "completionDate": "2024-07-25",
+        "expectedCompletion": "2024-08-15",
+        "percentComplete": 100,
+        "assignedTo": ["Legal Department", "James Wilson", "Vendor Management Office"],
+        "milestones": [
+          {
+            "name": "RFP Response & Evaluation",
+            "description": "Final proposals received and scored",
+            "dueDate": "2024-05-30",
+            "completed": true
+          },
+          {
+            "name": "Contract Negotiations",
+            "description": "Terms, pricing, and service levels finalized",
+            "dueDate": "2024-06-25",
+            "completed": true
+          },
+          {
+            "name": "Legal Approval & Execution",
+            "description": "Contracts signed by all parties",
+            "dueDate": "2024-07-20",
+            "completed": true
+          }
+        ],
+        "notes": "3-year agreements executed. Secured 12% price improvement vs. previous contracts through competitive leverage."
+      },
+      "implementation": {
+        "status": "active",
+        "startDate": "2024-07-29",
+        "expectedCompletion": "2024-12-31",
+        "percentComplete": 58,
+        "assignedTo": ["Clinical Operations", "Surgeon Champions", "Supply Chain"],
+        "milestones": [
+          {
+            "name": "Surgeon Education Program",
+            "description": "Training sessions for 400+ orthopedic surgeons",
+            "dueDate": "2024-10-15",
+            "completed": true
+          },
+          {
+            "name": "Pilot Sites Rollout",
+            "description": "Implementation at 8 flagship hospitals",
+            "dueDate": "2024-11-01",
+            "completed": true
+          },
+          {
+            "name": "System-wide Deployment",
+            "description": "Rollout to all 50 facilities across 5 regions",
+            "dueDate": "2024-12-31",
+            "completed": false
+          },
+          {
+            "name": "Inventory Optimization",
+            "description": "Par levels established, old stock transitioned",
+            "dueDate": "2025-01-31",
+            "completed": false
+          }
+        ],
+        "notes": "Pilot sites showing 92% surgeon adoption. System-wide rollout in progress. Early results tracking above savings targets."
+      },
+      "monitoring": {
+        "status": "upcoming",
+        "expectedCompletion": "2027-06-30",
+        "percentComplete": 0,
+        "assignedTo": ["Value Analytics Team", "Clinical Quality", "Finance"],
+        "milestones": [
+          {
+            "name": "KPI Dashboard Activation",
+            "description": "Real-time performance monitoring system live",
+            "dueDate": "2025-02-01",
+            "completed": false
+          },
+          {
+            "name": "Quarterly Performance Reviews",
+            "description": "Vendor scorecards and business reviews (ongoing)",
+            "dueDate": "Quarterly",
+            "completed": false
+          },
+          {
+            "name": "Annual Contract Compliance Audit",
+            "description": "Verify pricing, rebates, and service level commitments",
+            "dueDate": "Annually",
+            "completed": false
+          }
+        ],
+        "notes": "Begins post-implementation. Key metrics: cost per case, case mix, clinical outcomes, surgeon satisfaction, contract compliance."
+      },
+      "renewal": {
+        "status": "upcoming",
+        "expectedCompletion": "2027-03-31",
+        "percentComplete": 0,
+        "assignedTo": ["Portfolio Leadership", "Strategic Sourcing"],
+        "milestones": [
+          {
+            "name": "3-Year Performance Analysis",
+            "description": "Comprehensive review of contract outcomes",
+            "dueDate": "2026-09-30",
+            "completed": false
+          },
+          {
+            "name": "Market Assessment",
+            "description": "Evaluate new vendors, technologies, and market dynamics",
+            "dueDate": "2026-11-15",
+            "completed": false
+          },
+          {
+            "name": "Renewal Decision & Strategy",
+            "description": "Board approval for next cycle sourcing approach",
+            "dueDate": "2027-01-15",
+            "completed": false
+          }
+        ],
+        "notes": "Will assess contract performance, technology evolution, and market landscape to optimize next cycle strategy."
+      }
+    },
+    "previousCycles": []
   },
   "vendors": {
     "VENDOR-ETA": {

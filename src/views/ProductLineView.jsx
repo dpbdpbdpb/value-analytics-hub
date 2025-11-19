@@ -16,9 +16,6 @@ const ProductLineView = () => {
   const [orthoData, setOrthoData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Determine specialty name based on productLineId
-  const specialtyName = productLineId === 'shoulder' ? 'shoulder' : 'hipknee';
-
   // Sourcing Lifecycle Workflow Stages - dynamically loaded from data
   const getWorkflowStages = () => {
     const tracking = orthoData?.workflowTracking || orthoData?.workflow;
@@ -141,66 +138,6 @@ const ProductLineView = () => {
         setLoading(false);
       });
   }, [productLineId]);
-
-  // Decision Canvas configuration - dynamic based on product line
-  const decisionCanvases = [
-    {
-      id: 'team-decision',
-      name: 'Outcomes',
-      description: 'Executive dashboard with comprehensive outcome metrics across finance, clinical, and operations',
-      icon: Users,
-      color: 'from-blue-600 to-blue-700',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200',
-      textColor: 'text-blue-900',
-      accentColor: 'text-blue-600',
-      status: 'active',
-      route: `/executive/${specialtyName}`,
-      features: [
-        'Scenario comparison table',
-        'Hospital risk analysis',
-        'Key metrics dashboard',
-        'Strategic decision support'
-      ],
-      metrics: {
-        scenarios: 5,
-        dataPoints: '150+',
-        lastUpdated: '2025-10-21'
-      }
-    },
-    {
-      id: 'surgeon-tool',
-      name: 'Implementation',
-      description: 'Surgeon profiles, hospital analysis, peer influence mapping, and strategic transition planning',
-      icon: BarChart3,
-      color: 'from-teal-600 to-teal-700',
-      bgColor: 'bg-teal-50',
-      borderColor: 'border-teal-200',
-      textColor: 'text-teal-900',
-      accentColor: 'text-teal-600',
-      status: 'active',
-      route: `/surgeon/${specialtyName}`,
-      features: [
-        'Surgeon search & profiles',
-        'Sherpa recommendations',
-        'Peer benchmarks',
-        'Risk scoring'
-      ],
-      metrics: {
-        surgeons: orthoData?.metadata?.totalSurgeons || 443,
-        avgCost: (orthoData?.metadata?.totalCases && orthoData?.metadata?.totalSpend) ?
-          `$${(Math.round(orthoData.metadata.totalSpend / orthoData.metadata.totalCases)).toLocaleString()}` :
-          '$2,352',
-        lastUpdated: (orthoData?.metadata?.lastUpdated) ? orthoData.metadata.lastUpdated.split('T')[0] : '2025-10-24'
-      }
-    }
-  ];
-
-  const handleCanvasClick = (canvas) => {
-    if (canvas.status === 'active') {
-      navigate(canvas.route);
-    }
-  };
 
   if (loading) {
     return (
@@ -399,15 +336,18 @@ const ProductLineView = () => {
                     {/* Stage */}
                     <div className="flex flex-col items-center gap-3" style={{ width: '156px' }}>
                       {/* Icon Circle - Fixed size for perfect alignment */}
-                      <div className={`w-16 h-16 rounded-full flex items-center justify-center border-4 transition-all shadow-md ${
-                        isCompleted
-                          ? 'bg-green-500 border-green-600 shadow-green-200'
-                          : isActive
-                          ? 'bg-blue-500 border-blue-600 ring-4 ring-blue-200 animate-pulse shadow-blue-300'
-                          : 'bg-gray-300 border-gray-400 shadow-gray-200'
-                      }`}>
+                      <button
+                        onClick={() => navigate(`/service-line/${serviceLineId}/product-line/${productLineId}/stage/${stage.id}`)}
+                        className={`w-16 h-16 rounded-full flex items-center justify-center border-4 transition-all shadow-md hover:scale-110 cursor-pointer ${
+                          isCompleted
+                            ? 'bg-green-500 border-green-600 shadow-green-200 hover:shadow-green-300'
+                            : isActive
+                            ? 'bg-blue-500 border-blue-600 ring-4 ring-blue-200 animate-pulse shadow-blue-300 hover:shadow-blue-400'
+                            : 'bg-gray-300 border-gray-400 shadow-gray-200 hover:shadow-gray-300'
+                        }`}
+                      >
                         <IconComponent className={`w-7 h-7 ${isCompleted || isActive ? 'text-white' : 'text-gray-600'}`} />
-                      </div>
+                      </button>
 
                       {/* Label - Fixed width and height for uniformity */}
                       <div className={`w-full h-[140px] p-3 rounded-lg shadow-md border-2 flex flex-col justify-between overflow-hidden ${
@@ -490,114 +430,34 @@ const ProductLineView = () => {
               })}
             </div>
 
-            {/* Cycle Note */}
-            <div className="mt-6 bg-gradient-to-r from-slate-50 to-blue-50 border-2 border-slate-300 rounded-lg p-5 flex items-start gap-4">
-              <RotateCcw className="w-8 h-8 text-blue-600 flex-shrink-0 mt-0.5 animate-spin-slow" />
-              <div>
-                <div className="font-bold text-slate-900 mb-2 text-lg">Continuous Improvement Cycle</div>
-                <p className="text-sm text-slate-700 mb-2">
-                  After Contract Renewal Review, the cycle returns to Sourcing Strategy Review. This iterative process ensures
-                  continuous optimization of vendor relationships, clinical outcomes, and financial performance.
-                </p>
-                <p className="text-xs text-slate-600 italic">
-                  Note: Monitoring KPIs and strategic priorities may vary between cycles and product lines based on organizational needs.
+            {/* Demo Mode & Cycle Notes */}
+            <div className="mt-6 space-y-3">
+              <div className="bg-amber-50 border-2 border-amber-300 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="text-lg">🎯</div>
+                  <div className="font-bold text-amber-900">Demo Mode Active</div>
+                </div>
+                <p className="text-sm text-amber-800">
+                  All workflow stages are clickable for demonstration purposes. In production, only completed stages and the current active stage would be accessible. Future stages remain locked until the current stage is completed and timestamped.
                 </p>
               </div>
-            </div>
-          </div>
 
-          {/* Decision Canvases Section */}
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Decision Canvases</h2>
-            <p className="text-gray-600 mb-6">
-              Choose between outcome-focused metrics or implementation execution planning
-            </p>
-          </div>
-
-          {/* Decision Canvas Cards */}
-          <div className="grid grid-cols-2 gap-6">
-            {decisionCanvases.map((canvas) => {
-              const IconComponent = canvas.icon;
-              const isActive = canvas.status === 'active';
-
-              return (
-                <div
-                  key={canvas.id}
-                  className={`bg-white rounded-xl shadow-lg p-5 transition-all border-2 ${
-                    isActive
-                      ? `${canvas.borderColor} hover:shadow-xl cursor-pointer hover:scale-[1.02]`
-                      : 'border-gray-200 opacity-75'
-                  }`}
-                  onClick={() => handleCanvasClick(canvas)}
-                >
-                  {/* Icon */}
-                  <div className="flex justify-center mb-4">
-                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${canvas.color} flex items-center justify-center`}>
-                      <IconComponent className="w-7 h-7 text-white" />
-                    </div>
-                  </div>
-
-                  {/* Header */}
-                  <div className="text-center mb-3">
-                    <h3 className={`text-lg font-bold ${canvas.textColor} mb-1`}>
-                      {canvas.name}
-                    </h3>
-                    <p className="text-gray-600 text-xs">{canvas.description}</p>
-                  </div>
-
-                  {/* Features */}
-                  <div className="mb-3">
-                    <div className="text-xs font-semibold text-gray-600 mb-2 text-center">Key Features</div>
-                    <div className="flex flex-col gap-1">
-                      {canvas.features.map((feature, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
-                          <div className={`w-1.5 h-1.5 rounded-full ${canvas.bgColor} ${canvas.accentColor}`}></div>
-                          <span className="text-xs text-gray-700">{feature}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Metrics */}
-                  <div className="border-t pt-3">
-                    {Object.entries(canvas.metrics).map(([key, value]) => (
-                      <div key={key} className="flex justify-between text-xs mb-1">
-                        <span className="text-gray-600 capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
-                        <span className={`font-bold ${canvas.accentColor}`}>{value}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Arrow */}
-                  {isActive && (
-                    <div className={`flex items-center justify-center ${canvas.accentColor} mt-4`}>
-                      <ChevronRight className="w-6 h-6" />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Info Box */}
-          <div className="mt-8 bg-blue-50 border-l-4 border-blue-600 p-6 rounded-lg">
-            <div className="flex items-start gap-3">
-              <Target className="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-bold text-blue-900 mb-2">How to Use Decision Canvases</h3>
-                <div className="text-blue-800 text-sm space-y-2">
-                  <p>Two complementary views for comprehensive decision-making:</p>
-                  <ul className="space-y-1 ml-4">
-                    <li>• <strong>Outcomes</strong> - Executive dashboard focused on projected results across financial, clinical, and operational metrics for strategic scenario evaluation</li>
-                    <li>• <strong>Implementation</strong> - Execution-focused view with surgeon profiles, hospital alignment analysis, peer influence mapping, and tactical transition planning</li>
-                  </ul>
-                  <p className="mt-3 italic">
-                    Both canvases use the same underlying data to ensure consistency across all analyses.
+              <div className="bg-gradient-to-r from-slate-50 to-blue-50 border-2 border-slate-300 rounded-lg p-5 flex items-start gap-4">
+                <RotateCcw className="w-8 h-8 text-blue-600 flex-shrink-0 mt-0.5 animate-spin-slow" />
+                <div>
+                  <div className="font-bold text-slate-900 mb-2 text-lg">Continuous Improvement Cycle</div>
+                  <p className="text-sm text-slate-700 mb-2">
+                    After Contract Renewal Review, the cycle returns to Sourcing Strategy Review. This iterative process ensures
+                    continuous optimization of vendor relationships, clinical outcomes, and financial performance.
+                  </p>
+                  <p className="text-xs text-slate-600 italic">
+                    Note: Monitoring KPIs and strategic priorities may vary between cycles and product lines based on organizational needs.
                   </p>
                 </div>
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </div>

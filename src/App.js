@@ -7,8 +7,10 @@ import TeamDecisionDashboard from './views/TeamDecisionDashboard';
 import PortfolioOverview from './views/PortfolioOverview';
 import ServiceLineView from './views/ServiceLineView';
 import ProductLineView from './views/ProductLineView';
+import StageWorkspaceView from './views/StageWorkspaceView';
 import InitiativeDetail from './views/InitiativeDetail';
 import AdminDataUpload from './views/AdminDataUpload';
+import CardiovascularIPGDemo from './views/CardiovascularIPGDemo';
 import './App.css';
 
 function App() {
@@ -18,8 +20,12 @@ function App() {
         {/* Portfolio Overview - Default home page */}
         <Route path="/" element={<PortfolioOverview />} />
 
-        {/* New Hierarchy: Service Line → Product Line → Decision Canvas */}
+        {/* New Hierarchy: Service Line → Product Line → Stage Workspace */}
         <Route path="/service-line/:serviceLineId" element={<ServiceLineView />} />
+        <Route path="/service-line/:serviceLineId/product-line/:productLineId" element={<ProductLineView />} />
+        <Route path="/service-line/:serviceLineId/product-line/:productLineId/stage/:stageId" element={<StageWorkspaceView />} />
+
+        {/* Legacy product-line route for backwards compatibility */}
         <Route path="/product-line/:serviceLineId/:productLineId" element={<ProductLineView />} />
 
         {/* Initiative Detail - Legacy */}
@@ -48,6 +54,9 @@ function App() {
 
         {/* Admin routes */}
         <Route path="/admin/data-upload" element={<AdminDataUpload />} />
+
+        {/* IPG Product Evaluation Demo */}
+        <Route path="/cardiovascular/ipg-demo" element={<CardiovascularIPGDemo />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
