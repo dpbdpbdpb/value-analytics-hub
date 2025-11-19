@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronRight, ArrowLeft, Target, BarChart3, Users, Stethoscope, DollarSign, Settings, Search, CheckCircle, FileSignature, Wrench, TrendingUp, RotateCcw, Calendar } from 'lucide-react';
+import { ChevronRight, ArrowLeft, Target, BarChart3, Users, DollarSign, Settings, Search, CheckCircle, FileSignature, Wrench, TrendingUp, RotateCcw } from 'lucide-react';
 import NavigationHeader from '../components/shared/NavigationHeader';
-
-const ARC_HEIGHT = 200;
 
 const formatContractDate = (value) => {
   if (!value) return 'TBD';
@@ -112,18 +110,20 @@ const ProductLineView = () => {
   const formattedContractStart = formatContractDate(cycleMetadata.contractStartDate);
   const formattedContractEnd = formatContractDate(contractEndDate);
 
+  const [showHistory, setShowHistory] = useState(false);
+
   const positionedStages = React.useMemo(() => {
     if (!workflowStages || workflowStages.length === 0) return [];
-    // Distribute stages evenly along a semi-circle (0deg -> 180deg)
+
     const count = workflowStages.length;
-    return workflowStages.map((stage, index) => {
-      const angleDeg = count > 1 ? (index * 180) / (count - 1) : 90; // degrees
-      const angleRad = (angleDeg * Math.PI) / 180;
-      // leftPercent is mapped 0deg (left) -> 100% (right)
-      const leftPercent = (index * 100) / (count - 1);
-      const topOffset = Math.sin(angleRad) * ARC_HEIGHT * -1 + ARC_HEIGHT; // invert so arc goes upward
-      return { stage, leftPercent, topOffset, angleDeg };
-    });
+    const activeIndex = workflowStages.findIndex(s => s.status === 'active');
+    const startIndex = activeIndex >= 0 ? activeIndex : 0;
+
+    // Linear horizontal layout - stages flow left to right
+    return workflowStages.map((stage, index) => ({
+      stage,
+      index
+    }));
   }, [workflowStages]);
 
   // Load orthopedic data based on product line
@@ -355,63 +355,101 @@ const ProductLineView = () => {
               </div>
             </div>
 
-            {/* Arc Layout for desktop */}
-            <div className="relative hidden md:block h-[360px]">
-              <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 1000 320" preserveAspectRatio="none">
-                <defs>
-                  <marker id="workflow-arrow" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto" markerUnits="strokeWidth">
-                    <path d="M0,0 L0,6 L6,3 z" fill="#1d4ed8" />
-                  </marker>
-                  <marker id="loop-head" markerWidth="12" markerHeight="12" refX="6" refY="6" orient="auto" markerUnits="strokeWidth">
-                    <path d="M2,2 L10,6 L2,10 z" fill="#1d4ed8" />
-                  </marker>
-                </defs>
-                {/* main arc */}
-                <path d="M 80 260 Q 500 60 920 260" fill="none" stroke="#cbd5f5" strokeWidth="3" strokeLinecap="round" />
-                {/* subtle arrow near end to indicate direction */}
-                <path d="M 820 240 Q 920 180 880 90" fill="none" stroke="#1d4ed8" strokeWidth="2" markerEnd="url(#workflow-arrow)" strokeDasharray="6 4" />
-                {/* loop-back arrow from end back to start to show cycle returns */}
-                <path d="M 900 220 Q 500 320 120 220" fill="none" stroke="#1d4ed8" strokeWidth="2" markerEnd="url(#loop-head)" strokeDasharray="4 4" opacity="0.95" />
-              </svg>
+            {/* Cycle History Toggle */}
+            <div className="flex items-center justify-end gap-4 mb-4">
+              <button
+                onClick={() => setShowHistory(s => !s)}
+                className="text-xs px-3 py-1 bg-white border rounded text-gray-700 hover:bg-gray-50"
+              >
+                {showHistory ? 'Hide Cycle History' : 'Show Cycle History'}
+              </button>
+            </div>
 
-              {positionedStages.map(({ stage, leftPercent, topOffset }, idx) => {
+            {/* Previous Cycles History */}
+            {showHistory && (
+              <div className="mb-4 bg-gray-50 border border-gray-200 rounded p-3 text-sm">
+                <div className="font-semibold text-gray-800 mb-2">Previous Cycles</div>
+                {orthoData?.workflowTracking?.previousCycles?.length ? (
+                  <div className="grid grid-cols-1 gap-2">
+                    {orthoData.workflowTracking.previousCycles.map((c, i) => (
+                      <div key={i} className="p-2 bg-white rounded border">
+                        <div className="flex justify-between text-xs text-gray-700">
+                          <div>Cycle {c.cycleNumber}</div>
+                          <div>{c.startDate} → {c.endDate}</div>
+                        </div>
+                        <div className="text-xs text-gray-600 mt-1">{c.summary || 'No summary available'}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-xs text-gray-600">No previous cycles recorded for this product line.</div>
+                )}
+              </div>
+            )}
+            {/* Horizontal Linear Workflow */}
+            <div className="hidden md:flex items-start justify-center gap-2 py-8">
+              {positionedStages.map(({ stage, index }) => {
                 const IconComponent = stage.icon;
                 const isActive = stage.status === 'active';
                 const isCompleted = stage.status === 'completed';
-                const isUpcoming = stage.status === 'upcoming';
+                const isLast = index === workflowStages.length - 1;
+
                 return (
-                  <div
-                    key={stage.id}
-                    className="absolute flex flex-col items-center w-40"
-                    style={{ left: `calc(${leftPercent}% - 70px)`, top: `${topOffset}px` }}
-                  >
-                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-3 border-4 transition-all ${
-                      isCompleted
-                        ? 'bg-green-500 border-green-600'
-                        : isActive
-                        ? 'bg-blue-500 border-blue-600 ring-4 ring-blue-200 animate-pulse'
-                        : 'bg-gray-300 border-gray-400'
-                    }`}>
-                      <IconComponent className={`w-7 h-7 ${isCompleted || isActive ? 'text-white' : 'text-gray-600'}`} />
-                    </div>
-                    <div className={`text-center px-3 py-2 rounded-xl shadow ${
-                      isActive ? 'bg-blue-50 border border-blue-200' : 'bg-white border border-gray-200'
-                    }`}>
-                      <div className={`font-bold text-sm mb-1 ${
-                        isCompleted ? 'text-green-900' : isActive ? 'text-blue-900' : 'text-gray-600'
-                      }`}>{stage.name}</div>
-                      <div className="text-xs text-gray-600 mb-2">{stage.description}</div>
-                      <div className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${
+                  <React.Fragment key={stage.id}>
+                    {/* Stage */}
+                    <div className="flex flex-col items-center gap-3" style={{ width: '156px' }}>
+                      {/* Icon Circle - Fixed size for perfect alignment */}
+                      <div className={`w-16 h-16 rounded-full flex items-center justify-center border-4 transition-all shadow-md ${
                         isCompleted
-                          ? 'bg-green-100 text-green-800'
+                          ? 'bg-green-500 border-green-600 shadow-green-200'
                           : isActive
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-gray-100 text-gray-600'
+                          ? 'bg-blue-500 border-blue-600 ring-4 ring-blue-200 animate-pulse shadow-blue-300'
+                          : 'bg-gray-300 border-gray-400 shadow-gray-200'
                       }`}>
-                        {isCompleted ? '✓ Complete' : isActive ? '⚡ In Progress' : '⏳ Upcoming'}
+                        <IconComponent className={`w-7 h-7 ${isCompleted || isActive ? 'text-white' : 'text-gray-600'}`} />
+                      </div>
+
+                      {/* Label - Fixed width and height for uniformity */}
+                      <div className={`w-full h-[140px] p-3 rounded-lg shadow-md border-2 flex flex-col justify-between overflow-hidden ${
+                        isActive ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-200'
+                      }`}>
+                        <div className="overflow-hidden">
+                          <div className={`font-bold text-xs text-center leading-tight mb-2 ${
+                            isCompleted ? 'text-green-900' : isActive ? 'text-blue-900' : 'text-gray-700'
+                          }`} style={{
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden'
+                          }}>{stage.name}</div>
+                          <div className="text-xs text-gray-600 text-center leading-tight" style={{
+                            display: '-webkit-box',
+                            WebkitLineClamp: 3,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden'
+                          }}>{stage.description}</div>
+                        </div>
+                        <div className="flex justify-center mt-auto flex-shrink-0">
+                          <div className={`px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
+                            isCompleted
+                              ? 'bg-green-100 text-green-800'
+                              : isActive
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-gray-100 text-gray-600'
+                          }`}>
+                            {isCompleted ? '✓ Complete' : isActive ? '⚡ Active' : '⏳ Pending'}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
+
+                    {/* Arrow connector - Properly aligned at circle level */}
+                    {!isLast && (
+                      <div className="flex items-start pt-6">
+                        <ChevronRight className="w-6 h-6 text-gray-400" />
+                      </div>
+                    )}
+                  </React.Fragment>
                 );
               })}
             </div>
