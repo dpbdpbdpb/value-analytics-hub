@@ -1129,26 +1129,26 @@ const CardiovascularIPGDemo = () => {
                 </div>
 
                 {/* Active Phase Details */}
-                <div className="mt-6 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg p-5 border-2 border-blue-300">
+                <div className="mt-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-5 border-2 border-blue-400">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="text-2xl">📈</div>
                     <div>
-                      <div className="font-bold text-blue-900 text-lg">Currently in Scale Phase</div>
+                      <div className="font-bold text-blue-900 text-lg">Currently in Scale Phase (Active)</div>
                       <div className="text-sm text-blue-800">
-                        Expanding from pilot facilities (2) to broader system implementation (15-20 facilities)
+                        Pilot complete - now expanding from 2 pilot facilities to 15-20 high-volume cardiac centers across the system
                       </div>
                     </div>
                   </div>
                   <div className="grid grid-cols-3 gap-3 mt-4">
-                    <div className="bg-white rounded-lg p-3 border-2 border-yellow-200">
-                      <div className="text-xs text-yellow-700 font-semibold mb-1">🔬 Pilot Phase</div>
+                    <div className="bg-white rounded-lg p-3 border-2 border-green-300">
+                      <div className="text-xs text-green-700 font-semibold mb-1">🔬 Pilot Phase</div>
                       <div className="text-xs text-gray-700">Initial validation at 2 facilities (Q2-Q3 2025)</div>
                       <div className="text-xs font-bold text-green-700 mt-1">✓ Complete</div>
                     </div>
-                    <div className="bg-white rounded-lg p-3 border-2 border-blue-300">
+                    <div className="bg-white rounded-lg p-3 border-2 border-blue-400 ring-2 ring-blue-200">
                       <div className="text-xs text-blue-700 font-semibold mb-1">📈 Scale Phase</div>
-                      <div className="text-xs text-gray-700">Expanding to 15-20 high-volume centers (Q4 2025)</div>
-                      <div className="text-xs font-bold text-blue-700 mt-1">⚡ In Progress</div>
+                      <div className="text-xs text-gray-700">Expanding to 15-20 high-volume centers (Q3-Q4 2025)</div>
+                      <div className="text-xs font-bold text-blue-700 mt-1">⚡ Active Now</div>
                     </div>
                     <div className="bg-white rounded-lg p-3 border-2 border-gray-200">
                       <div className="text-xs text-gray-600 font-semibold mb-1">🎯 Sustain Phase</div>
