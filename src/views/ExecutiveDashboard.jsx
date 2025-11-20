@@ -105,6 +105,9 @@ const EnhancedOrthopedicDashboard = () => {
   const [selectedVendors, setSelectedVendors] = useState(['VENDOR-ALPHA', 'VENDOR-BETA']); // Array of vendor names
   const [selectedPriceCap, setSelectedPriceCap] = useState('none'); // 'none', 'construct-price-cap', 'component-price-cap'
 
+  // DEBUG: Log state on every render
+  console.log('ExecutiveDashboard render - selectedVendors:', selectedVendors, 'type:', typeof selectedVendors, 'isArray:', Array.isArray(selectedVendors));
+
   // Available vendors (from hip-knee data)
   const availableVendors = [
     { id: 'VENDOR-ALPHA', name: 'Vendor Alpha', tier: 'Premium', marketShare: 28 },
@@ -116,10 +119,11 @@ const EnhancedOrthopedicDashboard = () => {
   ];
 
   const toggleVendor = (vendorId) => {
-    if (selectedVendors.includes(vendorId)) {
-      setSelectedVendors(selectedVendors.filter(v => v !== vendorId));
-    } else if (selectedVendors.length < 5) {
-      setSelectedVendors([...selectedVendors, vendorId]);
+    const vendors = selectedVendors || [];
+    if (vendors.includes(vendorId)) {
+      setSelectedVendors(vendors.filter(v => v !== vendorId));
+    } else if (vendors.length < 5) {
+      setSelectedVendors([...vendors, vendorId]);
     }
   };
 
@@ -402,7 +406,8 @@ const EnhancedOrthopedicDashboard = () => {
 
   // Calculate Hybrid Scenario (Vendor Selection + Price Cap)
   const calculateHybridScenario = useMemo(() => {
-    if (selectedVendors.length === 0) {
+    const vendors = selectedVendors || [];
+    if (vendors.length === 0) {
       return null;
     }
 
@@ -413,7 +418,7 @@ const EnhancedOrthopedicDashboard = () => {
     // More vendors = Better physician satisfaction but lower adoption
     // Fewer vendors = Lower physician satisfaction but higher adoption
 
-    const vendorCount = selectedVendors.length;
+    const vendorCount = vendors.length;
 
     // Calculate physician adoption based on vendor count
     // 1 vendor: 95% adoption (monopoly), 60% satisfaction
@@ -501,7 +506,7 @@ const EnhancedOrthopedicDashboard = () => {
     }
 
     // Build scenario name
-    const vendorNames = selectedVendors.map(id => {
+    const vendorNames = vendors.map(id => {
       const vendor = availableVendors.find(v => v.id === id);
       return vendor ? vendor.name.replace('Vendor ', 'V') : id;
     }).join('+');
@@ -546,7 +551,7 @@ const EnhancedOrthopedicDashboard = () => {
             ]
       },
       isHybrid: true,
-      selectedVendors: selectedVendors,
+      selectedVendors: vendors,
       vendorCount: vendorCount,
       priceCap: selectedPriceCap
     };
@@ -1086,20 +1091,24 @@ const EnhancedOrthopedicDashboard = () => {
                 <th className="px-2 py-3 text-left font-bold text-gray-900 sticky left-0 bg-gradient-to-r from-purple-100 to-blue-100 z-10 min-w-[180px]">
                   Metric
                 </th>
-                {availableVendors.map(vendor => (
+                {availableVendors.map(vendor => {
+                  console.log('Vendor header map - vendor:', vendor.id, 'selectedVendors:', selectedVendors, 'typeof:', typeof selectedVendors);
+                  const vendors = selectedVendors || [];
+                  console.log('After defensive check - vendors:', vendors, 'isArray:', Array.isArray(vendors));
+                  return (
                   <th
                     key={vendor.id}
                     className={`px-2 py-3 text-center min-w-[140px] ${
-                      selectedVendors.includes(vendor.id) ? 'bg-purple-50' : ''
+                      vendors.includes(vendor.id) ? 'bg-purple-50' : ''
                     }`}
                   >
                     <div className="flex flex-col items-center gap-2">
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="checkbox"
-                          checked={selectedVendors.includes(vendor.id)}
+                          checked={vendors.includes(vendor.id)}
                           onChange={() => toggleVendor(vendor.id)}
-                          disabled={selectedVendors.length >= 5 && !selectedVendors.includes(vendor.id)}
+                          disabled={vendors.length >= 5 && !vendors.includes(vendor.id)}
                           className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
                         />
                         <span className="font-bold text-purple-900 text-sm">{vendor.name}</span>
@@ -1116,7 +1125,8 @@ const EnhancedOrthopedicDashboard = () => {
                       </div>
                     </div>
                   </th>
-                ))}
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
@@ -1125,12 +1135,14 @@ const EnhancedOrthopedicDashboard = () => {
                 <td className="px-2 py-2 font-semibold text-gray-700 text-sm sticky left-0 bg-gray-50 z-10">
                   Selection Status
                 </td>
-                {availableVendors.map(vendor => (
+                {availableVendors.map(vendor => {
+                  const vendors = selectedVendors || [];
+                  return (
                   <td
                     key={vendor.id}
-                    className={`px-2 py-2 text-center ${selectedVendors.includes(vendor.id) ? 'bg-purple-50' : ''}`}
+                    className={`px-2 py-2 text-center ${vendors.includes(vendor.id) ? 'bg-purple-50' : ''}`}
                   >
-                    {selectedVendors.includes(vendor.id) ? (
+                    {vendors.includes(vendor.id) ? (
                       <span className="px-2 py-1 bg-green-200 text-green-900 rounded-full font-bold text-xs">
                         ✓ Selected
                       </span>
@@ -1138,7 +1150,8 @@ const EnhancedOrthopedicDashboard = () => {
                       <span className="text-gray-400 text-xs">—</span>
                     )}
                   </td>
-                ))}
+                  );
+                })}
               </tr>
 
               {/* FINANCIAL OUTCOMES SECTION */}
@@ -1154,7 +1167,8 @@ const EnhancedOrthopedicDashboard = () => {
                   Annual Savings
                 </td>
                 {availableVendors.map(vendor => {
-                  const isSelected = selectedVendors.includes(vendor.id);
+                  const vendors = selectedVendors || [];
+                  const isSelected = vendors.includes(vendor.id);
                   return (
                     <td
                       key={vendor.id}
@@ -1176,7 +1190,8 @@ const EnhancedOrthopedicDashboard = () => {
                   Savings Percentage
                 </td>
                 {availableVendors.map(vendor => {
-                  const isSelected = selectedVendors.includes(vendor.id);
+                  const vendors = selectedVendors || [];
+                  const isSelected = vendors.includes(vendor.id);
                   return (
                     <td
                       key={vendor.id}
@@ -1205,7 +1220,8 @@ const EnhancedOrthopedicDashboard = () => {
                   Physician Adoption Rate
                 </td>
                 {availableVendors.map(vendor => {
-                  const isSelected = selectedVendors.includes(vendor.id);
+                  const vendors = selectedVendors || [];
+                  const isSelected = vendors.includes(vendor.id);
                   return (
                     <td
                       key={vendor.id}
@@ -1227,7 +1243,8 @@ const EnhancedOrthopedicDashboard = () => {
                   Surgeon Satisfaction
                 </td>
                 {availableVendors.map(vendor => {
-                  const isSelected = selectedVendors.includes(vendor.id);
+                  const vendors = selectedVendors || [];
+                  const isSelected = vendors.includes(vendor.id);
                   return (
                     <td
                       key={vendor.id}
@@ -1249,7 +1266,8 @@ const EnhancedOrthopedicDashboard = () => {
                   Operational Complexity
                 </td>
                 {availableVendors.map(vendor => {
-                  const isSelected = selectedVendors.includes(vendor.id);
+                  const vendors = selectedVendors || [];
+                  const isSelected = vendors.includes(vendor.id);
                   return (
                     <td
                       key={vendor.id}
@@ -1284,7 +1302,8 @@ const EnhancedOrthopedicDashboard = () => {
                   Overall Risk Level
                 </td>
                 {availableVendors.map(vendor => {
-                  const isSelected = selectedVendors.includes(vendor.id);
+                  const vendors = selectedVendors || [];
+                  const isSelected = vendors.includes(vendor.id);
                   return (
                     <td
                       key={vendor.id}
@@ -1312,7 +1331,8 @@ const EnhancedOrthopedicDashboard = () => {
                   Strategy Description
                 </td>
                 {availableVendors.map(vendor => {
-                  const isSelected = selectedVendors.includes(vendor.id);
+                  const vendors = selectedVendors || [];
+                  const isSelected = vendors.includes(vendor.id);
                   return (
                     <td
                       key={vendor.id}
@@ -1320,7 +1340,7 @@ const EnhancedOrthopedicDashboard = () => {
                     >
                       {isSelected && calculateHybridScenario ? (
                         <div className="text-xs text-gray-700">
-                          {selectedVendors.length} Vendor{selectedVendors.length !== 1 ? 's' : ''}
+                          {vendors.length} Vendor{vendors.length !== 1 ? 's' : ''}
                           {selectedPriceCap !== 'none' && (
                             <> + {calculateHybridScenario.priceCapDescription}</>
                           )}
