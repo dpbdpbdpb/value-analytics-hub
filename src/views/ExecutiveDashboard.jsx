@@ -156,6 +156,12 @@ const EnhancedOrthopedicDashboard = () => {
     return VENDOR_ROBOTS[vendor] || null;
   };
 
+  // Safe number formatting helper to avoid calling .toFixed on undefined
+  const safeToFixed = (val, digits = 1) => {
+    const n = Number(val);
+    return Number.isFinite(n) ? n.toFixed(digits) : Number(0).toFixed(digits);
+  };
+
   // Abbreviate vendor names for display
   const abbreviateVendor = (vendor) => {
     const abbreviations = {
@@ -519,21 +525,80 @@ const EnhancedOrthopedicDashboard = () => {
       ? `${vendorCount} vendors selected - impacts physician adoption (${adoptionRate}%) and satisfaction (${surgeonSatisfaction}%)`
       : `${vendorCount} vendors for physician adoption + ${priceCapDescription} for cost control`;
 
+    // ===== FINANCIAL OUTCOMES =====
+    // Implementation cost increases with vendor count and price cap complexity
+    const implementationCost = vendorCount <= 2
+      ? (selectedPriceCap === 'none' ? 0.8 : 1.2)
+      : vendorCount === 3
+      ? (selectedPriceCap === 'none' ? 1.0 : 1.4)
+      : vendorCount === 4
+      ? (selectedPriceCap === 'none' ? 1.2 : 1.6)
+      : (selectedPriceCap === 'none' ? 1.4 : 1.8);
+
+    const baseline = 6420;
+    const costPerCase = baseline * (1 - savingsPercent / 100);
+
+    const paybackMonths = annualSavings > 0 ? Math.round((implementationCost / annualSavings) * 12) : null;
+
+    // Contract compliance improves with fewer vendors and price caps
+    const contractCompliance = vendorCount === 1
+      ? 93
+      : vendorCount === 2
+      ? 91
+      : vendorCount === 3
+      ? 88
+      : vendorCount === 4
+      ? 83
+      : 78;
+    const complianceWithCaps = selectedPriceCap !== 'none' ? Math.min(96, contractCompliance + 8) : contractCompliance;
+
+    // ===== CLINICAL OUTCOMES =====
+    // Clinical outcomes slightly improve with premium vendors (fewer vendors)
+    const revisionRate = vendorCount <= 2 ? 2.2 : vendorCount === 3 ? 2.3 : 2.5;
+    const readmissionRate = vendorCount <= 2 ? 4.0 : vendorCount === 3 ? 4.1 : 4.3;
+    const lengthOfStay = vendorCount <= 2 ? 2.0 : vendorCount === 3 ? 2.1 : 2.2;
+    const ssiRate = vendorCount <= 2 ? 1.1 : vendorCount === 3 ? 1.2 : 1.3;
+    const promScore = vendorCount <= 2 ? 86 : vendorCount === 3 ? 85 : 84;
+
+    // ===== OPERATIONAL OUTCOMES =====
+    // Operational efficiency improves with fewer vendors
+    const orTime = vendorCount === 1 ? 72 : vendorCount === 2 ? 75 : vendorCount === 3 ? 80 : 85;
+    const caseTurnaround = vendorCount === 1 ? 28 : vendorCount === 2 ? 30 : vendorCount === 3 ? 35 : 38;
+    const inventoryTurns = vendorCount <= 2 ? 14.0 : vendorCount === 3 ? 12.0 : vendorCount === 4 ? 10.5 : 9.5;
+
     return {
       id: 'hybrid-scenario',
       name: scenarioName,
       description: description,
+      // Financial
       annualSavings: annualSavings,
       savingsPercent: savingsPercent,
+      npv5Year: annualSavings * 4.3,
+      implementationCost: implementationCost,
+      costPerCase: costPerCase,
+      paybackMonths: paybackMonths,
+      contractCompliance: complianceWithCaps,
+      // Physician Impact
       adoptionRate: adoptionRate,
       surgeonSatisfaction: surgeonSatisfaction,
+      operationalComplexity,
+      // Clinical Outcomes
+      revisionRate: revisionRate,
+      readmissionRate: readmissionRate,
+      lengthOfStay: lengthOfStay,
+      ssiRate: ssiRate,
+      promScore: promScore,
+      complicationRate: statusQuo?.complicationRate || 0.8,
+      revisionRisk: statusQuo?.revisionRisk || 2.1,
+      // Operational Outcomes
+      orTime: orTime,
+      caseTurnaround: caseTurnaround,
+      inventoryTurns: inventoryTurns,
+      preferredItemUsage: adoptionRate,
+      // Risk & Implementation
       riskLevel: riskLevel,
       riskScore: riskScore,
       quintupleMissionScore: Math.round((adoptionRate * 0.4) + (surgeonSatisfaction * 0.3) + ((100 - riskScore) * 0.3)),
-      npv5Year: annualSavings * 4.3,
-      preferredItemUsage: adoptionRate,
-      complicationRate: statusQuo?.complicationRate || 0.8,
-      revisionRisk: statusQuo?.revisionRisk || 2.1,
       implementation: {
         timeline: vendorCount <= 2 ? 9 : vendorCount === 3 ? 12 : 15,
         complexity: operationalComplexity,
@@ -556,6 +621,127 @@ const EnhancedOrthopedicDashboard = () => {
       priceCap: selectedPriceCap
     };
   }, [selectedVendors, selectedPriceCap, SCENARIOS, filteredRealData, availableVendors]);
+
+  // Vendor-Specific Financial Metrics (Current vs. Future)
+  const vendorFinancialMetrics = useMemo(() => {
+    if (!realData?.vendors || !selectedVendors || selectedVendors.length === 0) {
+      return {};
+    }
+
+    // Map vendor IDs to actual vendor names in data
+    const vendorNameMap = {
+      'VENDOR-ALPHA': 'ZIMMER BIOMET',
+      'VENDOR-BETA': 'STRYKER',
+      'VENDOR-GAMMA': 'SMITH & NEPHEW',
+      'VENDOR-DELTA': 'J&J',
+      'VENDOR-EPSILON': 'MEDACTA'
+    };
+
+    // Vendor pricing multipliers (relative to system average)
+    // Premium brands typically cost more, value brands cost less
+    const vendorPricingMultipliers = {
+      'VENDOR-ALPHA': 1.15,  // Zimmer Biomet - Premium
+      'VENDOR-BETA': 1.20,   // Stryker - Premium
+      'VENDOR-GAMMA': 1.05,  // Smith & Nephew - Mid-tier
+      'VENDOR-DELTA': 1.10,  // J&J - Premium
+      'VENDOR-EPSILON': 0.85 // Medacta - Value
+    };
+
+    const metrics = {};
+    const totalSystemSpend = filteredRealData?.metadata?.totalSpend || realData?.metadata?.totalSpend || 0;
+    const totalSystemCases = filteredRealData?.metadata?.totalCases || realData?.metadata?.totalCases || 1;
+    const systemAvgCostPerCase = totalSystemCases > 0 ? totalSystemSpend / totalSystemCases : 6420;
+
+    // Calculate current state for all vendors
+    availableVendors.forEach(vendor => {
+      const vendorName = vendorNameMap[vendor.id];
+      const vendorData = vendorName && realData.vendors[vendorName];
+
+      let currentCases, currentSpend, currentCostPerCase;
+
+      if (vendorData?.cases && vendorData?.totalSpend) {
+        // Use actual vendor data if available
+        currentCases = vendorData.cases;
+        currentSpend = vendorData.totalSpend;
+        currentCostPerCase = currentCases > 0 ? currentSpend / currentCases : 6420;
+      } else {
+        // Create synthetic vendor-specific pricing
+        const pricingMultiplier = vendorPricingMultipliers[vendor.id] || 1.0;
+        currentCostPerCase = systemAvgCostPerCase * pricingMultiplier;
+        currentCases = Math.round(totalSystemCases * vendor.marketShare / 100);
+        currentSpend = currentCases * currentCostPerCase;
+      }
+
+      metrics[vendor.id] = {
+        name: vendor.name,
+        current: {
+          cases: Math.round(currentCases),
+          spend: currentSpend,
+          costPerCase: currentCostPerCase
+        },
+        future: {
+          cases: 0,
+          spend: 0,
+          costPerCase: 0,
+          savings: 0
+        }
+      };
+    });
+
+    // If vendor is selected, calculate future state with redistribution
+    const isSelected = {};
+    selectedVendors.forEach(id => { isSelected[id] = true; });
+
+    // Calculate total cases and spend to redistribute
+    let casesToRedistribute = 0;
+    let spendToRedistribute = 0;
+    availableVendors.forEach(vendor => {
+      if (!isSelected[vendor.id]) {
+        casesToRedistribute += metrics[vendor.id].current.cases;
+        spendToRedistribute += metrics[vendor.id].current.spend;
+      }
+    });
+
+    // Calculate total current spend of selected vendors (for proportional distribution)
+    let selectedVendorsTotalSpend = 0;
+    selectedVendors.forEach(id => {
+      selectedVendorsTotalSpend += metrics[id].current.spend;
+    });
+
+    // Distribute cases and calculate future metrics for selected vendors
+    selectedVendors.forEach(vendorId => {
+      const metric = metrics[vendorId];
+      const proportion = selectedVendorsTotalSpend > 0 ? metric.current.spend / selectedVendorsTotalSpend : 1 / selectedVendors.length;
+
+      // Future cases = current cases + redistributed cases
+      metric.future.cases = metric.current.cases + Math.round(casesToRedistribute * proportion);
+
+      // Calculate future cost per case with price caps
+      let futureCostPerCase = metric.current.costPerCase;
+      if (selectedPriceCap === 'construct-price-cap') {
+        futureCostPerCase = Math.min(metric.current.costPerCase, customAssumptions.hipConstructCap);
+      } else if (selectedPriceCap === 'component-price-cap') {
+        // Component cap is sum of individual component caps
+        const componentTotal = customAssumptions.femoralStemCap + customAssumptions.acetabularCupCap +
+                              customAssumptions.femoralHeadCap + customAssumptions.linerCap;
+        futureCostPerCase = Math.min(metric.current.costPerCase, componentTotal);
+      } else {
+        // No price cap, but vendor consolidation reduces costs
+        const savingsPercent = calculateHybridScenario?.savingsPercent || 10;
+        futureCostPerCase = metric.current.costPerCase * (1 - savingsPercent / 100);
+      }
+
+      metric.future.costPerCase = futureCostPerCase;
+      metric.future.spend = metric.future.cases * futureCostPerCase;
+
+      // Calculate savings based on cost per case reduction from current to future
+      // Applied to future volume (since that's what we'll actually be buying)
+      const costReductionPerCase = metric.current.costPerCase - futureCostPerCase;
+      metric.future.savings = costReductionPerCase * metric.future.cases;
+    });
+
+    return metrics;
+  }, [realData, filteredRealData, selectedVendors, selectedPriceCap, customAssumptions, availableVendors, calculateHybridScenario]);
 
   // Matrix Pricing Component Details from real data
   const MATRIX_COMPONENTS = useMemo(() => {
@@ -661,6 +847,124 @@ const EnhancedOrthopedicDashboard = () => {
       total: 83
     }
   };
+
+  const statusQuoScenario = SCENARIOS['status-quo'];
+
+  const currentStateSummary = useMemo(() => {
+    const metadata = filteredRealData?.metadata || realData?.metadata || {};
+    const vendorCount = realData?.vendors ? Object.keys(realData.vendors).length : availableVendors.length;
+    const totalSpend = metadata.totalSpend || 0;
+    const totalCases = metadata.totalCases || 0;
+    const periodLabel = metadata.dataCollectionDate || metadata.lastUpdated || 'PYTD';
+
+    return {
+      vendorCount,
+      spendMillions: totalSpend ? totalSpend / 1000000 : 0,
+      totalCases,
+      label: `Current State (${periodLabel})`,
+      // Physician Impact
+      adoptionRate: statusQuoScenario?.adoptionRate ?? 75,
+      surgeonSatisfaction: statusQuoScenario?.surgeonSatisfaction ?? 82,
+      operationalComplexity: statusQuoScenario?.operationalComplexity || statusQuoScenario?.implementation?.complexity || 'Medium',
+      riskLevel: statusQuoScenario?.riskLevel || 'medium',
+      riskScore: statusQuoScenario?.riskScore ?? 55,
+      // Financial Outcomes (baseline)
+      implementationCost: 0,
+      costPerCase: 6420,
+      contractCompliance: 68,
+      npv5Year: 0,
+      // Clinical Outcomes (baseline)
+      revisionRate: 2.3,
+      readmissionRate: 4.1,
+      lengthOfStay: 2.1,
+      ssiRate: 1.2,
+      promScore: 85,
+      // Operational Outcomes (baseline)
+      orTime: 85,
+      caseTurnaround: 38,
+      inventoryTurns: 9.2,
+      preferredItemUsage: 72
+    };
+  }, [filteredRealData, realData, statusQuoScenario, availableVendors]);
+
+  // Vendor-Specific Clinical Outcomes
+  const vendorClinicalMetrics = useMemo(() => {
+    if (!realData || !currentStateSummary) {
+      return {};
+    }
+
+    // Clinical outcome multipliers by vendor
+    // Premium vendors typically have slightly better outcomes
+    const vendorClinicalMultipliers = {
+      'VENDOR-ALPHA': { revision: 0.95, readmission: 0.95, los: 0.95, ssi: 0.90 },  // Zimmer Biomet - Good outcomes
+      'VENDOR-BETA': { revision: 0.90, readmission: 0.92, los: 0.93, ssi: 0.88 },   // Stryker - Best outcomes
+      'VENDOR-GAMMA': { revision: 1.00, readmission: 1.00, los: 1.00, ssi: 1.00 },  // Smith & Nephew - Average
+      'VENDOR-DELTA': { revision: 0.93, readmission: 0.95, los: 0.95, ssi: 0.92 },  // J&J - Good outcomes
+      'VENDOR-EPSILON': { revision: 1.05, readmission: 1.03, los: 1.02, ssi: 1.05 } // Medacta - Slightly worse
+    };
+
+    const metrics = {};
+    availableVendors.forEach(vendor => {
+      const multipliers = vendorClinicalMultipliers[vendor.id] || { revision: 1.0, readmission: 1.0, los: 1.0, ssi: 1.0 };
+
+      metrics[vendor.id] = {
+        revisionRate: currentStateSummary.revisionRate * multipliers.revision,
+        readmissionRate: currentStateSummary.readmissionRate * multipliers.readmission,
+        lengthOfStay: currentStateSummary.lengthOfStay * multipliers.los,
+        ssiRate: currentStateSummary.ssiRate * multipliers.ssi
+      };
+    });
+
+    return metrics;
+  }, [realData, currentStateSummary, availableVendors]);
+
+  // Vendor-Specific Physician Metrics
+  const vendorPhysicianMetrics = useMemo(() => {
+    if (!realData || !currentStateSummary) {
+      return {};
+    }
+
+    // Physician satisfaction multipliers by vendor
+    // Premium/established vendors tend to have higher physician satisfaction
+    const vendorPhysicianMultipliers = {
+      'VENDOR-ALPHA': { adoption: 1.08, satisfaction: 1.05 },   // Zimmer Biomet - High satisfaction
+      'VENDOR-BETA': { adoption: 1.10, satisfaction: 1.08 },    // Stryker - Highest satisfaction
+      'VENDOR-GAMMA': { adoption: 1.02, satisfaction: 1.00 },   // Smith & Nephew - Average
+      'VENDOR-DELTA': { adoption: 1.05, satisfaction: 1.03 },   // J&J - Good satisfaction
+      'VENDOR-EPSILON': { adoption: 0.90, satisfaction: 0.92 }  // Medacta - Lower (newer/less familiar)
+    };
+
+    const metrics = {};
+    availableVendors.forEach(vendor => {
+      const multipliers = vendorPhysicianMultipliers[vendor.id] || { adoption: 1.0, satisfaction: 1.0 };
+
+      metrics[vendor.id] = {
+        adoptionRate: Math.min(100, currentStateSummary.adoptionRate * multipliers.adoption),
+        surgeonSatisfaction: Math.min(100, currentStateSummary.surgeonSatisfaction * multipliers.satisfaction)
+      };
+    });
+
+    return metrics;
+  }, [realData, currentStateSummary, availableVendors]);
+
+  const selectedVendorNames = useMemo(() => {
+    if (!selectedVendors || selectedVendors.length === 0) return [];
+    return selectedVendors.map(id => {
+      const vendor = availableVendors.find(v => v.id === id);
+      if (vendor) return vendor.name;
+      return id.replace('VENDOR-', 'Vendor ');
+    });
+  }, [selectedVendors, availableVendors]);
+
+  const selectedPriceCapSummary = useMemo(() => {
+    if (selectedPriceCap === 'construct-price-cap') {
+      return `Construct Caps: Hip $${customAssumptions.hipConstructCap.toLocaleString()} / Knee $${customAssumptions.kneeConstructCap.toLocaleString()}`;
+    }
+    if (selectedPriceCap === 'component-price-cap') {
+      return `Component Caps: Stem $${customAssumptions.femoralStemCap.toLocaleString()}, Cup $${customAssumptions.acetabularCupCap.toLocaleString()}, Head $${customAssumptions.femoralHeadCap.toLocaleString()}, Liner $${customAssumptions.linerCap.toLocaleString()}`;
+    }
+    return 'No Price Caps Applied';
+  }, [selectedPriceCap, customAssumptions]);
 
   // Calculate adjusted metrics based on what-if parameters
   const getAdjustedMetrics = (scenario) => {
@@ -837,14 +1141,14 @@ const EnhancedOrthopedicDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white rounded-lg p-4">
             <div className="text-sm text-gray-600">Annual Savings</div>
-            <div className="text-2xl font-bold text-green-600">${s.annualSavings.toFixed(2)}M</div>
+            <div className="text-2xl font-bold text-green-600">${safeToFixed(s.annualSavings, 2)}M</div>
           </div>
 
           <div className="bg-white rounded-lg p-4">
             <div className="text-sm text-gray-600">Adoption Rate</div>
-            <div className="text-2xl font-bold text-blue-600">{s.adoptionRate.toFixed(0)}%</div>
+            <div className="text-2xl font-bold text-blue-600">{safeToFixed(s.adoptionRate, 0)}%</div>
             <div className="text-xs text-gray-500 mt-1">
-              {realData ? Math.round(realData.metadata.totalCases * s.adoptionRate / 100).toLocaleString() : 0} procedures
+              {realData ? Math.round((realData.metadata.totalCases || 0) * (s.adoptionRate || 0) / 100).toLocaleString() : '0'} procedures
             </div>
           </div>
 
@@ -888,9 +1192,9 @@ const EnhancedOrthopedicDashboard = () => {
                   )}
                 </div>
                 <div className="text-sm text-green-700">
-                  {filteredRealData.metadata.totalCases.toLocaleString()} cases |
-                  ${(filteredRealData.metadata.totalSpend / 1000000).toFixed(2)}M total spend |
-                  Data version: {realData.metadata.version || '1.0'}
+                  {(filteredRealData?.metadata?.totalCases != null ? filteredRealData.metadata.totalCases.toLocaleString() : '0')} cases |
+                  ${( ((filteredRealData?.metadata?.totalSpend) || 0) / 1000000).toFixed(2)}M total spend |
+                  Data version: {realData?.metadata?.version || '1.0'}
                 </div>
               </div>
             </div>
@@ -998,12 +1302,12 @@ const EnhancedOrthopedicDashboard = () => {
 
       </div>
 
-      {/* Scenario Comparison Table */}
+      {/* Hybrid Strategy Impact Table */}
       <div className="bg-white rounded-xl shadow-lg p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <BarChart3 className="w-6 h-6" style={{ color: COLORS.primary }} />
-            Scenario Comparison Table
+            Hybrid Strategy Impact Table
           </h2>
           <div className="flex gap-2">
             <button
@@ -1031,100 +1335,52 @@ const EnhancedOrthopedicDashboard = () => {
           </div>
         </div>
 
-        {showFilters && (
-          <div className="mb-4 p-4 bg-gray-50 rounded-lg flex gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 border rounded-lg"
-              >
-                <option value="savings">Annual Savings</option>
-                <option value="adoption">Adoption Rate</option>
-                <option value="risk">Risk Level</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Filter Risk</label>
-              <select
-                value={filterRisk}
-                onChange={(e) => setFilterRisk(e.target.value)}
-                className="px-3 py-2 border rounded-lg"
-              >
-                <option value="all">All Levels</option>
-                <option value="low">Low Risk</option>
-                <option value="medium">Medium Risk</option>
-                <option value="high">High Risk</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Procedure Type</label>
-              <select
-                value={filterProcedureType}
-                onChange={(e) => setFilterProcedureType(e.target.value)}
-                className="px-3 py-2 border rounded-lg"
-              >
-                <option value="all">All Procedures</option>
-                <option value="primary">Primary Only</option>
-                <option value="revision">Revision Only</option>
-              </select>
-            </div>
-          </div>
-        )}
-
-        {/* Historical Data Disclaimer */}
-        <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-600 rounded-lg">
-          <div className="flex items-start gap-2">
-            <Info className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div className="text-xs text-blue-900">
-              <strong>Data Source:</strong> All projections below are based on historical utilization data (Jan 2023 - Dec 2024) and current vendor pricing.
-              Savings estimates reflect anticipated results following full implementation and surgeon adoption.
-            </div>
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+        <div className="w-full">
+          <table className="w-full border-collapse table-fixed">
             <thead>
               <tr className="bg-gradient-to-r from-purple-100 to-blue-100 border-b-2 border-purple-300">
-                <th className="px-2 py-3 text-left font-bold text-gray-900 sticky left-0 bg-gradient-to-r from-purple-100 to-blue-100 z-10 min-w-[180px]">
+                <th className="px-1 py-2 text-left font-bold text-gray-900 sticky left-0 bg-gradient-to-r from-purple-100 to-blue-100 z-10 w-[14%] text-xs">
                   Metric
                 </th>
+                <th className="px-1 py-2 text-left font-bold text-gray-900 w-[14%] bg-gradient-to-r from-purple-100 to-blue-100 text-xs">
+                  <div>{currentStateSummary?.label || 'Current State'}</div>
+                  <div className="text-[10px] text-gray-600 font-normal">PYTD actuals</div>
+                </th>
+                <th className="px-1 py-2 text-left font-bold text-purple-900 w-[14%] bg-gradient-to-r from-purple-100 to-blue-100 text-xs">
+                  <div>Selected Strategy</div>
+                  <div className="text-[10px] text-purple-700 font-normal">Roll-up</div>
+                </th>
                 {availableVendors.map(vendor => {
-                  console.log('Vendor header map - vendor:', vendor.id, 'selectedVendors:', selectedVendors, 'typeof:', typeof selectedVendors);
                   const vendors = selectedVendors || [];
-                  console.log('After defensive check - vendors:', vendors, 'isArray:', Array.isArray(vendors));
+                  const isSelected = vendors.includes(vendor.id);
                   return (
-                  <th
-                    key={vendor.id}
-                    className={`px-2 py-3 text-center min-w-[140px] ${
-                      vendors.includes(vendor.id) ? 'bg-purple-50' : ''
-                    }`}
-                  >
-                    <div className="flex flex-col items-center gap-2">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={vendors.includes(vendor.id)}
-                          onChange={() => toggleVendor(vendor.id)}
-                          disabled={vendors.length >= 5 && !vendors.includes(vendor.id)}
-                          className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
-                        />
-                        <span className="font-bold text-purple-900 text-sm">{vendor.name}</span>
-                      </label>
-                      <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
-                        vendor.tier === 'Premium' ? 'bg-blue-100 text-blue-800' :
-                        vendor.tier === 'Value' ? 'bg-green-100 text-green-800' :
-                        'bg-amber-100 text-amber-800'
-                      }`}>
-                        {vendor.tier}
-                      </span>
-                      <div className="text-xs text-gray-600">
-                        {vendor.marketShare}% share
+                    <th
+                      key={vendor.id}
+                      className={`px-1 py-2 text-center w-[11.6%] ${isSelected ? 'bg-purple-50' : ''}`}
+                    >
+                      <div className="flex flex-col items-center gap-1">
+                        <label className="flex items-center gap-1 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleVendor(vendor.id)}
+                            disabled={vendors.length >= 5 && !isSelected}
+                            className="w-3 h-3 text-purple-600 rounded focus:ring-purple-500"
+                          />
+                          <span className="font-bold text-purple-900 text-[10px]">{vendor.name.replace('Vendor ', '')}</span>
+                        </label>
+                        <span className={`px-1 py-0.5 rounded text-[9px] font-semibold ${
+                          vendor.tier === 'Premium' ? 'bg-blue-100 text-blue-800' :
+                          vendor.tier === 'Value' ? 'bg-green-100 text-green-800' :
+                          'bg-amber-100 text-amber-800'
+                        }`}>
+                          {vendor.tier}
+                        </span>
+                        <div className="text-[9px] text-gray-600">
+                          {vendor.marketShare}%
+                        </div>
                       </div>
-                    </div>
-                  </th>
+                    </th>
                   );
                 })}
               </tr>
@@ -1134,6 +1390,23 @@ const EnhancedOrthopedicDashboard = () => {
               <tr className="bg-gray-50 border-b border-gray-200">
                 <td className="px-2 py-2 font-semibold text-gray-700 text-sm sticky left-0 bg-gray-50 z-10">
                   Selection Status
+                </td>
+                <td className="px-2 py-2 bg-gray-50">
+                  <div className="font-semibold text-gray-900">{currentStateSummary?.vendorCount || 0}+ vendors active</div>
+                  <div className="text-xs text-gray-600">
+                    ${safeToFixed(currentStateSummary?.spendMillions, 1)}M spend · {currentStateSummary?.totalCases?.toLocaleString() || '0'} cases
+                  </div>
+                </td>
+                <td className="px-2 py-2 bg-purple-50">
+                  {selectedVendorNames.length > 0 ? (
+                    <>
+                      <div className="font-semibold text-purple-900">{selectedVendorNames.length} vendor{selectedVendorNames.length > 1 ? 's' : ''} selected</div>
+                      <div className="text-xs text-gray-700">{selectedVendorNames.join(', ')}</div>
+                      <div className="text-xs text-purple-700 mt-1">{selectedPriceCapSummary}</div>
+                    </>
+                  ) : (
+                    <div className="text-xs text-gray-500">Use the checkboxes to model a combined strategy</div>
+                  )}
                 </td>
                 {availableVendors.map(vendor => {
                   const vendors = selectedVendors || [];
@@ -1156,7 +1429,7 @@ const EnhancedOrthopedicDashboard = () => {
 
               {/* FINANCIAL OUTCOMES SECTION */}
               <tr className="bg-gradient-to-r from-green-100 to-green-50 border-t-2 border-green-400">
-                <td colSpan={availableVendors.length + 1} className="px-2 py-1 font-bold text-green-900 text-xs uppercase tracking-wide sticky left-0 z-10">
+                <td colSpan={availableVendors.length + 3} className="px-2 py-1 font-bold text-green-900 text-xs uppercase tracking-wide sticky left-0 z-10">
                   💰 Combined Strategy Results (Based on Selected Vendors + Price Caps)
                 </td>
               </tr>
@@ -1166,41 +1439,199 @@ const EnhancedOrthopedicDashboard = () => {
                 <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
                   Annual Savings
                 </td>
+                <td className="px-2 py-1.5 text-center bg-gray-50">
+                  <div className="font-semibold text-gray-800">${safeToFixed(currentStateSummary?.spendMillions, 1)}M</div>
+                  <div className="text-xs text-gray-500">PYTD spend baseline</div>
+                </td>
+                <td className="px-2 py-1.5 text-center bg-purple-50">
+                  {calculateHybridScenario ? (
+                    <>
+                      <div className="font-bold text-green-600 text-base">${safeToFixed(calculateHybridScenario?.annualSavings, 1)}M</div>
+                      <div className="text-xs text-gray-600">{calculateHybridScenario.name}</div>
+                    </>
+                  ) : (
+                    <div className="text-gray-400 text-sm">Select vendors</div>
+                  )}
+                </td>
                 {availableVendors.map(vendor => {
                   const vendors = selectedVendors || [];
                   const isSelected = vendors.includes(vendor.id);
+                  const metrics = vendorFinancialMetrics[vendor.id];
+                  const vendorSavings = metrics ? (metrics.future.savings / 1000000) : 0;
                   return (
                     <td
                       key={vendor.id}
-                      className={`px-2 py-1.5 text-center ${isSelected ? 'bg-purple-50' : 'bg-gray-50'}`}
+                      className={`px-1 py-1 text-center text-xs ${isSelected ? 'bg-purple-50' : 'bg-gray-50'}`}
                     >
-                      {isSelected && calculateHybridScenario ? (
-                        <div className="font-bold text-green-600 text-base">${calculateHybridScenario.annualSavings.toFixed(1)}M</div>
+                      {isSelected && calculateHybridScenario && metrics ? (
+                        <div className="font-bold text-green-600">${safeToFixed(vendorSavings, 1)}M</div>
                       ) : (
-                        <div className="text-gray-400 text-sm">—</div>
+                        <div className="text-gray-400">—</div>
                       )}
                     </td>
                   );
                 })}
               </tr>
 
-              {/* Savings Percentage Row */}
-              <tr className="border-b hover:bg-gray-50">
-                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
-                  Savings Percentage
+              {/* Vendor Spend Share Row */}
+              <tr className="border-b hover:bg-gray-50 bg-blue-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-blue-50 z-10">
+                  Vendor Spend Share
+                </td>
+                <td className="px-2 py-1.5 text-center bg-blue-50">
+                  <div className="font-semibold text-gray-800">${(currentStateSummary?.spendMillions)?.toFixed(1) || '0.0'}M</div>
+                  <div className="text-xs text-gray-500">Total spend</div>
+                </td>
+                <td className="px-2 py-1.5 text-center bg-purple-100">
+                  {calculateHybridScenario ? (
+                    <div className="font-semibold text-purple-900">${((calculateHybridScenario?.spendMillions) || 0).toFixed(1)}M</div>
+                  ) : (
+                    <div className="text-gray-400 text-sm">—</div>
+                  )}
                 </td>
                 {availableVendors.map(vendor => {
                   const vendors = selectedVendors || [];
                   const isSelected = vendors.includes(vendor.id);
+                  const metrics = vendorFinancialMetrics[vendor.id];
+                  const totalCurrentSpend = (currentStateSummary?.spendMillions || 0) * 1000000;
+
+                  // Calculate total future spend for selected vendors only
+                  let totalFutureSpend = 0;
+                  if (calculateHybridScenario) {
+                    availableVendors.forEach(v => {
+                      if (vendors.includes(v.id) && vendorFinancialMetrics[v.id]) {
+                        totalFutureSpend += vendorFinancialMetrics[v.id].future.spend;
+                      }
+                    });
+                  }
+
                   return (
                     <td
                       key={vendor.id}
-                      className={`px-2 py-1.5 text-center ${isSelected ? 'bg-purple-50' : 'bg-gray-50'}`}
+                      className={`px-1 py-1 text-center text-xs ${isSelected ? 'bg-purple-100' : 'bg-blue-50'}`}
                     >
-                      {isSelected && calculateHybridScenario ? (
-                        <div className="font-bold text-green-600 text-base">{calculateHybridScenario.savingsPercent}%</div>
+                      {metrics?.current?.spend != null ? (
+                        <div>
+                          {isSelected && calculateHybridScenario && totalFutureSpend > 0 ? (
+                            <div className="font-semibold text-[10px]">
+                              <span className="text-gray-600">{((metrics.current.spend / totalCurrentSpend) * 100).toFixed(0)}% (${(metrics.current.spend / 1000000).toFixed(1)}M)</span>
+                              <span className="text-gray-400"> → </span>
+                              <span className="text-purple-700">{((metrics.future.spend / totalFutureSpend) * 100).toFixed(0)}% (${(metrics.future.spend / 1000000).toFixed(1)}M)</span>
+                            </div>
+                          ) : (
+                            <div className="text-[10px]">
+                              <span className="text-gray-600">{((metrics.current.spend / totalCurrentSpend) * 100).toFixed(0)}% (${(metrics.current.spend / 1000000).toFixed(1)}M)</span>
+                              <span className="text-red-600"> → 0%</span>
+                            </div>
+                          )}
+                        </div>
                       ) : (
-                        <div className="text-gray-400 text-sm">—</div>
+                        <div className="text-gray-400">—</div>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+
+              {/* Cases Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  Case Volume
+                </td>
+                <td className="px-2 py-1.5 text-center bg-gray-50">
+                  <div className="font-semibold text-gray-800">{currentStateSummary?.totalCases?.toLocaleString() || '0'}</div>
+                  <div className="text-xs text-gray-500">Total cases</div>
+                </td>
+                <td className="px-2 py-1.5 text-center bg-purple-50">
+                  {calculateHybridScenario ? (
+                    <div className="font-semibold text-gray-800">{currentStateSummary?.totalCases?.toLocaleString() || '0'}</div>
+                  ) : (
+                    <div className="text-gray-400 text-sm">—</div>
+                  )}
+                </td>
+                {availableVendors.map(vendor => {
+                  const vendors = selectedVendors || [];
+                  const isSelected = vendors.includes(vendor.id);
+                  const metrics = vendorFinancialMetrics[vendor.id];
+                  const totalCurrentCases = currentStateSummary?.totalCases || 1;
+
+                  // Calculate total future cases for selected vendors
+                  let totalFutureCases = 0;
+                  if (calculateHybridScenario) {
+                    availableVendors.forEach(v => {
+                      if (vendors.includes(v.id) && vendorFinancialMetrics[v.id]) {
+                        totalFutureCases += vendorFinancialMetrics[v.id].future.cases;
+                      }
+                    });
+                  }
+
+                  return (
+                    <td
+                      key={vendor.id}
+                      className={`px-1 py-1 text-center text-xs ${isSelected ? 'bg-purple-50' : 'bg-gray-50'}`}
+                    >
+                      {metrics?.current?.cases != null ? (
+                        <div className="font-semibold">
+                          {isSelected && calculateHybridScenario && totalFutureCases > 0 ? (
+                            <div>
+                              <span className="text-gray-600 text-[10px]">{((metrics.current.cases / totalCurrentCases) * 100).toFixed(0)}% ({metrics.current.cases.toLocaleString()})</span>
+                              <span className="text-gray-400"> → </span>
+                              <span className="text-purple-600 text-[11px]">{((metrics.future.cases / totalFutureCases) * 100).toFixed(0)}% ({metrics.future.cases.toLocaleString()})</span>
+                            </div>
+                          ) : (
+                            <div>
+                              <span className="text-gray-600 text-[10px]">{((metrics.current.cases / totalCurrentCases) * 100).toFixed(0)}% ({metrics.current.cases.toLocaleString()})</span>
+                              <span className="text-red-600"> → 0</span>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-gray-400">—</div>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+
+              {/* Cost per Case Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  Average Cost per Case
+                  <div className="text-xs font-normal text-gray-500 mt-1">Baseline: $6,420</div>
+                </td>
+                <td className="px-2 py-1.5 text-center bg-gray-50">
+                  <div className="font-semibold text-gray-600 text-base">${currentStateSummary?.costPerCase?.toLocaleString() || '0'}</div>
+                </td>
+                <td className="px-2 py-1.5 text-center bg-purple-50">
+                  {calculateHybridScenario ? (
+                    <div className="font-bold text-green-600 text-base">${Math.round(calculateHybridScenario.costPerCase).toLocaleString()}</div>
+                  ) : (
+                    <div className="text-gray-400 text-sm">—</div>
+                  )}
+                </td>
+                {availableVendors.map(vendor => {
+                  const vendors = selectedVendors || [];
+                  const isSelected = vendors.includes(vendor.id);
+                  const metrics = vendorFinancialMetrics[vendor.id];
+                  return (
+                    <td
+                      key={vendor.id}
+                      className={`px-1 py-1 text-center text-xs ${isSelected ? 'bg-purple-50' : 'bg-gray-50'}`}
+                    >
+                      {metrics?.current?.costPerCase ? (
+                        <div className="space-y-0.5">
+                          <div className="text-gray-600">${Math.round(metrics.current.costPerCase).toLocaleString()}</div>
+                          {isSelected && calculateHybridScenario ? (
+                            <>
+                              <div className="text-gray-400">→</div>
+                              <div className="font-bold text-green-600">${Math.round(metrics.future.costPerCase).toLocaleString()}</div>
+                            </>
+                          ) : (
+                            <div className="text-gray-400">→ —</div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-gray-400">—</div>
                       )}
                     </td>
                   );
@@ -1209,7 +1640,7 @@ const EnhancedOrthopedicDashboard = () => {
 
               {/* PHYSICIAN IMPACT SECTION */}
               <tr className="bg-gradient-to-r from-blue-100 to-blue-50 border-t-2 border-blue-400">
-                <td colSpan={availableVendors.length + 1} className="px-2 py-1 font-bold text-blue-900 text-xs uppercase tracking-wide sticky left-0 z-10">
+                <td colSpan={availableVendors.length + 3} className="px-2 py-1 font-bold text-blue-900 text-xs uppercase tracking-wide sticky left-0 z-10">
                   👨‍⚕️ Physician Impact (Driven by Vendor Count)
                 </td>
               </tr>
@@ -1219,9 +1650,23 @@ const EnhancedOrthopedicDashboard = () => {
                 <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
                   Physician Adoption Rate
                 </td>
+                <td className="px-2 py-1.5 text-center bg-gray-50">
+                  <div className="font-semibold text-blue-800 text-base">
+                    {currentStateSummary.adoptionRate}%
+                  </div>
+                  <div className="text-xs text-gray-500">Existing vendor mix</div>
+                </td>
+                <td className="px-2 py-1.5 text-center bg-purple-50">
+                  {calculateHybridScenario ? (
+                    <div className="font-bold text-blue-600 text-base">{calculateHybridScenario.adoptionRate}%</div>
+                  ) : (
+                    <div className="text-gray-400 text-sm">—</div>
+                  )}
+                </td>
                 {availableVendors.map(vendor => {
                   const vendors = selectedVendors || [];
                   const isSelected = vendors.includes(vendor.id);
+                  const vendorMetrics = vendorPhysicianMetrics[vendor.id];
                   return (
                     <td
                       key={vendor.id}
@@ -1229,6 +1674,8 @@ const EnhancedOrthopedicDashboard = () => {
                     >
                       {isSelected && calculateHybridScenario ? (
                         <div className="font-bold text-blue-600 text-base">{calculateHybridScenario.adoptionRate}%</div>
+                      ) : vendorMetrics?.adoptionRate ? (
+                        <div className="text-gray-600 text-sm">{Math.round(vendorMetrics.adoptionRate)}%</div>
                       ) : (
                         <div className="text-gray-400 text-sm">—</div>
                       )}
@@ -1242,9 +1689,23 @@ const EnhancedOrthopedicDashboard = () => {
                 <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
                   Surgeon Satisfaction
                 </td>
+                <td className="px-2 py-1.5 text-center bg-gray-50">
+                  <div className="font-semibold text-blue-800 text-base">
+                    {currentStateSummary.surgeonSatisfaction}%
+                  </div>
+                  <div className="text-xs text-gray-500">Voice of surgeon baseline</div>
+                </td>
+                <td className="px-2 py-1.5 text-center bg-purple-50">
+                  {calculateHybridScenario ? (
+                    <div className="font-bold text-blue-600 text-base">{calculateHybridScenario.surgeonSatisfaction}%</div>
+                  ) : (
+                    <div className="text-gray-400 text-sm">—</div>
+                  )}
+                </td>
                 {availableVendors.map(vendor => {
                   const vendors = selectedVendors || [];
                   const isSelected = vendors.includes(vendor.id);
+                  const vendorMetrics = vendorPhysicianMetrics[vendor.id];
                   return (
                     <td
                       key={vendor.id}
@@ -1252,6 +1713,8 @@ const EnhancedOrthopedicDashboard = () => {
                     >
                       {isSelected && calculateHybridScenario ? (
                         <div className="font-bold text-blue-600 text-base">{calculateHybridScenario.surgeonSatisfaction}%</div>
+                      ) : vendorMetrics?.surgeonSatisfaction ? (
+                        <div className="text-gray-600 text-sm">{Math.round(vendorMetrics.surgeonSatisfaction)}%</div>
                       ) : (
                         <div className="text-gray-400 text-sm">—</div>
                       )}
@@ -1264,6 +1727,28 @@ const EnhancedOrthopedicDashboard = () => {
               <tr className="border-b hover:bg-gray-50">
                 <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
                   Operational Complexity
+                </td>
+                <td className="px-2 py-1.5 text-center bg-gray-50">
+                  <div className={`font-semibold ${
+                    currentStateSummary.operationalComplexity === 'Low' ? 'text-green-600' :
+                    currentStateSummary.operationalComplexity?.includes('Medium') ? 'text-yellow-600' :
+                    'text-red-600'
+                  }`}>
+                    {currentStateSummary.operationalComplexity}
+                  </div>
+                </td>
+                <td className="px-2 py-1.5 text-center bg-purple-50">
+                  {calculateHybridScenario ? (
+                    <div className={`font-bold text-base ${
+                      calculateHybridScenario.operationalComplexity === 'Low' ? 'text-green-600' :
+                      calculateHybridScenario.operationalComplexity.includes('Medium') ? 'text-yellow-600' :
+                      'text-red-600'
+                    }`}>
+                      {calculateHybridScenario.operationalComplexity}
+                    </div>
+                  ) : (
+                    <div className="text-gray-400 text-sm">—</div>
+                  )}
                 </td>
                 {availableVendors.map(vendor => {
                   const vendors = selectedVendors || [];
@@ -1289,9 +1774,447 @@ const EnhancedOrthopedicDashboard = () => {
                 })}
               </tr>
 
+              {/* Loyalist Surgeons Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  Loyalist Surgeons
+                  <div className="text-xs font-normal text-gray-500 mt-1">&gt;70% volume with vendor</div>
+                </td>
+                <td className="px-2 py-1.5 text-center bg-gray-50">
+                  <div className="font-semibold text-gray-800">85</div>
+                  <div className="text-xs text-gray-500">Total in system</div>
+                </td>
+                <td className="px-2 py-1.5 text-center bg-purple-50">
+                  {calculateHybridScenario ? (
+                    <>
+                      {(() => {
+                        const vendors = selectedVendors || [];
+                        let coveredLoyalists = 0;
+                        availableVendors.forEach(v => {
+                          if (vendors.includes(v.id)) {
+                            coveredLoyalists += Math.round(85 * (v.marketShare / 100) * 0.7);
+                          }
+                        });
+                        return (
+                          <div>
+                            <div className="font-bold text-blue-700">{coveredLoyalists}</div>
+                            <div className="text-xs text-gray-600">{85 - coveredLoyalists} must change</div>
+                          </div>
+                        );
+                      })()}
+                    </>
+                  ) : (
+                    <div className="text-gray-400 text-sm">—</div>
+                  )}
+                </td>
+                {availableVendors.map(vendor => {
+                  const vendors = selectedVendors || [];
+                  const isSelected = vendors.includes(vendor.id);
+                  // Estimate loyalists based on market share (~70% of market share percentage)
+                  const loyalistCount = Math.round(85 * (vendor.marketShare / 100) * 0.7);
+                  return (
+                    <td
+                      key={vendor.id}
+                      className={`px-1 py-1 text-center text-xs ${isSelected ? 'bg-purple-50' : 'bg-gray-50'}`}
+                    >
+                      <div className={`font-semibold ${isSelected ? 'text-blue-700' : 'text-red-600'}`}>{loyalistCount}</div>
+                    </td>
+                  );
+                })}
+              </tr>
+
+              {/* High Volume Loyalists Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  High Volume Loyalists
+                  <div className="text-xs font-normal text-gray-500 mt-1">&gt;150 cases/year</div>
+                </td>
+                <td className="px-2 py-1.5 text-center bg-gray-50">
+                  <div className="font-semibold text-gray-800">32</div>
+                  <div className="text-xs text-gray-500">Total in system</div>
+                </td>
+                <td className="px-2 py-1.5 text-center bg-purple-50">
+                  {calculateHybridScenario ? (
+                    <>
+                      {(() => {
+                        const vendors = selectedVendors || [];
+                        let coveredHighVolume = 0;
+                        availableVendors.forEach(v => {
+                          if (vendors.includes(v.id)) {
+                            const loyalistCount = Math.round(85 * (v.marketShare / 100) * 0.7);
+                            coveredHighVolume += Math.round(loyalistCount * 0.35);
+                          }
+                        });
+                        return (
+                          <div>
+                            <div className="font-bold text-purple-700">{coveredHighVolume}</div>
+                            <div className="text-xs text-gray-600">{32 - coveredHighVolume} must change</div>
+                          </div>
+                        );
+                      })()}
+                    </>
+                  ) : (
+                    <div className="text-gray-400 text-sm">—</div>
+                  )}
+                </td>
+                {availableVendors.map(vendor => {
+                  const vendors = selectedVendors || [];
+                  const isSelected = vendors.includes(vendor.id);
+                  // High volume is ~35% of loyalists
+                  const loyalistCount = Math.round(85 * (vendor.marketShare / 100) * 0.7);
+                  const highVolumeLoyalists = Math.round(loyalistCount * 0.35);
+                  return (
+                    <td
+                      key={vendor.id}
+                      className={`px-1 py-1 text-center text-xs ${isSelected ? 'bg-purple-50' : 'bg-gray-50'}`}
+                    >
+                      <div className={`font-bold ${isSelected ? 'text-purple-700' : 'text-red-600'}`}>{highVolumeLoyalists}</div>
+                    </td>
+                  );
+                })}
+              </tr>
+
+              {/* CLINICAL OUTCOMES SECTION */}
+              <tr className="bg-gradient-to-r from-teal-100 to-teal-50 border-t-2 border-teal-400">
+                <td colSpan={availableVendors.length + 3} className="px-2 py-1 font-bold text-teal-900 text-xs uppercase tracking-wide sticky left-0 z-10">
+                  🏥 Clinical Outcomes
+                </td>
+              </tr>
+
+              {/* Revision Rate Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  Revision Rate (2-year)
+                </td>
+                <td className="px-2 py-1.5 text-center bg-gray-50">
+                  <div className="font-semibold text-base text-gray-600">{currentStateSummary?.revisionRate?.toFixed(1) || '0.0'}%</div>
+                  <div className="text-xs text-gray-500">Benchmark: 2.6%</div>
+                </td>
+                <td className="px-2 py-1.5 text-center bg-purple-50">
+                  {calculateHybridScenario ? (
+                    <div className={`font-bold text-base ${calculateHybridScenario.revisionRate <= 2.6 ? 'text-green-600' : 'text-red-600'}`}>
+                      {calculateHybridScenario.revisionRate.toFixed(1)}%
+                    </div>
+                  ) : (
+                    <div className="text-gray-400 text-sm">—</div>
+                  )}
+                </td>
+                {availableVendors.map(vendor => {
+                  const vendors = selectedVendors || [];
+                  const isSelected = vendors.includes(vendor.id);
+                  const vendorMetrics = vendorClinicalMetrics[vendor.id];
+                  return (
+                    <td
+                      key={vendor.id}
+                      className={`px-2 py-1.5 text-center ${isSelected ? 'bg-purple-50' : 'bg-gray-50'}`}
+                    >
+                      {isSelected && calculateHybridScenario ? (
+                        <div className={`font-bold text-base ${calculateHybridScenario.revisionRate <= 2.6 ? 'text-green-600' : 'text-red-600'}`}>
+                          {calculateHybridScenario.revisionRate.toFixed(1)}%
+                        </div>
+                      ) : vendorMetrics?.revisionRate ? (
+                        <div className={`text-gray-600 text-sm ${vendorMetrics.revisionRate <= 2.6 ? '' : ''}`}>
+                          {vendorMetrics.revisionRate.toFixed(1)}%
+                        </div>
+                      ) : (
+                        <div className="text-gray-400 text-sm">—</div>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+
+              {/* 30-Day Readmission Rate Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  30-Day Readmission Rate
+                </td>
+                <td className="px-2 py-1.5 text-center bg-gray-50">
+                  <div className="font-semibold text-base text-gray-600">{currentStateSummary?.readmissionRate?.toFixed(1) || '0.0'}%</div>
+                  <div className="text-xs text-gray-500">Benchmark: 5.2%</div>
+                </td>
+                <td className="px-2 py-1.5 text-center bg-purple-50">
+                  {calculateHybridScenario ? (
+                    <div className={`font-bold text-base ${calculateHybridScenario.readmissionRate <= 5.2 ? 'text-green-600' : 'text-red-600'}`}>
+                      {calculateHybridScenario.readmissionRate.toFixed(1)}%
+                    </div>
+                  ) : (
+                    <div className="text-gray-400 text-sm">—</div>
+                  )}
+                </td>
+                {availableVendors.map(vendor => {
+                  const vendors = selectedVendors || [];
+                  const isSelected = vendors.includes(vendor.id);
+                  const vendorMetrics = vendorClinicalMetrics[vendor.id];
+                  return (
+                    <td
+                      key={vendor.id}
+                      className={`px-2 py-1.5 text-center ${isSelected ? 'bg-purple-50' : 'bg-gray-50'}`}
+                    >
+                      {isSelected && calculateHybridScenario ? (
+                        <div className={`font-bold text-base ${calculateHybridScenario.readmissionRate <= 5.2 ? 'text-green-600' : 'text-red-600'}`}>
+                          {calculateHybridScenario.readmissionRate.toFixed(1)}%
+                        </div>
+                      ) : vendorMetrics?.readmissionRate ? (
+                        <div className="text-gray-600 text-sm">
+                          {vendorMetrics.readmissionRate.toFixed(1)}%
+                        </div>
+                      ) : (
+                        <div className="text-gray-400 text-sm">—</div>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+
+              {/* Average Length of Stay Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  Average Length of Stay
+                </td>
+                <td className="px-2 py-1.5 text-center bg-gray-50">
+                  <div className="font-semibold text-base text-gray-600">{currentStateSummary?.lengthOfStay?.toFixed(1) || '0.0'} days</div>
+                  <div className="text-xs text-gray-500">Benchmark: 2.5 days</div>
+                </td>
+                <td className="px-2 py-1.5 text-center bg-purple-50">
+                  {calculateHybridScenario ? (
+                    <div className={`font-bold text-base ${calculateHybridScenario.lengthOfStay <= 2.5 ? 'text-green-600' : 'text-red-600'}`}>
+                      {calculateHybridScenario.lengthOfStay.toFixed(1)} days
+                    </div>
+                  ) : (
+                    <div className="text-gray-400 text-sm">—</div>
+                  )}
+                </td>
+                {availableVendors.map(vendor => {
+                  const vendors = selectedVendors || [];
+                  const isSelected = vendors.includes(vendor.id);
+                  const vendorMetrics = vendorClinicalMetrics[vendor.id];
+                  return (
+                    <td
+                      key={vendor.id}
+                      className={`px-2 py-1.5 text-center ${isSelected ? 'bg-purple-50' : 'bg-gray-50'}`}
+                    >
+                      {isSelected && calculateHybridScenario ? (
+                        <div className={`font-bold text-base ${calculateHybridScenario.lengthOfStay <= 2.5 ? 'text-green-600' : 'text-red-600'}`}>
+                          {calculateHybridScenario.lengthOfStay.toFixed(1)} days
+                        </div>
+                      ) : vendorMetrics?.lengthOfStay ? (
+                        <div className="text-gray-600 text-sm">
+                          {vendorMetrics.lengthOfStay.toFixed(1)} days
+                        </div>
+                      ) : (
+                        <div className="text-gray-400 text-sm">—</div>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+
+              {/* Surgical Site Infection Rate Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  Surgical Site Infection Rate
+                </td>
+                <td className="px-2 py-1.5 text-center bg-gray-50">
+                  <div className="font-semibold text-base text-gray-600">{currentStateSummary?.ssiRate?.toFixed(1) || '0.0'}%</div>
+                  <div className="text-xs text-gray-500">Benchmark: 1.8%</div>
+                </td>
+                <td className="px-2 py-1.5 text-center bg-purple-50">
+                  {calculateHybridScenario ? (
+                    <div className={`font-bold text-base ${calculateHybridScenario.ssiRate <= 1.8 ? 'text-green-600' : 'text-red-600'}`}>
+                      {calculateHybridScenario.ssiRate.toFixed(1)}%
+                    </div>
+                  ) : (
+                    <div className="text-gray-400 text-sm">—</div>
+                  )}
+                </td>
+                {availableVendors.map(vendor => {
+                  const vendors = selectedVendors || [];
+                  const isSelected = vendors.includes(vendor.id);
+                  const vendorMetrics = vendorClinicalMetrics[vendor.id];
+                  return (
+                    <td
+                      key={vendor.id}
+                      className={`px-2 py-1.5 text-center ${isSelected ? 'bg-purple-50' : 'bg-gray-50'}`}
+                    >
+                      {isSelected && calculateHybridScenario ? (
+                        <div className={`font-bold text-base ${calculateHybridScenario.ssiRate <= 1.8 ? 'text-green-600' : 'text-red-600'}`}>
+                          {calculateHybridScenario.ssiRate.toFixed(1)}%
+                        </div>
+                      ) : vendorMetrics?.ssiRate ? (
+                        <div className="text-gray-600 text-sm">
+                          {vendorMetrics.ssiRate.toFixed(1)}%
+                        </div>
+                      ) : (
+                        <div className="text-gray-400 text-sm">—</div>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+
+              {/* OPERATIONAL OUTCOMES SECTION */}
+              <tr className="bg-gradient-to-r from-orange-100 to-orange-50 border-t-2 border-orange-400">
+                <td colSpan={availableVendors.length + 3} className="px-2 py-1 font-bold text-orange-900 text-xs uppercase tracking-wide sticky left-0 z-10">
+                  ⚙️ Operational Outcomes
+                </td>
+              </tr>
+
+              {/* Average OR Time Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  Average OR Time
+                </td>
+                <td className="px-2 py-1.5 text-center bg-gray-50">
+                  <div className="font-semibold text-base text-gray-600">{currentStateSummary.orTime} min</div>
+                  <div className="text-xs text-gray-500">Benchmark: 90 min</div>
+                </td>
+                <td className="px-2 py-1.5 text-center bg-purple-50">
+                  {calculateHybridScenario ? (
+                    <div className={`font-bold text-base ${calculateHybridScenario.orTime <= 90 ? 'text-green-600' : 'text-red-600'}`}>
+                      {calculateHybridScenario.orTime} min
+                    </div>
+                  ) : (
+                    <div className="text-gray-400 text-sm">—</div>
+                  )}
+                </td>
+                {availableVendors.map(vendor => {
+                  const vendors = selectedVendors || [];
+                  const isSelected = vendors.includes(vendor.id);
+                  return (
+                    <td
+                      key={vendor.id}
+                      className={`px-2 py-1.5 text-center ${isSelected ? 'bg-purple-50' : 'bg-gray-50'}`}
+                    >
+                      {isSelected && calculateHybridScenario ? (
+                        <div className={`font-bold text-base ${calculateHybridScenario.orTime <= 90 ? 'text-green-600' : 'text-red-600'}`}>
+                          {calculateHybridScenario.orTime} min
+                        </div>
+                      ) : (
+                        <div className="text-gray-600 text-sm">{currentStateSummary.orTime} min</div>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+
+              {/* Case Turnaround Time Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  Case Turnaround Time
+                </td>
+                <td className="px-2 py-1.5 text-center bg-gray-50">
+                  <div className="font-semibold text-base text-gray-600">{currentStateSummary.caseTurnaround} min</div>
+                  <div className="text-xs text-gray-500">Benchmark: 40 min</div>
+                </td>
+                <td className="px-2 py-1.5 text-center bg-purple-50">
+                  {calculateHybridScenario ? (
+                    <div className={`font-bold text-base ${calculateHybridScenario.caseTurnaround <= 40 ? 'text-green-600' : 'text-red-600'}`}>
+                      {calculateHybridScenario.caseTurnaround} min
+                    </div>
+                  ) : (
+                    <div className="text-gray-400 text-sm">—</div>
+                  )}
+                </td>
+                {availableVendors.map(vendor => {
+                  const vendors = selectedVendors || [];
+                  const isSelected = vendors.includes(vendor.id);
+                  return (
+                    <td
+                      key={vendor.id}
+                      className={`px-2 py-1.5 text-center ${isSelected ? 'bg-purple-50' : 'bg-gray-50'}`}
+                    >
+                      {isSelected && calculateHybridScenario ? (
+                        <div className={`font-bold text-base ${calculateHybridScenario.caseTurnaround <= 40 ? 'text-green-600' : 'text-red-600'}`}>
+                          {calculateHybridScenario.caseTurnaround} min
+                        </div>
+                      ) : (
+                        <div className="text-gray-600 text-sm">{currentStateSummary.caseTurnaround} min</div>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+
+              {/* Inventory Turns Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  Inventory Turns per Year
+                </td>
+                <td className="px-2 py-1.5 text-center bg-gray-50">
+                  <div className="font-semibold text-base text-gray-600">{currentStateSummary?.inventoryTurns?.toFixed(1) || '0.0'}</div>
+                  <div className="text-xs text-gray-500">Target: 10</div>
+                </td>
+                <td className="px-2 py-1.5 text-center bg-purple-50">
+                  {calculateHybridScenario ? (
+                    <div className={`font-bold text-base ${calculateHybridScenario.inventoryTurns >= 10 ? 'text-green-600' : 'text-red-600'}`}>
+                      {calculateHybridScenario.inventoryTurns.toFixed(1)}
+                    </div>
+                  ) : (
+                    <div className="text-gray-400 text-sm">—</div>
+                  )}
+                </td>
+                {availableVendors.map(vendor => {
+                  const vendors = selectedVendors || [];
+                  const isSelected = vendors.includes(vendor.id);
+                  return (
+                    <td
+                      key={vendor.id}
+                      className={`px-2 py-1.5 text-center ${isSelected ? 'bg-purple-50' : 'bg-gray-50'}`}
+                    >
+                      {isSelected && calculateHybridScenario ? (
+                        <div className={`font-bold text-base ${calculateHybridScenario.inventoryTurns >= 10 ? 'text-green-600' : 'text-red-600'}`}>
+                          {calculateHybridScenario.inventoryTurns.toFixed(1)}
+                        </div>
+                      ) : (
+                        <div className="text-gray-600 text-sm">{currentStateSummary?.inventoryTurns?.toFixed(1) || '0.0'}</div>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+
+              {/* Preferred Item Usage Rate Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  Preferred Item Usage Rate
+                </td>
+                <td className="px-2 py-1.5 text-center bg-gray-50">
+                  <div className="font-semibold text-base text-gray-600">{currentStateSummary.preferredItemUsage}%</div>
+                  <div className="text-xs text-gray-500">Target: 85%</div>
+                </td>
+                <td className="px-2 py-1.5 text-center bg-purple-50">
+                  {calculateHybridScenario ? (
+                    <div className={`font-bold text-base ${calculateHybridScenario.preferredItemUsage >= 85 ? 'text-green-600' : 'text-red-600'}`}>
+                      {calculateHybridScenario.preferredItemUsage}%
+                    </div>
+                  ) : (
+                    <div className="text-gray-400 text-sm">—</div>
+                  )}
+                </td>
+                {availableVendors.map(vendor => {
+                  const vendors = selectedVendors || [];
+                  const isSelected = vendors.includes(vendor.id);
+                  return (
+                    <td
+                      key={vendor.id}
+                      className={`px-2 py-1.5 text-center ${isSelected ? 'bg-purple-50' : 'bg-gray-50'}`}
+                    >
+                      {isSelected && calculateHybridScenario ? (
+                        <div className={`font-bold text-base ${calculateHybridScenario.preferredItemUsage >= 85 ? 'text-green-600' : 'text-red-600'}`}>
+                          {calculateHybridScenario.preferredItemUsage}%
+                        </div>
+                      ) : (
+                        <div className="text-gray-400 text-sm">—</div>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+
               {/* RISK ASSESSMENT SECTION */}
               <tr className="bg-gradient-to-r from-amber-100 to-amber-50 border-t-2 border-amber-400">
-                <td colSpan={availableVendors.length + 1} className="px-2 py-1 font-bold text-amber-900 text-xs uppercase tracking-wide sticky left-0 z-10">
+                <td colSpan={availableVendors.length + 3} className="px-2 py-1 font-bold text-amber-900 text-xs uppercase tracking-wide sticky left-0 z-10">
                   ⚠️ Risk Assessment
                 </td>
               </tr>
@@ -1300,6 +2223,29 @@ const EnhancedOrthopedicDashboard = () => {
               <tr className="border-b hover:bg-gray-50">
                 <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
                   Overall Risk Level
+                </td>
+                <td className="px-2 py-1.5 text-center bg-gray-50">
+                  <div className={`font-semibold text-base uppercase ${
+                    currentStateSummary.riskLevel === 'low' ? 'text-green-600' :
+                    currentStateSummary.riskLevel === 'medium' ? 'text-yellow-600' :
+                    currentStateSummary.riskLevel === 'medium-high' ? 'text-amber-600' :
+                    'text-red-600'
+                  }`}>
+                    {currentStateSummary.riskLevel}
+                  </div>
+                </td>
+                <td className="px-2 py-1.5 text-center bg-purple-50">
+                  {calculateHybridScenario ? (
+                    <div className={`font-bold text-base uppercase ${
+                      calculateHybridScenario.riskLevel === 'low' ? 'text-green-600' :
+                      calculateHybridScenario.riskLevel === 'medium' ? 'text-yellow-600' :
+                      'text-red-600'
+                    }`}>
+                      {calculateHybridScenario.riskLevel}
+                    </div>
+                  ) : (
+                    <div className="text-gray-400 text-sm">—</div>
+                  )}
                 </td>
                 {availableVendors.map(vendor => {
                   const vendors = selectedVendors || [];
@@ -1329,6 +2275,19 @@ const EnhancedOrthopedicDashboard = () => {
               <tr className="border-b hover:bg-gray-50">
                 <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
                   Strategy Description
+                </td>
+                <td className="px-2 py-1.5 bg-gray-50 text-sm text-gray-700">
+                  Maintain current multi-vendor mix — baseline ${currentStateSummary?.spendMillions?.toFixed(1) || '0.0'}M spend / {currentStateSummary?.totalCases?.toLocaleString() || '0'} cases.
+                </td>
+                <td className="px-2 py-1.5 bg-purple-50 text-sm text-gray-700">
+                  {selectedVendorNames.length > 0 && calculateHybridScenario ? (
+                    <>
+                      {calculateHybridScenario.description}
+                      <div className="text-xs text-purple-700 mt-1">{selectedPriceCapSummary}</div>
+                    </>
+                  ) : (
+                    <span className="text-gray-500">Select vendors and price caps to view combined strategy.</span>
+                  )}
                 </td>
                 {availableVendors.map(vendor => {
                   const vendors = selectedVendors || [];
@@ -1488,6 +2447,595 @@ const EnhancedOrthopedicDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Scenario Comparison Table */}
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <BarChart3 className="w-6 h-6" style={{ color: COLORS.primary }} />
+            Scenario Comparison Table
+          </h2>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowAssumptionsPanel(!showAssumptionsPanel)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 font-semibold"
+              title="Customize savings percentages and price caps"
+            >
+              <Settings className="w-4 h-4" />
+              Customize Assumptions
+            </button>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200"
+            >
+              <Filter className="w-4 h-4" />
+              Filters
+            </button>
+            <button
+              onClick={() => setComparisonMode(!comparisonMode)}
+              className="flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200"
+            >
+              <Eye className="w-4 h-4" />
+              {comparisonMode ? 'Exit' : 'Compare'}
+            </button>
+          </div>
+        </div>
+
+        {showFilters && (
+          <div className="mb-4 p-4 bg-gray-50 rounded-lg flex gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Sort By</label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="px-3 py-2 border rounded-lg"
+              >
+                <option value="savings">Annual Savings</option>
+                <option value="adoption">Adoption Rate</option>
+                <option value="risk">Risk Level</option>
+                <option value="mission">Mission Alignment</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Filter Risk</label>
+              <select
+                value={filterRisk}
+                onChange={(e) => setFilterRisk(e.target.value)}
+                className="px-3 py-2 border rounded-lg"
+              >
+                <option value="all">All Levels</option>
+                <option value="low">Low Risk</option>
+                <option value="medium">Medium Risk</option>
+                <option value="high">High Risk</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Procedure Type</label>
+              <select
+                value={filterProcedureType}
+                onChange={(e) => setFilterProcedureType(e.target.value)}
+                className="px-3 py-2 border rounded-lg"
+              >
+                <option value="all">All Procedures</option>
+                <option value="primary">Primary Only</option>
+                <option value="revision">Revision Only</option>
+              </select>
+            </div>
+          </div>
+        )}
+
+        {/* Historical Data Disclaimer */}
+        <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-600 rounded-lg">
+          <div className="flex items-start gap-2">
+            <Info className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+            <div className="text-xs text-blue-900">
+              <strong>Data Source:</strong> All projections below are based on historical utilization data (Jan 2023 - Dec 2024) and current vendor pricing.
+              Savings estimates reflect anticipated results following full implementation and surgeon adoption.
+            </div>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-gray-100 border-b-2 border-gray-300">
+                <th className="px-2 py-1.5 text-left font-bold text-gray-900 sticky left-0 bg-gray-100 z-10 min-w-[180px]">
+                  Metric
+                </th>
+                {filteredScenarios.map(scenario => (
+                  <th
+                    key={scenario.id}
+                    className={`px-2 py-2 text-center font-bold text-gray-900 min-w-[160px] max-w-[200px] cursor-pointer hover:bg-gray-200 ${
+                      selectedScenario === scenario.id ? 'bg-purple-100' : ''
+                    }`}
+                    onClick={() => setSelectedScenario(scenario.id)}
+                  >
+                    <div className="font-bold text-sm break-words leading-tight">{scenario.shortName}</div>
+                    <div className="text-xs text-gray-500 font-normal mt-1">
+                      {scenario.vendors?.length || 0} vendors • {scenario.savingsPercent?.toFixed(1)}% savings
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {/* Financial Outcomes Section */}
+              <tr className="bg-gradient-to-r from-green-100 to-green-50 border-t-2 border-green-400">
+                <td colSpan={filteredScenarios.length + 1} className="px-2 py-1.5 font-bold text-green-900 text-xs uppercase tracking-wide sticky left-0 z-10">
+                  💰 Financial & Adoption Metrics
+                </td>
+              </tr>
+
+              {/* Annual Savings Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  Annual Savings
+                </td>
+                {filteredScenarios.map(scenario => (
+                  <td
+                    key={scenario.id}
+                    className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : 'bg-gray-50'}`}
+                  >
+                    <div className="font-bold text-green-600 text-base">
+                      ${((scenario.annualSavings ?? 0)).toFixed(1)}M
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {(scenario.savingsPercent ?? 0).toFixed(1)}% savings
+                    </div>
+                  </td>
+                ))}
+              </tr>
+
+              {/* NPV Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  5-Year NPV (after costs)
+                </td>
+                {filteredScenarios.map(scenario => (
+                  <td
+                    key={scenario.id}
+                    className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : 'bg-gray-50'}`}
+                  >
+                    <div className="font-bold text-green-600 text-base">
+                      ${((scenario.npv5Year ?? 0)).toFixed(1)}M
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Implementation cost: ${(scenario.implementation?.costMillions ?? 0).toFixed(2)}M
+                    </div>
+                  </td>
+                ))}
+              </tr>
+
+              {/* Adoption Rate Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  Physician Adoption Rate
+                </td>
+                {filteredScenarios.map(scenario => (
+                  <td
+                    key={scenario.id}
+                    className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : 'bg-gray-50'}`}
+                  >
+                    <div className="font-bold text-blue-600 text-base">
+                      {(scenario.adoptionRate ?? 0).toFixed(0)}%
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Surgeon satisfaction: {(scenario.surgeonSatisfaction ?? 0).toFixed(0)}%
+                    </div>
+                  </td>
+                ))}
+              </tr>
+
+              {/* Vendor Count Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  Vendor Count
+                </td>
+                {filteredScenarios.map(scenario => (
+                  <td
+                    key={scenario.id}
+                    className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : 'bg-gray-50'}`}
+                  >
+                    <div className="font-bold text-purple-700 text-base">{scenario.vendorCount}</div>
+                    <div className="text-xs text-gray-500">{scenario.vendors?.join(', ')}</div>
+                  </td>
+                ))}
+              </tr>
+
+              {/* Compliance & Risk Section */}
+              <tr className="bg-gradient-to-r from-amber-100 to-amber-50 border-t-2 border-amber-400">
+                <td colSpan={filteredScenarios.length + 1} className="px-2 py-1.5 font-bold text-amber-900 text-xs uppercase tracking-wide sticky left-0 z-10">
+                  ⚠️ Risk & Compliance
+                </td>
+              </tr>
+
+              {/* Risk Level Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  Overall Risk Level
+                </td>
+                {filteredScenarios.map(scenario => (
+                  <td
+                    key={scenario.id}
+                    className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : 'bg-gray-50'}`}
+                  >
+                    <div className={`font-bold text-base uppercase ${
+                      scenario.riskLevel === 'low' ? 'text-green-600' :
+                      scenario.riskLevel === 'medium' ? 'text-yellow-600' :
+                      scenario.riskLevel === 'medium-high' ? 'text-amber-600' :
+                      'text-red-600'
+                    }`}>
+                      {scenario.riskLevel}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Score: {scenario.riskScore?.toFixed(1)} / 10
+                    </div>
+                  </td>
+                ))}
+              </tr>
+
+              {/* Surgeons Affected Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  Surgeons Needing Transition
+                </td>
+                {filteredScenarios.map(scenario => {
+                  const affected = scenario.volumeWeightedRisk?.totalSurgeonsAffected || 0;
+                  const percent = scenario.volumeWeightedRisk?.casesAtRiskPercent || 0;
+                  return (
+                    <td
+                      key={scenario.id}
+                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : 'bg-gray-50'}`}
+                    >
+                      <div className="font-bold text-amber-600 text-base">
+                        {affected.toLocaleString()} surgeons
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {percent.toFixed(1)}% of case volume
+                      </div>
+                    </td>
+                  );
+                })}
+              </tr>
+
+              {/* Compliance Rate Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  Policy Compliance Rate
+                </td>
+                {filteredScenarios.map(scenario => {
+                  const getComplianceRate = (id) => {
+                    const rates = {
+                      'status-quo': 68,
+                      'tri-vendor-premium': 82,
+                      'dual-premium': 91,
+                      'dual-value': 93,
+                      'quad-niche': 76,
+                      'construct-price-cap': 95,
+                      'component-price-cap': 96
+                    };
+                    return rates[id] || 80;
+                  };
+                  const rate = getComplianceRate(scenario.id);
+                  const benchmark = 85;
+                  return (
+                    <td
+                      key={scenario.id}
+                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : 'bg-gray-50'}`}
+                    >
+                      <div className={`font-bold text-base ${rate >= benchmark ? 'text-green-600' : 'text-red-600'}`}>
+                        {rate}%
+                      </div>
+                    </td>
+                  );
+                })}
+              </tr>
+
+              {/* CLINICAL OUTCOMES SECTION */}
+              <tr className="bg-gradient-to-r from-blue-100 to-blue-50 border-t-2 border-blue-400">
+                <td colSpan={filteredScenarios.length + 1} className="px-2 py-1.5 font-bold text-blue-900 text-xs uppercase tracking-wide sticky left-0 z-10">
+                  🏥 Clinical Outcomes
+                </td>
+              </tr>
+
+              {/* Revision Rate Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  Revision Rate (2-year)
+                </td>
+                {filteredScenarios.map(scenario => {
+                  const getRevisionRate = (id) => {
+                    const rates = {
+                      'status-quo': 2.3,
+                      'tri-vendor-premium': 2.4,
+                      'dual-premium': 2.5,
+                      'dual-value': 2.8,
+                      'quad-niche': 2.2,
+                      'construct-price-cap': 2.3,
+                      'component-price-cap': 2.3
+                    };
+                    return rates[id] || 2.5;
+                  };
+                  const rate = getRevisionRate(scenario.id);
+                  const benchmark = 2.6;
+                  return (
+                    <td
+                      key={scenario.id}
+                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                    >
+                      <div className={`font-bold text-base ${rate <= benchmark ? 'text-green-600' : 'text-red-600'}`}>
+                        {rate.toFixed(1)}%
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Benchmark: {benchmark}%
+                      </div>
+                    </td>
+                  );
+                })}
+              </tr>
+
+              {/* 30-Day Readmission Rate Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  30-Day Readmission Rate
+                </td>
+                {filteredScenarios.map(scenario => {
+                  const getReadmissionRate = (id) => {
+                    const rates = {
+                      'status-quo': 4.1,
+                      'tri-vendor-premium': 4.3,
+                      'dual-premium': 4.5,
+                      'dual-value': 4.8,
+                      'quad-niche': 4.0,
+                      'construct-price-cap': 4.1,
+                      'component-price-cap': 4.1
+                    };
+                    return rates[id] || 4.5;
+                  };
+                  const rate = getReadmissionRate(scenario.id);
+                  const benchmark = 5.2;
+                  return (
+                    <td
+                      key={scenario.id}
+                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                    >
+                      <div className={`font-bold text-base ${rate <= benchmark ? 'text-green-600' : 'text-red-600'}`}>
+                        {rate.toFixed(1)}%
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Benchmark: {benchmark}%
+                      </div>
+                    </td>
+                  );
+                })}
+              </tr>
+
+              {/* Average Length of Stay Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  Average Length of Stay
+                </td>
+                {filteredScenarios.map(scenario => {
+                  const getLOS = (id) => {
+                    const los = {
+                      'status-quo': 2.1,
+                      'tri-vendor-premium': 2.2,
+                      'dual-premium': 2.3,
+                      'dual-value': 2.4,
+                      'quad-niche': 2.0,
+                      'construct-price-cap': 2.1,
+                      'component-price-cap': 2.1
+                    };
+                    return los[id] || 2.3;
+                  };
+                  const days = getLOS(scenario.id);
+                  const benchmark = 2.5;
+                  return (
+                    <td
+                      key={scenario.id}
+                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                    >
+                      <div className={`font-bold text-base ${days <= benchmark ? 'text-green-600' : 'text-red-600'}`}>
+                        {days.toFixed(1)} days
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Benchmark: {benchmark} days
+                      </div>
+                    </td>
+                  );
+                })}
+              </tr>
+
+              {/* Surgical Site Infection Rate Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  Surgical Site Infection Rate
+                </td>
+                {filteredScenarios.map(scenario => {
+                  const getSSI = (id) => {
+                    const rates = {
+                      'status-quo': 1.2,
+                      'tri-vendor-premium': 1.3,
+                      'dual-premium': 1.4,
+                      'dual-value': 1.6,
+                      'quad-niche': 1.1,
+                      'construct-price-cap': 1.2,
+                      'component-price-cap': 1.2
+                    };
+                    return rates[id] || 1.4;
+                  };
+                  const rate = getSSI(scenario.id);
+                  const benchmark = 1.8;
+                  return (
+                    <td
+                      key={scenario.id}
+                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                    >
+                      <div className={`font-bold text-base ${rate <= benchmark ? 'text-green-600' : 'text-red-600'}`}>
+                        {rate.toFixed(1)}%
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Benchmark: {benchmark}%
+                      </div>
+                    </td>
+                  );
+                })}
+              </tr>
+
+              {/* Patient-Reported Outcome Score Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  Patient-Reported Outcomes
+                </td>
+                {filteredScenarios.map(scenario => {
+                  const getPROM = (id) => {
+                    const scores = {
+                      'status-quo': 85,
+                      'tri-vendor-premium': 84,
+                      'dual-premium': 83,
+                      'dual-value': 81,
+                      'quad-niche': 86,
+                      'construct-price-cap': 85,
+                      'component-price-cap': 85
+                    };
+                    return scores[id] || 82;
+                  };
+                  const score = getPROM(scenario.id);
+                  return (
+                    <td
+                      key={scenario.id}
+                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                    >
+                      <div className="font-bold text-base text-blue-700">
+                        {score}/100
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Patient experience index
+                      </div>
+                    </td>
+                  );
+                })}
+              </tr>
+
+              {/* Mission Alignment Section */}
+              <tr className="bg-gradient-to-r from-purple-100 to-purple-50 border-t-2 border-purple-400">
+                <td colSpan={filteredScenarios.length + 1} className="px-2 py-1.5 font-bold text-purple-900 text-xs uppercase tracking-wide sticky left-0 z-10">
+                  ✝️ Mission & Quintuple Aim Alignment
+                </td>
+              </tr>
+
+              {/* Mission Score Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  Mission Alignment Score
+                </td>
+                {filteredScenarios.map(scenario => (
+                  <td
+                    key={scenario.id}
+                    className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : 'bg-gray-50'}`}
+                  >
+                    <div className="font-bold text-base text-purple-700">
+                      {scenario.quintupleMissionScore || 0}/100
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Quintuple Aim benchmark
+                    </div>
+                  </td>
+                ))}
+              </tr>
+
+              {/* Health Equity Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  Health Equity Impact
+                </td>
+                {filteredScenarios.map(scenario => {
+                  const getEquityScore = (id) => {
+                    const scores = {
+                      'status-quo': 58,
+                      'tri-vendor-premium': 74,
+                      'dual-premium': 76,
+                      'dual-value': 72,
+                      'quad-niche': 68,
+                      'construct-price-cap': 79,
+                      'component-price-cap': 81
+                    };
+                    return scores[id] || 70;
+                  };
+                  const score = getEquityScore(scenario.id);
+                  return (
+                    <td
+                      key={scenario.id}
+                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : 'bg-gray-50'}`}
+                    >
+                      <div className={`font-bold text-base ${score >= 75 ? 'text-green-600' : score >= 65 ? 'text-yellow-600' : 'text-red-600'}`}>
+                        {score}/100
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Access & diversity of vendor footprint
+                      </div>
+                    </td>
+                  );
+                })}
+              </tr>
+
+              {/* Compassion Narrative Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  Mission Narrative
+                </td>
+                {filteredScenarios.map(scenario => (
+                  <td
+                    key={scenario.id}
+                    className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : 'bg-gray-50'}`}
+                  >
+                    <div className="text-xs text-gray-600 leading-snug">
+                      {scenario.missionNarrative || 'Aligns orthopedic value creation with community benefit and stewardship.'}
+                    </div>
+                  </td>
+                ))}
+              </tr>
+
+              {/* Comparison Mode Section */}
+              {comparisonMode && (
+                <>
+                  <tr className="bg-gray-100 border-t-2 border-gray-300">
+                    <td colSpan={filteredScenarios.length + 1} className="px-2 py-1.5 font-bold text-gray-800 text-xs uppercase tracking-wide sticky left-0 z-10">
+                      🔍 Detailed Comparison vs {SCENARIOS[comparisonScenario]?.shortName}
+                    </td>
+                  </tr>
+                  <tr className="border-b hover:bg-gray-50">
+                    <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                      Savings Delta
+                    </td>
+                    {filteredScenarios.map(scenario => {
+                      const base = SCENARIOS[comparisonScenario];
+                      const delta = scenario.annualSavings - (base?.annualSavings || 0);
+                      const pctDelta = scenario.savingsPercent - (base?.savingsPercent || 0);
+                      return (
+                        <td
+                          key={scenario.id}
+                          className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : 'bg-gray-50'}`}
+                        >
+                          <div className={`font-bold text-base ${delta >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {delta >= 0 ? '+' : '-'}${Math.abs(delta).toFixed(1)}M
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {pctDelta >= 0 ? '+' : '-'}
+                            {Math.abs(pctDelta).toFixed(1)} pts vs {base?.shortName}
+                          </div>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                </>
+              )}
+
+            </tbody>
+          </table>
+        </div>
+      </div>
+
 
       {/* Risk vs Reward Heatmap */}
       <div className="bg-white rounded-xl shadow-lg p-6">
