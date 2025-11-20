@@ -1361,8 +1361,8 @@ const CardiovascularIPGDemo = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 {[
                   { name: 'Clinical', approved: results.clinicalApproval },
-                  { name: 'Financial', approved: results.financialApproval },
-                  { name: 'Operational', approved: results.operationalApproval }
+                  { name: 'Operational', approved: results.operationalApproval },
+                  { name: 'Financial', approved: results.financialApproval }
                 ].map((pillar, idx) => (
                   <div
                     key={idx}
