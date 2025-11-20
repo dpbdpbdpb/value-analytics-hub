@@ -402,7 +402,7 @@ const EnhancedOrthopedicDashboard = () => {
 
   // Calculate Hybrid Scenario (Vendor Selection + Price Cap)
   const calculateHybridScenario = useMemo(() => {
-    if (!enableHybridScenario || selectedVendors.length === 0) {
+    if (selectedVendors.length === 0) {
       return null;
     }
 
@@ -550,7 +550,7 @@ const EnhancedOrthopedicDashboard = () => {
       vendorCount: vendorCount,
       priceCap: selectedPriceCap
     };
-  }, [enableHybridScenario, selectedVendors, selectedPriceCap, SCENARIOS, filteredRealData, availableVendors]);
+  }, [selectedVendors, selectedPriceCap, SCENARIOS, filteredRealData, availableVendors]);
 
   // Matrix Pricing Component Details from real data
   const MATRIX_COMPONENTS = useMemo(() => {
@@ -1346,183 +1346,6 @@ const EnhancedOrthopedicDashboard = () => {
             The table shows the combined impact across all selected vendors. Selected vendors will display purple-highlighted results,
             while unselected vendors show dashes. Vendor selection impacts physician adoption and satisfaction, while price caps impact cost savings.
           </div>
-        </div>
-      </div>
-
-      {/* Key Definitions and Reference Information */}
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-md p-4 border border-blue-200">
-        <h3 className="text-base font-bold mb-3 text-gray-800 flex items-center gap-2">
-          <Info className="w-4 h-4 text-blue-600" />
-                      key={scenario.id}
-                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
-                    >
-                      <div className={`font-bold text-base ${minutes <= benchmark ? 'text-green-600' : 'text-red-600'}`}>
-                        {minutes} min
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        Benchmark: {benchmark} min
-                      </div>
-                    </td>
-                  );
-                })}
-              </tr>
-
-              {/* Surgeon Adoption Rate Row */}
-              <tr className="border-b hover:bg-gray-50">
-                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
-                  Surgeon Adoption Rate
-                </td>
-                {filteredScenarios.map(scenario => {
-                  const getAdoptionRate = (id) => {
-                    const rates = {
-                      'status-quo': 100,
-                      'tri-vendor-premium': 92,
-                      'dual-premium': 85,
-                      'dual-value': 78,
-                      'quad-niche': 95,
-                      'construct-price-cap': 88,
-                      'component-price-cap': 90
-                    };
-                    return rates[id] || 85;
-                  };
-                  const rate = getAdoptionRate(scenario.id);
-                  const benchmark = 80;
-                  return (
-                    <td
-                      key={scenario.id}
-                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
-                    >
-                      <div className={`font-bold text-base ${rate >= benchmark ? 'text-green-600' : 'text-red-600'}`}>
-                        {rate}%
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        Target: {benchmark}%
-                      </div>
-                    </td>
-                  );
-                })}
-              </tr>
-
-              {/* Inventory Turns Row */}
-              <tr className="border-b hover:bg-gray-50">
-                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
-                  Inventory Turns per Year
-                </td>
-                {filteredScenarios.map(scenario => {
-                  const getInventoryTurns = (id) => {
-                    const turns = {
-                      'status-quo': 9.2,
-                      'tri-vendor-premium': 11.5,
-                      'dual-premium': 13.8,
-                      'dual-value': 14.2,
-                      'quad-niche': 10.1,
-                      'construct-price-cap': 9.8,
-                      'component-price-cap': 10.0
-                    };
-                    return turns[id] || 10;
-                  };
-                  const turns = getInventoryTurns(scenario.id);
-                  const benchmark = 10;
-                  return (
-                    <td
-                      key={scenario.id}
-                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
-                    >
-                      <div className={`font-bold text-base ${turns >= benchmark ? 'text-green-600' : 'text-red-600'}`}>
-                        {turns.toFixed(1)}
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        Target: {benchmark}
-                      </div>
-                    </td>
-                  );
-                })}
-              </tr>
-
-              {/* Inpatient/Outpatient Ratio Row */}
-              <tr className="border-b hover:bg-gray-50">
-                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
-                  Inpatient/Outpatient Ratio
-                  <div className="text-xs font-normal text-gray-500 mt-1">Impacts reimbursement & cost structure</div>
-                </td>
-                {filteredScenarios.map(scenario => {
-                  const getIPOPRatio = (id) => {
-                    // Scenarios with more restrictive vendor choices may shift more cases to outpatient
-                    // as surgeons optimize for lower-cost settings
-                    const ratios = {
-                      'status-quo': 1.85,           // 65% IP / 35% OP (current state - higher inpatient)
-                      'tri-vendor-premium': 1.55,   // 61% IP / 39% OP (some shift to OP)
-                      'dual-premium': 1.35,         // 57% IP / 43% OP (more OP shift)
-                      'dual-value': 1.25,           // 56% IP / 44% OP (value focus = more OP)
-                      'quad-niche': 1.70,           // 63% IP / 37% OP (moderate shift)
-                      'construct-price-cap': 1.45,  // 59% IP / 41% OP
-                      'component-price-cap': 1.50   // 60% IP / 40% OP
-                    };
-                    return ratios[id] || 1.5;
-                  };
-                  const ratio = getIPOPRatio(scenario.id);
-                  const ipPercent = Math.round((ratio / (ratio + 1)) * 100);
-                  const opPercent = 100 - ipPercent;
-                  // Lower ratio (more outpatient) is generally better for cost efficiency
-                  const benchmark = 1.5;
-                  return (
-                    <td
-                      key={scenario.id}
-                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
-                    >
-                      <div className={`font-bold text-base ${ratio <= benchmark ? 'text-green-600' : 'text-orange-600'}`}>
-                        {ratio.toFixed(2)}:1
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        {ipPercent}% IP / {opPercent}% OP
-                      </div>
-                    </td>
-                  );
-                })}
-              </tr>
-
-              {/* Robotic Case Proportion Row */}
-              <tr className="border-b hover:bg-gray-50">
-                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
-                  Robotic Case Proportion
-                  <div className="text-xs font-normal text-gray-500 mt-1">Platform utilization & stranded investment risk</div>
-                </td>
-                {filteredScenarios.map(scenario => {
-                  const getRoboticProportion = (id) => {
-                    // Scenarios with vendor restrictions may "strand" robotic cases
-                    // if selected vendors don't support existing robotic platforms
-                    const proportions = {
-                      'status-quo': 28.5,           // Current robotic adoption rate
-                      'tri-vendor-premium': 26.0,   // Minor reduction (some platforms excluded)
-                      'dual-premium': 18.5,         // Significant reduction (only 2 vendors)
-                      'dual-value': 15.0,           // Major reduction (value vendors may not have robotics)
-                      'quad-niche': 25.5,           // Moderate reduction (4 vendors, good coverage)
-                      'construct-price-cap': 22.0,  // Some platforms priced out
-                      'component-price-cap': 20.5   // Component caps may exclude robotic-tied implants
-                    };
-                    return proportions[id] || 20;
-                  };
-                  const percentage = getRoboticProportion(scenario.id);
-                  const statusQuo = 28.5;
-                  const strandedCases = Math.round((statusQuo - percentage) / statusQuo * 100);
-                  const benchmark = 25; // Target to maintain investment utilization
-                  return (
-                    <td
-                      key={scenario.id}
-                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
-                    >
-                      <div className={`font-bold text-base ${percentage >= benchmark ? 'text-green-600' : 'text-orange-600'}`}>
-                        {percentage.toFixed(1)}%
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        {strandedCases > 0 ? `${strandedCases}% cases stranded` : 'Full platform utilization'}
-                      </div>
-                    </td>
-                  );
-                })}
-              </tr>
-            </tbody>
-          </table>
         </div>
       </div>
 
