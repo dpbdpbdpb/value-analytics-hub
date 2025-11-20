@@ -100,6 +100,29 @@ const EnhancedOrthopedicDashboard = () => {
     });
   };
 
+  // Hybrid Scenario Builder State
+  const [enableHybridScenario, setEnableHybridScenario] = useState(false);
+  const [selectedVendors, setSelectedVendors] = useState(['VENDOR-ALPHA', 'VENDOR-BETA']); // Array of vendor names
+  const [selectedPriceCap, setSelectedPriceCap] = useState('none'); // 'none', 'construct-price-cap', 'component-price-cap'
+
+  // Available vendors (from hip-knee data)
+  const availableVendors = [
+    { id: 'VENDOR-ALPHA', name: 'Vendor Alpha', tier: 'Premium', marketShare: 28 },
+    { id: 'VENDOR-BETA', name: 'Vendor Beta', tier: 'Premium', marketShare: 24 },
+    { id: 'VENDOR-GAMMA', name: 'Vendor Gamma', tier: 'Value', marketShare: 18 },
+    { id: 'VENDOR-DELTA', name: 'Vendor Delta', tier: 'Value', marketShare: 15 },
+    { id: 'VENDOR-EPSILON', name: 'Vendor Epsilon', tier: 'Specialty', marketShare: 8 },
+    { id: 'VENDOR-ETA', name: 'Vendor Eta', tier: 'Specialty', marketShare: 7 }
+  ];
+
+  const toggleVendor = (vendorId) => {
+    if (selectedVendors.includes(vendorId)) {
+      setSelectedVendors(selectedVendors.filter(v => v !== vendorId));
+    } else if (selectedVendors.length < 5) {
+      setSelectedVendors([...selectedVendors, vendorId]);
+    }
+  };
+
   // CommonSpirit brand colors
   const COLORS = {
     primary: '#BA4896',
@@ -377,6 +400,158 @@ const EnhancedOrthopedicDashboard = () => {
     return scenarios;
   }, [filteredRealData, customAssumptions]);
 
+  // Calculate Hybrid Scenario (Vendor Selection + Price Cap)
+  const calculateHybridScenario = useMemo(() => {
+    if (!enableHybridScenario || selectedVendors.length === 0) {
+      return null;
+    }
+
+    const totalSpend = filteredRealData?.metadata?.totalSpend || 0;
+    const statusQuo = SCENARIOS['status-quo'];
+
+    // ===== VENDOR SELECTION IMPACTS PHYSICIANS =====
+    // More vendors = Better physician satisfaction but lower adoption
+    // Fewer vendors = Lower physician satisfaction but higher adoption
+
+    const vendorCount = selectedVendors.length;
+
+    // Calculate physician adoption based on vendor count
+    // 1 vendor: 95% adoption (monopoly), 60% satisfaction
+    // 2 vendors: 90% adoption, 75% satisfaction
+    // 3 vendors: 85% adoption, 88% satisfaction (optimal balance)
+    // 4 vendors: 75% adoption, 92% satisfaction
+    // 5 vendors: 68% adoption, 95% satisfaction
+
+    let adoptionRate, surgeonSatisfaction, operationalComplexity;
+    if (vendorCount === 1) {
+      adoptionRate = 95;
+      surgeonSatisfaction = 60;
+      operationalComplexity = 'Low';
+    } else if (vendorCount === 2) {
+      adoptionRate = 90;
+      surgeonSatisfaction = 75;
+      operationalComplexity = 'Low';
+    } else if (vendorCount === 3) {
+      adoptionRate = 85;
+      surgeonSatisfaction = 88;
+      operationalComplexity = 'Medium';
+    } else if (vendorCount === 4) {
+      adoptionRate = 75;
+      surgeonSatisfaction = 92;
+      operationalComplexity = 'Medium-High';
+    } else { // 5 vendors
+      adoptionRate = 68;
+      surgeonSatisfaction = 95;
+      operationalComplexity = 'High';
+    }
+
+    // ===== PRICE CAP IMPACTS COSTS =====
+    // Price caps drive savings, vendor count doesn't impact pricing directly
+
+    let annualSavings, savingsPercent, priceCapDescription;
+
+    if (selectedPriceCap === 'construct-price-cap') {
+      // Use construct cap scenario
+      const capScenario = SCENARIOS['construct-price-cap'];
+      annualSavings = capScenario?.annualSavings || (totalSpend * 0.08 / 1000000);
+      savingsPercent = 8;
+      priceCapDescription = 'Construct Caps';
+    } else if (selectedPriceCap === 'component-price-cap') {
+      // Use component cap scenario
+      const capScenario = SCENARIOS['component-price-cap'];
+      annualSavings = capScenario?.annualSavings || (totalSpend * 0.10 / 1000000);
+      savingsPercent = 10;
+      priceCapDescription = 'Component Caps';
+    } else {
+      // No price caps - only vendor consolidation leverage
+      // Fewer vendors = More negotiation leverage = Better pricing
+      if (vendorCount === 1) {
+        savingsPercent = 15; // Single vendor monopoly pricing
+      } else if (vendorCount === 2) {
+        savingsPercent = 18; // Dual vendor leverage
+      } else if (vendorCount === 3) {
+        savingsPercent = 12; // Balanced competition
+      } else if (vendorCount === 4) {
+        savingsPercent = 8;
+      } else {
+        savingsPercent = 5; // Many vendors = Less leverage
+      }
+      annualSavings = (totalSpend * savingsPercent / 100) / 1000000;
+      priceCapDescription = 'Vendor Leverage Only';
+    }
+
+    // Risk calculation
+    let riskLevel, riskScore;
+    if (vendorCount <= 2) {
+      riskLevel = 'high'; // High risk with few vendors
+      riskScore = 75;
+    } else if (vendorCount === 3) {
+      riskLevel = 'medium';
+      riskScore = 50;
+    } else {
+      riskLevel = 'low';
+      riskScore = 30;
+    }
+
+    // Adjust risk if price caps are added
+    if (selectedPriceCap !== 'none') {
+      riskScore += 15; // Price caps add operational risk
+      if (riskScore > 66) riskLevel = 'high';
+      else if (riskScore > 33) riskLevel = 'medium';
+    }
+
+    // Build scenario name
+    const vendorNames = selectedVendors.map(id => {
+      const vendor = availableVendors.find(v => v.id === id);
+      return vendor ? vendor.name.replace('Vendor ', 'V') : id;
+    }).join('+');
+
+    const scenarioName = selectedPriceCap === 'none'
+      ? `${vendorCount}-Vendor Strategy (${vendorNames})`
+      : `${vendorCount}-Vendor (${vendorNames}) + ${priceCapDescription}`;
+
+    const description = selectedPriceCap === 'none'
+      ? `${vendorCount} vendors selected - impacts physician adoption (${adoptionRate}%) and satisfaction (${surgeonSatisfaction}%)`
+      : `${vendorCount} vendors for physician adoption + ${priceCapDescription} for cost control`;
+
+    return {
+      id: 'hybrid-scenario',
+      name: scenarioName,
+      description: description,
+      annualSavings: annualSavings,
+      savingsPercent: savingsPercent,
+      adoptionRate: adoptionRate,
+      surgeonSatisfaction: surgeonSatisfaction,
+      riskLevel: riskLevel,
+      riskScore: riskScore,
+      quintupleMissionScore: Math.round((adoptionRate * 0.4) + (surgeonSatisfaction * 0.3) + ((100 - riskScore) * 0.3)),
+      npv5Year: annualSavings * 4.3,
+      preferredItemUsage: adoptionRate,
+      complicationRate: statusQuo?.complicationRate || 0.8,
+      revisionRisk: statusQuo?.revisionRisk || 2.1,
+      implementation: {
+        timeline: vendorCount <= 2 ? 9 : vendorCount === 3 ? 12 : 15,
+        complexity: operationalComplexity,
+        keySteps: selectedPriceCap === 'none'
+          ? [
+              `Negotiate with ${vendorCount} selected vendors`,
+              'Align surgeon preferences with vendor portfolio',
+              'Monitor adoption and satisfaction metrics'
+            ]
+          : [
+              `Negotiate with ${vendorCount} selected vendors`,
+              'Establish price cap framework',
+              'Align clinical and financial teams',
+              'Monitor both adoption and pricing compliance'
+            ]
+      },
+      isHybrid: true,
+      selectedVendors: selectedVendors,
+      vendorCount: vendorCount,
+      priceCap: selectedPriceCap
+    };
+  }, [enableHybridScenario, selectedVendors, selectedPriceCap, SCENARIOS, filteredRealData, availableVendors]);
+
   // Matrix Pricing Component Details from real data
   const MATRIX_COMPONENTS = useMemo(() => {
     if (!realData?.matrixPricing) {
@@ -511,6 +686,11 @@ const EnhancedOrthopedicDashboard = () => {
   const filteredScenarios = useMemo(() => {
     let scenarios = Object.values(SCENARIOS);
 
+    // Add hybrid scenario if enabled
+    if (calculateHybridScenario) {
+      scenarios.push(calculateHybridScenario);
+    }
+
     // Apply risk filter
     if (filterRisk !== 'all') {
       scenarios = scenarios.filter(s => s.riskLevel === filterRisk);
@@ -518,6 +698,15 @@ const EnhancedOrthopedicDashboard = () => {
 
     // Apply sorting
     scenarios.sort((a, b) => {
+      // Always keep Status Quo first
+      if (a.id === 'status-quo') return -1;
+      if (b.id === 'status-quo') return 1;
+
+      // Keep hybrid scenario second (after Status Quo) for easy comparison
+      if (a.id === 'hybrid-scenario') return -1;
+      if (b.id === 'hybrid-scenario') return 1;
+
+      // Then apply the selected sort
       switch (sortBy) {
         case 'savings':
           return b.annualSavings - a.annualSavings;
@@ -533,7 +722,7 @@ const EnhancedOrthopedicDashboard = () => {
     });
 
     return scenarios;
-  }, [SCENARIOS, sortBy, filterRisk, filterProcedureType]);
+  }, [SCENARIOS, sortBy, filterRisk, filterProcedureType, calculateHybridScenario]);
 
   // Bookmark current configuration
   const toggleBookmark = () => {
@@ -711,6 +900,99 @@ const EnhancedOrthopedicDashboard = () => {
         </div>
       )}
 
+      {/* Interactive Vendor & Pricing Strategy Builder */}
+      <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border-2 border-purple-200">
+        <div className="mb-4">
+          <h2 className="text-2xl font-bold flex items-center gap-2 text-purple-900 mb-2">
+            <Building2 className="w-6 h-6" style={{ color: COLORS.primary }} />
+            Interactive Vendor & Pricing Strategy Builder
+          </h2>
+          <p className="text-sm text-gray-600">
+            Select vendors in the table below (impacts physicians) and set price caps (impacts costs)
+          </p>
+        </div>
+
+        {/* Price Cap Controls */}
+        <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4 mb-4 border border-green-300">
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-2 flex items-center gap-1">
+                <DollarSign className="w-4 h-4" />
+                Price Cap Type
+              </label>
+              <select
+                value={selectedPriceCap}
+                onChange={(e) => setSelectedPriceCap(e.target.value)}
+                className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-green-500 text-sm"
+              >
+                <option value="none">No Price Caps</option>
+                <option value="construct-price-cap">Construct Caps (~8%)</option>
+                <option value="component-price-cap">Component Caps (~10%)</option>
+              </select>
+            </div>
+
+            {selectedPriceCap === 'construct-price-cap' && (
+              <>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-2">Hip Construct Cap</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2 text-gray-500">$</span>
+                    <input
+                      type="number"
+                      value={customAssumptions.hipConstructCap}
+                      onChange={(e) => setCustomAssumptions({...customAssumptions, hipConstructCap: parseInt(e.target.value)})}
+                      className="w-full pl-7 pr-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-green-500 text-sm"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-2">Knee Construct Cap</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2 text-gray-500">$</span>
+                    <input
+                      type="number"
+                      value={customAssumptions.kneeConstructCap}
+                      onChange={(e) => setCustomAssumptions({...customAssumptions, kneeConstructCap: parseInt(e.target.value)})}
+                      className="w-full pl-7 pr-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-green-500 text-sm"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {selectedPriceCap === 'component-price-cap' && (
+              <>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-2">Femoral Stem Cap</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2 text-gray-500">$</span>
+                    <input
+                      type="number"
+                      value={customAssumptions.femoralStemCap}
+                      onChange={(e) => setCustomAssumptions({...customAssumptions, femoralStemCap: parseInt(e.target.value)})}
+                      className="w-full pl-7 pr-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-green-500 text-sm"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-2">Acetabular Cup Cap</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2 text-gray-500">$</span>
+                    <input
+                      type="number"
+                      value={customAssumptions.acetabularCupCap}
+                      onChange={(e) => setCustomAssumptions({...customAssumptions, acetabularCupCap: parseInt(e.target.value)})}
+                      className="w-full pl-7 pr-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-green-500 text-sm"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+      </div>
+
       {/* Scenario Comparison Table */}
       <div className="bg-white rounded-xl shadow-lg p-6">
         <div className="flex items-center justify-between mb-4">
@@ -800,47 +1082,69 @@ const EnhancedOrthopedicDashboard = () => {
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="bg-gray-100 border-b-2 border-gray-300">
-                <th className="px-2 py-1.5 text-left font-bold text-gray-900 sticky left-0 bg-gray-100 z-10 min-w-[180px]">
+              <tr className="bg-gradient-to-r from-purple-100 to-blue-100 border-b-2 border-purple-300">
+                <th className="px-2 py-3 text-left font-bold text-gray-900 sticky left-0 bg-gradient-to-r from-purple-100 to-blue-100 z-10 min-w-[180px]">
                   Metric
                 </th>
-                {filteredScenarios.map(scenario => (
+                {availableVendors.map(vendor => (
                   <th
-                    key={scenario.id}
-                    className={`px-2 py-2 text-center font-bold text-gray-900 min-w-[160px] max-w-[200px] cursor-pointer hover:bg-gray-200 ${
-                      selectedScenario === scenario.id ? 'bg-purple-100' : ''
+                    key={vendor.id}
+                    className={`px-2 py-3 text-center min-w-[140px] ${
+                      selectedVendors.includes(vendor.id) ? 'bg-purple-50' : ''
                     }`}
-                    onClick={() => setSelectedScenario(scenario.id)}
                   >
-                    <div className="font-bold text-sm break-words leading-tight">{scenario.shortName}</div>
-                    <div className="text-xs text-gray-500 font-normal mt-1">
-                      {scenario.id === 'construct-price-cap' ? (
-                        <span title={`Hip construct cap: $${customAssumptions.hipConstructCap.toLocaleString()} | Knee construct cap: $${customAssumptions.kneeConstructCap.toLocaleString()}`}>
-                          {scenario.vendorCount} vendors
-                          <br />
-                          <span className="text-blue-600 font-semibold">
-                            Hip: ${(customAssumptions.hipConstructCap / 1000).toFixed(1)}K | Knee: ${(customAssumptions.kneeConstructCap / 1000).toFixed(1)}K
-                          </span>
-                        </span>
-                      ) : scenario.id === 'component-price-cap' ? (
-                        <span title={`Femoral Stem: $${customAssumptions.femoralStemCap} | Acetabular Cup: $${customAssumptions.acetabularCupCap} | Femoral Head: $${customAssumptions.femoralHeadCap} | Liner: $${customAssumptions.linerCap}`}>
-                          {scenario.vendorCount} vendors
-                          <br />
-                          <span className="text-blue-600 font-semibold">Per-component caps</span>
-                        </span>
-                      ) : (
-                        `${scenario.vendorCount} vendors`
-                      )}
+                    <div className="flex flex-col items-center gap-2">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedVendors.includes(vendor.id)}
+                          onChange={() => toggleVendor(vendor.id)}
+                          disabled={selectedVendors.length >= 5 && !selectedVendors.includes(vendor.id)}
+                          className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                        />
+                        <span className="font-bold text-purple-900 text-sm">{vendor.name}</span>
+                      </label>
+                      <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                        vendor.tier === 'Premium' ? 'bg-blue-100 text-blue-800' :
+                        vendor.tier === 'Value' ? 'bg-green-100 text-green-800' :
+                        'bg-amber-100 text-amber-800'
+                      }`}>
+                        {vendor.tier}
+                      </span>
+                      <div className="text-xs text-gray-600">
+                        {vendor.marketShare}% share
+                      </div>
                     </div>
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
+              {/* Selection Status Row */}
+              <tr className="bg-gray-50 border-b border-gray-200">
+                <td className="px-2 py-2 font-semibold text-gray-700 text-sm sticky left-0 bg-gray-50 z-10">
+                  Selection Status
+                </td>
+                {availableVendors.map(vendor => (
+                  <td
+                    key={vendor.id}
+                    className={`px-2 py-2 text-center ${selectedVendors.includes(vendor.id) ? 'bg-purple-50' : ''}`}
+                  >
+                    {selectedVendors.includes(vendor.id) ? (
+                      <span className="px-2 py-1 bg-green-200 text-green-900 rounded-full font-bold text-xs">
+                        ✓ Selected
+                      </span>
+                    ) : (
+                      <span className="text-gray-400 text-xs">—</span>
+                    )}
+                  </td>
+                ))}
+              </tr>
+
               {/* FINANCIAL OUTCOMES SECTION */}
               <tr className="bg-gradient-to-r from-green-100 to-green-50 border-t-2 border-green-400">
-                <td colSpan={filteredScenarios.length + 1} className="px-2 py-1 font-bold text-green-900 text-xs uppercase tracking-wide sticky left-0 z-10">
-                  💰 Financial Outcomes
+                <td colSpan={availableVendors.length + 1} className="px-2 py-1 font-bold text-green-900 text-xs uppercase tracking-wide sticky left-0 z-10">
+                  💰 Combined Strategy Results (Based on Selected Vendors + Price Caps)
                 </td>
               </tr>
 
@@ -849,432 +1153,206 @@ const EnhancedOrthopedicDashboard = () => {
                 <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
                   Annual Savings
                 </td>
-                {filteredScenarios.map(scenario => (
-                  <td
-                    key={scenario.id}
-                    className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
-                  >
-                    <div className="font-bold text-green-600 text-base">${scenario.annualSavings.toFixed(2)}M</div>
-                  </td>
-                ))}
-              </tr>
-
-              {/* 5-Year NPV Row */}
-              <tr className="border-b hover:bg-gray-50">
-                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
-                  5-Year NPV
-                </td>
-                {filteredScenarios.map(scenario => (
-                  <td
-                    key={scenario.id}
-                    className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
-                  >
-                    <div className="font-bold text-purple-600 text-base">
-                      ${scenario.npv5Year?.toFixed(2) || '0.00'}M
-                    </div>
-                  </td>
-                ))}
-              </tr>
-
-              {/* Implementation Cost Row */}
-              <tr className="border-b hover:bg-gray-50">
-                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
-                  Implementation Cost
-                </td>
-                {filteredScenarios.map(scenario => {
-                  const getImplementationCost = (id) => {
-                    const costs = {
-                      'status-quo': 0,
-                      'tri-vendor-premium': 0.8,
-                      'dual-premium': 1.4,
-                      'dual-value': 1.2,
-                      'quad-niche': 0.6,
-                      'construct-price-cap': 0.3,
-                      'component-price-cap': 0.4
-                    };
-                    return costs[id] || 1.0;
-                  };
-                  const cost = getImplementationCost(scenario.id);
+                {availableVendors.map(vendor => {
+                  const isSelected = selectedVendors.includes(vendor.id);
                   return (
                     <td
-                      key={scenario.id}
-                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                      key={vendor.id}
+                      className={`px-2 py-1.5 text-center ${isSelected ? 'bg-purple-50' : 'bg-gray-50'}`}
                     >
-                      <div className={`font-bold text-base ${cost === 0 ? 'text-gray-600' : 'text-red-600'}`}>
-                        ${cost.toFixed(1)}M
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        One-time cost
-                      </div>
-                    </td>
-                  );
-                })}
-              </tr>
-
-              {/* Cost per Case Row */}
-              <tr className="border-b hover:bg-gray-50">
-                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
-                  Average Cost per Case
-                  <div className="text-xs font-normal text-gray-500 mt-1">Baseline: $6,420</div>
-                </td>
-                {filteredScenarios.map(scenario => {
-                  const getCostPerCase = (id) => {
-                    const costs = {
-                      'status-quo': 6420,
-                      'tri-vendor-premium': 5650,
-                      'dual-premium': 5265,
-                      'dual-value': 5395,
-                      'quad-niche': 5870,
-                      'construct-price-cap': 5910,
-                      'component-price-cap': 5780
-                    };
-                    return costs[id] || 6000;
-                  };
-                  const cost = getCostPerCase(scenario.id);
-                  const baseline = 6420;
-                  return (
-                    <td
-                      key={scenario.id}
-                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
-                    >
-                      <div className={`font-bold text-base ${cost < baseline ? 'text-green-600' : 'text-gray-600'}`}>
-                        ${cost.toLocaleString()}
-                      </div>
-                    </td>
-                  );
-                })}
-              </tr>
-
-              {/* Payback Period Row */}
-              <tr className="border-b hover:bg-gray-50">
-                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
-                  Payback Period
-                </td>
-                {filteredScenarios.map(scenario => {
-                  const getImplementationCost = (id) => {
-                    const costs = {
-                      'status-quo': 0,
-                      'tri-vendor-premium': 0.8,
-                      'dual-premium': 1.4,
-                      'dual-value': 1.2,
-                      'quad-niche': 0.6,
-                      'construct-price-cap': 0.3,
-                      'component-price-cap': 0.4
-                    };
-                    return costs[id] || 1.0;
-                  };
-                  const implCost = getImplementationCost(scenario.id);
-                  const rawPayback = (implCost / scenario.annualSavings) * 12;
-                  const paybackMonths = !implCost || !scenario.annualSavings || !isFinite(rawPayback) ? null : Math.round(rawPayback);
-                  return (
-                    <td
-                      key={scenario.id}
-                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
-                    >
-                      {paybackMonths === null ? (
-                        <div className="font-bold text-gray-600 text-base">N/A</div>
+                      {isSelected && calculateHybridScenario ? (
+                        <div className="font-bold text-green-600 text-base">${calculateHybridScenario.annualSavings.toFixed(1)}M</div>
                       ) : (
-                        <>
-                          <div className={`font-bold text-base ${paybackMonths <= 12 ? 'text-green-600' : paybackMonths <= 24 ? 'text-yellow-600' : 'text-red-600'}`}>
-                            {paybackMonths} months
-                          </div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            {(paybackMonths / 12).toFixed(1)} years
-                          </div>
-                        </>
+                        <div className="text-gray-400 text-sm">—</div>
                       )}
                     </td>
                   );
                 })}
               </tr>
 
-              {/* Contract Compliance Rate Row */}
+              {/* Savings Percentage Row */}
               <tr className="border-b hover:bg-gray-50">
                 <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
-                  Contract Compliance Rate
-                  <div className="text-xs font-normal text-gray-500 mt-1">Target: 85%</div>
+                  Savings Percentage
                 </td>
-                {filteredScenarios.map(scenario => {
-                  const getComplianceRate = (id) => {
-                    const rates = {
-                      'status-quo': 68,
-                      'tri-vendor-premium': 82,
-                      'dual-premium': 91,
-                      'dual-value': 93,
-                      'quad-niche': 76,
-                      'construct-price-cap': 95,
-                      'component-price-cap': 96
-                    };
-                    return rates[id] || 80;
-                  };
-                  const rate = getComplianceRate(scenario.id);
-                  const benchmark = 85;
+                {availableVendors.map(vendor => {
+                  const isSelected = selectedVendors.includes(vendor.id);
                   return (
                     <td
-                      key={scenario.id}
-                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                      key={vendor.id}
+                      className={`px-2 py-1.5 text-center ${isSelected ? 'bg-purple-50' : 'bg-gray-50'}`}
                     >
-                      <div className={`font-bold text-base ${rate >= benchmark ? 'text-green-600' : 'text-red-600'}`}>
-                        {rate}%
-                      </div>
+                      {isSelected && calculateHybridScenario ? (
+                        <div className="font-bold text-green-600 text-base">{calculateHybridScenario.savingsPercent}%</div>
+                      ) : (
+                        <div className="text-gray-400 text-sm">—</div>
+                      )}
                     </td>
                   );
                 })}
               </tr>
 
-              {/* CLINICAL OUTCOMES SECTION */}
+              {/* PHYSICIAN IMPACT SECTION */}
               <tr className="bg-gradient-to-r from-blue-100 to-blue-50 border-t-2 border-blue-400">
-                <td colSpan={filteredScenarios.length + 1} className="px-2 py-1.5 font-bold text-blue-900 text-xs uppercase tracking-wide sticky left-0 z-10">
-                  🏥 Clinical Outcomes
+                <td colSpan={availableVendors.length + 1} className="px-2 py-1 font-bold text-blue-900 text-xs uppercase tracking-wide sticky left-0 z-10">
+                  👨‍⚕️ Physician Impact (Driven by Vendor Count)
                 </td>
               </tr>
 
-              {/* Revision Rate Row */}
+              {/* Physician Adoption Rate Row */}
               <tr className="border-b hover:bg-gray-50">
                 <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
-                  Revision Rate (2-year)
+                  Physician Adoption Rate
                 </td>
-                {filteredScenarios.map(scenario => {
-                  // Generate synthetic revision rate data
-                  const getRevisionRate = (id) => {
-                    const rates = {
-                      'status-quo': 2.3,
-                      'tri-vendor-premium': 2.4,
-                      'dual-premium': 2.5,
-                      'dual-value': 2.8,
-                      'quad-niche': 2.2,
-                      'construct-price-cap': 2.3,
-                      'component-price-cap': 2.3
-                    };
-                    return rates[id] || 2.5;
-                  };
-                  const rate = getRevisionRate(scenario.id);
-                  const benchmark = 2.6;
+                {availableVendors.map(vendor => {
+                  const isSelected = selectedVendors.includes(vendor.id);
                   return (
                     <td
-                      key={scenario.id}
-                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                      key={vendor.id}
+                      className={`px-2 py-1.5 text-center ${isSelected ? 'bg-purple-50' : 'bg-gray-50'}`}
                     >
-                      <div className={`font-bold text-base ${rate <= benchmark ? 'text-green-600' : 'text-red-600'}`}>
-                        {rate.toFixed(1)}%
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        Benchmark: {benchmark}%
-                      </div>
+                      {isSelected && calculateHybridScenario ? (
+                        <div className="font-bold text-blue-600 text-base">{calculateHybridScenario.adoptionRate}%</div>
+                      ) : (
+                        <div className="text-gray-400 text-sm">—</div>
+                      )}
                     </td>
                   );
                 })}
               </tr>
 
-              {/* 30-Day Readmission Rate Row */}
+              {/* Surgeon Satisfaction Row */}
               <tr className="border-b hover:bg-gray-50">
                 <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
-                  30-Day Readmission Rate
+                  Surgeon Satisfaction
                 </td>
-                {filteredScenarios.map(scenario => {
-                  const getReadmissionRate = (id) => {
-                    const rates = {
-                      'status-quo': 4.1,
-                      'tri-vendor-premium': 4.3,
-                      'dual-premium': 4.5,
-                      'dual-value': 4.8,
-                      'quad-niche': 4.0,
-                      'construct-price-cap': 4.1,
-                      'component-price-cap': 4.1
-                    };
-                    return rates[id] || 4.5;
-                  };
-                  const rate = getReadmissionRate(scenario.id);
-                  const benchmark = 5.2;
+                {availableVendors.map(vendor => {
+                  const isSelected = selectedVendors.includes(vendor.id);
                   return (
                     <td
-                      key={scenario.id}
-                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                      key={vendor.id}
+                      className={`px-2 py-1.5 text-center ${isSelected ? 'bg-purple-50' : 'bg-gray-50'}`}
                     >
-                      <div className={`font-bold text-base ${rate <= benchmark ? 'text-green-600' : 'text-red-600'}`}>
-                        {rate.toFixed(1)}%
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        Benchmark: {benchmark}%
-                      </div>
+                      {isSelected && calculateHybridScenario ? (
+                        <div className="font-bold text-blue-600 text-base">{calculateHybridScenario.surgeonSatisfaction}%</div>
+                      ) : (
+                        <div className="text-gray-400 text-sm">—</div>
+                      )}
                     </td>
                   );
                 })}
               </tr>
 
-              {/* Average Length of Stay Row */}
+              {/* Operational Complexity Row */}
               <tr className="border-b hover:bg-gray-50">
                 <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
-                  Average Length of Stay
+                  Operational Complexity
                 </td>
-                {filteredScenarios.map(scenario => {
-                  const getLOS = (id) => {
-                    const los = {
-                      'status-quo': 2.1,
-                      'tri-vendor-premium': 2.2,
-                      'dual-premium': 2.3,
-                      'dual-value': 2.4,
-                      'quad-niche': 2.0,
-                      'construct-price-cap': 2.1,
-                      'component-price-cap': 2.1
-                    };
-                    return los[id] || 2.3;
-                  };
-                  const days = getLOS(scenario.id);
-                  const benchmark = 2.5;
+                {availableVendors.map(vendor => {
+                  const isSelected = selectedVendors.includes(vendor.id);
                   return (
                     <td
-                      key={scenario.id}
-                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                      key={vendor.id}
+                      className={`px-2 py-1.5 text-center ${isSelected ? 'bg-purple-50' : 'bg-gray-50'}`}
                     >
-                      <div className={`font-bold text-base ${days <= benchmark ? 'text-green-600' : 'text-red-600'}`}>
-                        {days.toFixed(1)} days
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        Benchmark: {benchmark} days
-                      </div>
+                      {isSelected && calculateHybridScenario ? (
+                        <div className={`font-bold text-base ${
+                          calculateHybridScenario.operationalComplexity === 'Low' ? 'text-green-600' :
+                          calculateHybridScenario.operationalComplexity.includes('Medium') ? 'text-yellow-600' :
+                          'text-red-600'
+                        }`}>
+                          {calculateHybridScenario.operationalComplexity}
+                        </div>
+                      ) : (
+                        <div className="text-gray-400 text-sm">—</div>
+                      )}
                     </td>
                   );
                 })}
               </tr>
 
-              {/* Surgical Site Infection Rate Row */}
+              {/* RISK ASSESSMENT SECTION */}
+              <tr className="bg-gradient-to-r from-amber-100 to-amber-50 border-t-2 border-amber-400">
+                <td colSpan={availableVendors.length + 1} className="px-2 py-1 font-bold text-amber-900 text-xs uppercase tracking-wide sticky left-0 z-10">
+                  ⚠️ Risk Assessment
+                </td>
+              </tr>
+
+              {/* Risk Level Row */}
               <tr className="border-b hover:bg-gray-50">
                 <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
-                  Surgical Site Infection Rate
+                  Overall Risk Level
                 </td>
-                {filteredScenarios.map(scenario => {
-                  const getSSI = (id) => {
-                    const rates = {
-                      'status-quo': 1.2,
-                      'tri-vendor-premium': 1.3,
-                      'dual-premium': 1.4,
-                      'dual-value': 1.6,
-                      'quad-niche': 1.1,
-                      'construct-price-cap': 1.2,
-                      'component-price-cap': 1.2
-                    };
-                    return rates[id] || 1.4;
-                  };
-                  const rate = getSSI(scenario.id);
-                  const benchmark = 1.8;
+                {availableVendors.map(vendor => {
+                  const isSelected = selectedVendors.includes(vendor.id);
                   return (
                     <td
-                      key={scenario.id}
-                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                      key={vendor.id}
+                      className={`px-2 py-1.5 text-center ${isSelected ? 'bg-purple-50' : 'bg-gray-50'}`}
                     >
-                      <div className={`font-bold text-base ${rate <= benchmark ? 'text-green-600' : 'text-red-600'}`}>
-                        {rate.toFixed(1)}%
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        Benchmark: {benchmark}%
-                      </div>
+                      {isSelected && calculateHybridScenario ? (
+                        <div className={`font-bold text-base uppercase ${
+                          calculateHybridScenario.riskLevel === 'low' ? 'text-green-600' :
+                          calculateHybridScenario.riskLevel === 'medium' ? 'text-yellow-600' :
+                          'text-red-600'
+                        }`}>
+                          {calculateHybridScenario.riskLevel}
+                        </div>
+                      ) : (
+                        <div className="text-gray-400 text-sm">—</div>
+                      )}
                     </td>
                   );
                 })}
               </tr>
 
-              {/* Patient-Reported Outcome Score Row */}
+              {/* Strategy Description Row */}
               <tr className="border-b hover:bg-gray-50">
                 <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
-                  Patient-Reported Outcomes
+                  Strategy Description
                 </td>
-                {filteredScenarios.map(scenario => {
-                  const getPROM = (id) => {
-                    const scores = {
-                      'status-quo': 85,
-                      'tri-vendor-premium': 84,
-                      'dual-premium': 83,
-                      'dual-value': 81,
-                      'quad-niche': 86,
-                      'construct-price-cap': 85,
-                      'component-price-cap': 85
-                    };
-                    return scores[id] || 83;
-                  };
-                  const score = getPROM(scenario.id);
-                  const benchmark = 82;
+                {availableVendors.map(vendor => {
+                  const isSelected = selectedVendors.includes(vendor.id);
                   return (
                     <td
-                      key={scenario.id}
-                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                      key={vendor.id}
+                      className={`px-2 py-1.5 text-center ${isSelected ? 'bg-purple-50' : 'bg-gray-50'}`}
                     >
-                      <div className={`font-bold text-base ${score >= benchmark ? 'text-green-600' : 'text-red-600'}`}>
-                        {score}
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        Benchmark: {benchmark}
-                      </div>
+                      {isSelected && calculateHybridScenario ? (
+                        <div className="text-xs text-gray-700">
+                          {selectedVendors.length} Vendor{selectedVendors.length !== 1 ? 's' : ''}
+                          {selectedPriceCap !== 'none' && (
+                            <> + {calculateHybridScenario.priceCapDescription}</>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-gray-400 text-sm">—</div>
+                      )}
                     </td>
                   );
                 })}
               </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-              {/* OPERATIONAL OUTCOMES SECTION */}
-              <tr className="bg-gradient-to-r from-orange-100 to-orange-50 border-t-2 border-orange-400">
-                <td colSpan={filteredScenarios.length + 1} className="px-2 py-1.5 font-bold text-orange-900 text-xs uppercase tracking-wide sticky left-0 z-10">
-                  ⚙️ Operational Outcomes
-                </td>
-              </tr>
+      {/* Explanation Note */}
+      <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-lg">
+        <div className="flex items-start gap-2">
+          <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-blue-900">
+            <strong>How to Use This Table:</strong> Select vendors using the checkboxes in the column headers and configure price caps above.
+            The table shows the combined impact across all selected vendors. Selected vendors will display purple-highlighted results,
+            while unselected vendors show dashes. Vendor selection impacts physician adoption and satisfaction, while price caps impact cost savings.
+          </div>
+        </div>
+      </div>
 
-              {/* Average OR Time Row */}
-              <tr className="border-b hover:bg-gray-50">
-                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
-                  Average OR Time
-                </td>
-                {filteredScenarios.map(scenario => {
-                  const getORTime = (id) => {
-                    const times = {
-                      'status-quo': 85,
-                      'tri-vendor-premium': 78,
-                      'dual-premium': 72,
-                      'dual-value': 70,
-                      'quad-niche': 82,
-                      'construct-price-cap': 83,
-                      'component-price-cap': 83
-                    };
-                    return times[id] || 80;
-                  };
-                  const minutes = getORTime(scenario.id);
-                  const benchmark = 90;
-                  return (
-                    <td
-                      key={scenario.id}
-                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
-                    >
-                      <div className={`font-bold text-base ${minutes <= benchmark ? 'text-green-600' : 'text-red-600'}`}>
-                        {minutes} min
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        Benchmark: {benchmark} min
-                      </div>
-                    </td>
-                  );
-                })}
-              </tr>
-
-              {/* Case Turnaround Time Row */}
-              <tr className="border-b hover:bg-gray-50">
-                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
-                  Case Turnaround Time
-                </td>
-                {filteredScenarios.map(scenario => {
-                  const getTurnaround = (id) => {
-                    const times = {
-                      'status-quo': 38,
-                      'tri-vendor-premium': 34,
-                      'dual-premium': 30,
-                      'dual-value': 28,
-                      'quad-niche': 36,
-                      'construct-price-cap': 37,
-                      'component-price-cap': 37
-                    };
-                    return times[id] || 35;
-                  };
-                  const minutes = getTurnaround(scenario.id);
-                  const benchmark = 40;
-                  return (
-                    <td
+      {/* Key Definitions and Reference Information */}
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-md p-4 border border-blue-200">
+        <h3 className="text-base font-bold mb-3 text-gray-800 flex items-center gap-2">
+          <Info className="w-4 h-4 text-blue-600" />
                       key={scenario.id}
                       className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
                     >
@@ -1361,36 +1439,83 @@ const EnhancedOrthopedicDashboard = () => {
                 })}
               </tr>
 
-              {/* Preferred Item Usage Rate Row */}
+              {/* Inpatient/Outpatient Ratio Row */}
               <tr className="border-b hover:bg-gray-50">
                 <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
-                  Preferred Item Usage Rate
+                  Inpatient/Outpatient Ratio
+                  <div className="text-xs font-normal text-gray-500 mt-1">Impacts reimbursement & cost structure</div>
                 </td>
                 {filteredScenarios.map(scenario => {
-                  const getPreferredUsage = (id) => {
-                    const rates = {
-                      'status-quo': 72,
-                      'tri-vendor-premium': 85,
-                      'dual-premium': 92,
-                      'dual-value': 94,
-                      'quad-niche': 80,
-                      'construct-price-cap': 88,
-                      'component-price-cap': 90
+                  const getIPOPRatio = (id) => {
+                    // Scenarios with more restrictive vendor choices may shift more cases to outpatient
+                    // as surgeons optimize for lower-cost settings
+                    const ratios = {
+                      'status-quo': 1.85,           // 65% IP / 35% OP (current state - higher inpatient)
+                      'tri-vendor-premium': 1.55,   // 61% IP / 39% OP (some shift to OP)
+                      'dual-premium': 1.35,         // 57% IP / 43% OP (more OP shift)
+                      'dual-value': 1.25,           // 56% IP / 44% OP (value focus = more OP)
+                      'quad-niche': 1.70,           // 63% IP / 37% OP (moderate shift)
+                      'construct-price-cap': 1.45,  // 59% IP / 41% OP
+                      'component-price-cap': 1.50   // 60% IP / 40% OP
                     };
-                    return rates[id] || 85;
+                    return ratios[id] || 1.5;
                   };
-                  const rate = getPreferredUsage(scenario.id);
-                  const benchmark = 85;
+                  const ratio = getIPOPRatio(scenario.id);
+                  const ipPercent = Math.round((ratio / (ratio + 1)) * 100);
+                  const opPercent = 100 - ipPercent;
+                  // Lower ratio (more outpatient) is generally better for cost efficiency
+                  const benchmark = 1.5;
                   return (
                     <td
                       key={scenario.id}
                       className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
                     >
-                      <div className={`font-bold text-base ${rate >= benchmark ? 'text-green-600' : 'text-red-600'}`}>
-                        {rate}%
+                      <div className={`font-bold text-base ${ratio <= benchmark ? 'text-green-600' : 'text-orange-600'}`}>
+                        {ratio.toFixed(2)}:1
                       </div>
                       <div className="text-xs text-gray-500 mt-1">
-                        Target: {benchmark}%
+                        {ipPercent}% IP / {opPercent}% OP
+                      </div>
+                    </td>
+                  );
+                })}
+              </tr>
+
+              {/* Robotic Case Proportion Row */}
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-2 py-1.5 font-semibold text-gray-700 text-sm sticky left-0 bg-white z-10">
+                  Robotic Case Proportion
+                  <div className="text-xs font-normal text-gray-500 mt-1">Platform utilization & stranded investment risk</div>
+                </td>
+                {filteredScenarios.map(scenario => {
+                  const getRoboticProportion = (id) => {
+                    // Scenarios with vendor restrictions may "strand" robotic cases
+                    // if selected vendors don't support existing robotic platforms
+                    const proportions = {
+                      'status-quo': 28.5,           // Current robotic adoption rate
+                      'tri-vendor-premium': 26.0,   // Minor reduction (some platforms excluded)
+                      'dual-premium': 18.5,         // Significant reduction (only 2 vendors)
+                      'dual-value': 15.0,           // Major reduction (value vendors may not have robotics)
+                      'quad-niche': 25.5,           // Moderate reduction (4 vendors, good coverage)
+                      'construct-price-cap': 22.0,  // Some platforms priced out
+                      'component-price-cap': 20.5   // Component caps may exclude robotic-tied implants
+                    };
+                    return proportions[id] || 20;
+                  };
+                  const percentage = getRoboticProportion(scenario.id);
+                  const statusQuo = 28.5;
+                  const strandedCases = Math.round((statusQuo - percentage) / statusQuo * 100);
+                  const benchmark = 25; // Target to maintain investment utilization
+                  return (
+                    <td
+                      key={scenario.id}
+                      className={`px-2 py-1.5 text-center ${selectedScenario === scenario.id ? 'bg-purple-50' : ''}`}
+                    >
+                      <div className={`font-bold text-base ${percentage >= benchmark ? 'text-green-600' : 'text-orange-600'}`}>
+                        {percentage.toFixed(1)}%
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {strandedCases > 0 ? `${strandedCases}% cases stranded` : 'Full platform utilization'}
                       </div>
                     </td>
                   );

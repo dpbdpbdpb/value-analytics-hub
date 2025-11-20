@@ -661,6 +661,11 @@ const CardiovascularIPGDemo = () => {
     return {
       metrics: [
         {
+          label: 'TLR Risk Level',
+          value: c.efficacy.toFixed(1) + '%',
+          trend: c.efficacy < 15 ? '✓ Within threshold' : '⚠️ Monitor closely'
+        },
+        {
           label: 'Annual Cases',
           value: Math.round(adoptedCases * o.facilities),
           trend: '↑ ' + Math.round(c.adoption) + '% adoption'
@@ -674,11 +679,6 @@ const CardiovascularIPGDemo = () => {
           label: '5-Year Value',
           value: '$' + (fiveYearValue / 1000000).toFixed(1) + 'M',
           trend: o.facilities + ' facilities participating'
-        },
-        {
-          label: 'TLR Risk Level',
-          value: c.efficacy.toFixed(1) + '%',
-          trend: c.efficacy < 15 ? '✓ Within threshold' : '⚠️ Monitor closely'
         }
       ],
       chartData: generateChartData(systemWideMargin),
